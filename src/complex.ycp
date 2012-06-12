@@ -1,0 +1,145 @@
+/* ------------------------------------------------------------------------------
+ * Copyright (c) 2006 Novell, Inc. All Rights Reserved.
+ *
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of version 2 of the GNU General Public License as published by the
+ * Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, contact Novell, Inc.
+ *
+ * To contact Novell about this file by physical or electronic mail, you may find
+ * current contact information at www.novell.com.
+ * ------------------------------------------------------------------------------
+ */
+
+/**
+ * File:	include/crawbar/complex.ycp
+ * Package:	Configuration of crawbar
+ * Summary:	Dialogs definitions
+ * Authors:	Jiri Suchomel <jsuchome@suse.cz>
+ *
+ * $Id: complex.ycp 65771 2011-09-19 07:37:30Z visnov $
+ */
+
+{
+
+textdomain "crawbar";
+
+import "Label";
+import "Popup";
+import "Wizard";
+import "UIHelper";
+import "Confirm";
+import "Crawbar";
+
+
+include "crawbar/helps.ycp";
+
+/**
+ * Return a modification status
+ * @return true if data was modified
+ */
+boolean Modified() {
+    return Crawbar::Modified();
+}
+
+boolean ReallyAbort() {
+    return !Crawbar::Modified() || Popup::ReallyAbort(true);
+}
+
+boolean PollAbort() {
+    return UI::PollInput() == `abort;
+}
+
+/**
+ * Read settings dialog
+ * @return `abort if aborted and `next otherwise
+ */
+symbol ReadDialog() {
+    Wizard::RestoreHelp(HELPS["read"]:"");
+    // Crawbar::SetAbortFunction(PollAbort);
+    if (!Confirm::MustBeRoot()) return `abort;
+    boolean ret = Crawbar::Read();
+    return ret ? `next : `abort;
+}
+
+/**
+ * Write settings dialog
+ * @return `abort if aborted and `next otherwise
+ */
+symbol WriteDialog() {
+    Wizard::RestoreHelp(HELPS["write"]:"");
+    // Crawbar::SetAbortFunction(PollAbort);
+    boolean ret = Crawbar::Write();
+    return ret ? `next : `abort;
+}
+
+/**
+ * Overview dialog
+ * @return dialog result
+ */
+any OverviewDialog() {
+
+    /* Crawbar overview dialog caption */
+    string caption = _("Crawbar Overview");
+
+    list overview = Crawbar::Overview();
+
+    /* FIXME table header */
+    term contents = UIHelper::EditTable(
+	/* Table header */
+	`header(_("Number"), _("Crawbar")),
+	overview, nil, nil, nil, nil );
+
+    contents = UIHelper::SpacingAround(contents, 1.5, 1.5, 1.0, 1.0);
+
+    Wizard::SetContentsButtons(caption, contents, HELPS["overview"]:"",
+	    Label::BackButton(), Label::FinishButton());
+
+    any ret = nil;
+    while(true) {
+
+	ret = UI::UserInput();
+
+	/* abort? */
+	if(ret == `abort || ret == `cancel) {
+	    if(ReallyAbort()) break;
+	    else continue;
+	}
+        /* add */
+        else if(ret == `add_button) {
+	    /* FIXME */
+            ret = `add;
+            break;
+        }
+        /* edit */
+        else if(ret == `edit_button) {
+	    /* FIXME */
+            ret = `edit;
+            break;
+        }
+        /* delete */
+        else if(ret == `delete_button) {
+	    /* FIXME */
+            continue;
+        }
+        else if(ret == `next || ret == `back) {
+            break;
+        }
+        else {
+            y2error("unexpected retcode: %1", ret);
+            continue;
+        }
+    }
+
+    return ret;
+}
+
+/* EOF */
+}

@@ -1,0 +1,31 @@
+@HEADER-COMMENT@
+
+@HEADER@
+Requires:	yast2
+BuildRequires:	perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-testsuite
+
+BuildArchitectures:	noarch
+
+Summary:	Configuration of crawbar
+
+%description
+-
+
+@PREP@
+
+@BUILD@
+
+@INSTALL@
+
+@CLEAN@
+
+%files
+%defattr(-,root,root)
+%dir @yncludedir@/crawbar
+@yncludedir@/crawbar/*
+@clientdir@/crawbar.ycp
+@clientdir@/crawbar_*.ycp
+@moduledir@/Crawbar.*
+@moduledir@/Crawbar2.*
+@desktopdir@/crawbar.desktop
+%doc @docdir@
