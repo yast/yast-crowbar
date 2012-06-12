@@ -44,8 +44,7 @@ import "Message";
 /**
  * Path to the file with JSON data
  */
-global string file_name = "/tmp/bc-template-network.json";
-// "/opt/dell/barclamps/dns/chef/data_bags/crowbar/bc-template-dns.json"
+global string file_name = "/opt/dell/barclamps/dns/chef/data_bags/crowbar/bc-template-dns.json";
 
 /**
  * map of configuration data
@@ -140,6 +139,13 @@ global boolean Write() {
 	],
 	""
     );
+
+
+    crowbar["attributes","network","networks"]  = networks;
+
+    y2internal ("networks to write: %1", networks);
+    y2security ("file %1", file_name);
+    JSON::write (crowbar, file_name);
 
     Progress::NextStage();
 
