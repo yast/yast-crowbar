@@ -19,8 +19,8 @@
  */
 
 /**
- * File:	include/crawbar/complex.ycp
- * Package:	Configuration of crawbar
+ * File:	include/crowbar/complex.ycp
+ * Package:	Configuration of crowbar
  * Summary:	Dialogs definitions
  * Authors:	Jiri Suchomel <jsuchome@suse.cz>
  *
@@ -29,28 +29,28 @@
 
 {
 
-textdomain "crawbar";
+textdomain "crowbar";
 
 import "Label";
 import "Popup";
 import "Wizard";
 import "UIHelper";
 import "Confirm";
-import "Crawbar";
+import "Crowbar";
 
 
-include "crawbar/helps.ycp";
+include "crowbar/helps.ycp";
 
 /**
  * Return a modification status
  * @return true if data was modified
  */
 boolean Modified() {
-    return Crawbar::Modified();
+    return Crowbar::Modified();
 }
 
 boolean ReallyAbort() {
-    return !Crawbar::Modified() || Popup::ReallyAbort(true);
+    return !Crowbar::Modified() || Popup::ReallyAbort(true);
 }
 
 boolean PollAbort() {
@@ -63,9 +63,8 @@ boolean PollAbort() {
  */
 symbol ReadDialog() {
     Wizard::RestoreHelp(HELPS["read"]:"");
-    // Crawbar::SetAbortFunction(PollAbort);
     if (!Confirm::MustBeRoot()) return `abort;
-    boolean ret = Crawbar::Read();
+    boolean ret = Crowbar::Read();
     return ret ? `next : `abort;
 }
 
@@ -75,8 +74,7 @@ symbol ReadDialog() {
  */
 symbol WriteDialog() {
     Wizard::RestoreHelp(HELPS["write"]:"");
-    // Crawbar::SetAbortFunction(PollAbort);
-    boolean ret = Crawbar::Write();
+    boolean ret = Crowbar::Write();
     return ret ? `next : `abort;
 }
 
@@ -86,21 +84,25 @@ symbol WriteDialog() {
  */
 any OverviewDialog() {
 
-    /* Crawbar overview dialog caption */
-    string caption = _("Crawbar Overview");
+    // Crowbar overview dialog caption
+    string caption = _("Crowbar Configuration Overview");
 
-    list overview = Crawbar::Overview();
+    list overview = [];
 
-    /* FIXME table header */
-    term contents = UIHelper::EditTable(
-	/* Table header */
-	`header(_("Number"), _("Crawbar")),
-	overview, nil, nil, nil, nil );
-
-    contents = UIHelper::SpacingAround(contents, 1.5, 1.5, 1.0, 1.0);
+    term contents       = `HBox (`HSpacing (), `VBox (
+      `VSpacing (),
+      // button label
+      `Right (`PushButton (`id (`refresh), _("Refresh"))),
+      // Table header
+      `Table (`id (`table), `opt (`notify, `immediate), `header(_("Name"), _("Status")), []),
+      `HBox (
+        `PushButton (`id (`add_button), `opt (`key_F3), Label::AddButton ())
+      ),
+      `VSpacing ()
+    ), `HSpacing ());
 
     Wizard::SetContentsButtons(caption, contents, HELPS["overview"]:"",
-	    Label::BackButton(), Label::FinishButton());
+        Label::BackButton(), Label::FinishButton());
 
     any ret = nil;
     while(true) {
@@ -117,17 +119,6 @@ any OverviewDialog() {
 	    /* FIXME */
             ret = `add;
             break;
-        }
-        /* edit */
-        else if(ret == `edit_button) {
-	    /* FIXME */
-            ret = `edit;
-            break;
-        }
-        /* delete */
-        else if(ret == `delete_button) {
-	    /* FIXME */
-            continue;
         }
         else if(ret == `next || ret == `back) {
             break;
