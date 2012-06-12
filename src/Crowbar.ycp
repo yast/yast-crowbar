@@ -45,6 +45,7 @@ import "Message";
  * Path to the file with JSON data
  */
 global string file_name = "/tmp/bc-template-network.json";
+// "/opt/dell/barclamps/dns/chef/data_bags/crowbar/bc-template-dns.json"
 
 /**
  * map of configuration data
@@ -54,7 +55,7 @@ global map crowbar      = $[];
 /**
  * networks subset of global configuration map
  */
-global map networks     = $[];
+global map<string,map> networks     = $[];
 
 /**
  * Prototypes
@@ -113,12 +114,9 @@ global boolean Read() {
         return false;
     }
 
-    crowbar     = JSON::read (file_name);
-    y2internal ("parsed: %1", crowbar);
+    crowbar     = (map) JSON::read (file_name);
 
     networks    = crowbar["attributes","network","networks"]:$[];
-
-    y2milestone ("networks: %1", networks);
 
     Progress::NextStage();
 

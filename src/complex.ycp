@@ -63,7 +63,7 @@ boolean PollAbort() {
  */
 symbol ReadDialog() {
     Wizard::RestoreHelp(HELPS["read"]:"");
-    if (!Confirm::MustBeRoot()) return `abort;
+//    if (!Confirm::MustBeRoot()) return `abort;
     boolean ret = Crowbar::Read();
     return ret ? `next : `abort;
 }
@@ -89,15 +89,37 @@ any OverviewDialog() {
 
     list overview = [];
 
+    map<string,map> networks    = Crowbar::networks;
+    y2internal ("networks: %1", networks);
+
+    list<term> network_names  = maplist (string name, map n, networks, {
+      return `item (`id (name), name, name == "admin");
+    });
+
+    term build_ui_for_network (string name) {
+
+      map network       = networks[name]:$[];
+      return `VBox (
+        `TextEntry (`id ("conduit"), _("Conduit"), network["conduit"]:""),
+        `TextEntry (`id ("subnet"), _("Subnet"), network["subnet"]:""),
+        `TextEntry (`id ("netmask"), _("Netmask"), network["netmask"]:""),
+        `TextEntry (`id ("broadcast"), _("Broadcast"), network["broadcast"]:""),
+        `VSpacing (0.5),
+        `Left (`CheckBox (`id ("add_bridge"), _("Add Bridge"), network["add_bridge"]:false))
+      );
+    }
+
     term contents       = `HBox (`HSpacing (), `VBox (
       `VSpacing (),
-      // button label
-      `Right (`PushButton (`id (`refresh), _("Refresh"))),
-      // Table header
-      `Table (`id (`table), `opt (`notify, `immediate), `header(_("Name"), _("Status")), []),
-      `HBox (
-        `PushButton (`id (`add_button), `opt (`key_F3), Label::AddButton ())
+      `Left (
+        `ComboBox (`id (`networks), `opt (`notify), _("Networks"), network_names)
       ),
+      `ReplacePoint (`id (`rp_network), build_ui_for_network ("admin")),
+      /*
+      `HBox (
+        `PushButton (`id (`add_button), `opt (`key_F3), "Some button")
+      ),
+      */
       `VSpacing ()
     ), `HSpacing ());
 
@@ -109,18 +131,16 @@ any OverviewDialog() {
 
 	ret = UI::UserInput();
 
-	/* abort? */
-	if(ret == `abort || ret == `cancel) {
-	    if(ReallyAbort()) break;
+	if (ret == `abort || ret == `cancel) {
+	    if (ReallyAbort()) break;
 	    else continue;
 	}
-        /* add */
-        else if(ret == `add_button) {
-	    /* FIXME */
-            ret = `add;
-            break;
+        else if (ret == `networks) {
+            UI::ReplaceWidget (`id (`rp_network),
+              build_ui_for_network ((string) UI::QueryWidget (`id (`networks), `Value))
+            );
         }
-        else if(ret == `next || ret == `back) {
+        else if (ret == `next || ret == `back) {
             break;
         }
         else {
