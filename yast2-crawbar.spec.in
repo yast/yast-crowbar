@@ -24,6 +24,7 @@ Summary:	Configuration of crawbar
 %dir @yncludedir@/crawbar
 @yncludedir@/crawbar/*
 @clientdir@/crawbar.ycp
+@moduledir@/JSON.rb
 @moduledir@/Crawbar.*
 @desktopdir@/crawbar.desktop
 %doc @docdir@
