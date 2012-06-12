@@ -44,7 +44,7 @@ import "Message";
 /**
  * Path to the file with JSON data
  */
-global string file_name = "/opt/dell/barclamps/dns/chef/data_bags/crowbar/bc-template-dns.json";
+global string file_name = "/opt/dell/barclamps/dns/chef/data_bags/crowbar/bc-template-network.json";
 
 /**
  * map of configuration data
