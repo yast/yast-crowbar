@@ -41,6 +41,7 @@ textdomain "crawbar";
 y2milestone ("----------------------------------------");
 y2milestone ("Crawbar module started");
 
+import "Crawbar";
 import "Progress";
 import "Report";
 import "Summary";
@@ -49,21 +50,10 @@ import "CommandLine";
 include "crawbar/wizards.ycp";
 
 map cmdline_description = $[
-    "id" 	: "crawbar",
-    /* Command line help text for the Xcrawbar module */
+    "id"	: "crawbar",
+    // Command line help text for the Xcrawbar module
     "help"	: _("Configuration of crawbar"),
     "guihandler"        : CrawbarSequence,
-    "initialize"        : Crawbar::Read,
-    "finish"            : Crawbar::Write,
-    "actions"           : $[
-	// FIXME TODO: fill the functionality description here
-    ],
-    "options"		: $[
-	// FIXME TODO: fill the option descriptions here
-    ],
-    "mappings"		: $[
-	// FIXME TODO: fill the mappings of actions and options here
-    ]
 ];
 
 /* is this proposal or not? */
@@ -78,6 +68,8 @@ if(size(args) > 0) {
 
 /* main ui function */
 any ret = nil;
+
+y2internal ("parsed: %1", Crawbar::parse ("/tmp/bc-template-network.json"));
 
 if(propose) ret = CrawbarAutoSequence();
 else ret = CommandLine::Run(cmdline_description);
