@@ -19,8 +19,8 @@
  */
 
 /**
- * File:	include/crawbar/helps.ycp
- * Package:	Configuration of crawbar
+ * File:	include/crowbar/helps.ycp
+ * Package:	Configuration of crowbar
  * Summary:	Help texts of all the dialogs
  * Authors:	Jiri Suchomel <jsuchome@suse.cz>
  *
@@ -29,7 +29,7 @@
 
 {
 
-textdomain "crawbar";
+textdomain "crowbar";
 
 /**
  * All helps are here
@@ -37,7 +37,7 @@ textdomain "crawbar";
 map HELPS = $[
 
     /* Read dialog help 1/2 */
-    "read" : _("<p><b><big>Initializing crawbar Configuration</big></b><br>
+    "read" : _("<p><b><big>Initializing crowbar Configuration</big></b><br>
 Please wait...<br></p>
 ") +
 
@@ -47,7 +47,7 @@ Safely abort the configuration utility by pressing <b>Abort</b> now.</p>
 "),
 
     /* Write dialog help 1/2 */
-    "write" : _("<p><b><big>Saving crawbar Configuration</big></b><br>
+    "write" : _("<p><b><big>Saving crowbar Configuration</big></b><br>
 Please wait...<br></p>
 ") +
 
@@ -59,14 +59,14 @@ An additional dialog informs whether it is safe to do so.
 "),
 
     /* Summary dialog help 1/3 */
-    "summary" : _("<p><b><big>Crawbar Configuration</big></b><br>
-Configure crawbar here.<br></p>
+    "summary" : _("<p><b><big>Crowbar Configuration</big></b><br>
+Configure crowbar here.<br></p>
 ") +
 
     /* Summary dialog help 2/3 */
-    _("<p><b><big>Adding a crawbar:</big></b><br>
-Choose an crawbar from the list of detected crawbars.
-If your crawbar was not detected, use <b>Other (not detected)</b>.
+    _("<p><b><big>Adding a crowbar:</big></b><br>
+Choose an crowbar from the list of detected crowbars.
+If your crowbar was not detected, use <b>Other (not detected)</b>.
 Then press <b>Configure</b>.</p>
 ") +
 
@@ -77,18 +77,18 @@ the configuration opens.</p>
 "),
 
     /* Ovreview dialog help 1/3 */
-    "overview" : _("<p><b><big>Crawbar Configuration Overview</big></b><br>
-Obtain an overview of installed crawbars. Additionally
+    "overview" : _("<p><b><big>Crowbar Configuration Overview</big></b><br>
+Obtain an overview of installed crowbars. Additionally
 edit their configurations.<br></p>
 ") +
 
     /* Ovreview dialog help 2/3 */
-_("<p><b><big>Adding a crawbar:</big></b><br>
-Press <b>Add</b> to configure a crawbar.</p>") +
+_("<p><b><big>Adding a crowbar:</big></b><br>
+Press <b>Add</b> to configure a crowbar.</p>") +
 
     /* Ovreview dialog help 3/3 */
 _("<p><b><big>Editing or Deleting:</big></b><br>
-Choose a crawbar to change or remove.
+Choose a crowbar to change or remove.
 Then press <b>Edit</b> or <b>Delete</b> as desired.</p>
 "),
 

@@ -19,8 +19,8 @@
  */
 
 /**
- * File:	include/crawbar/wizards.ycp
- * Package:	Configuration of crawbar
+ * File:	include/crowbar/wizards.ycp
+ * Package:	Configuration of crowbar
  * Summary:	Wizards definitions
  * Authors:	Jiri Suchomel <jsuchome@suse.cz>
  *
@@ -29,16 +29,16 @@
 
 {
 
-textdomain "crawbar";
+textdomain "crowbar";
 
 import "Sequencer";
 import "Wizard";
 
-include "crawbar/complex.ycp";
-include "crawbar/dialogs.ycp";
+include "crowbar/complex.ycp";
+include "crowbar/dialogs.ycp";
 
 /**
- * Add a configuration of crawbar
+ * Add a configuration of crowbar
  * @return sequence result
  */
 any AddSequence() {
@@ -66,7 +66,7 @@ any AddSequence() {
 }
 
 /**
- * Main workflow of the crawbar configuration
+ * Main workflow of the crowbar configuration
  * @return sequence result
  */
 any MainSequence() {
@@ -103,10 +103,10 @@ any MainSequence() {
 }
 
 /**
- * Whole configuration of crawbar
+ * Whole configuration of crowbar
  * @return sequence result
  */
-any CrawbarSequence() {
+any CrowbarSequence() {
 
     map aliases = $[
 	"read"	: [ ``( ReadDialog() ), true ],
@@ -132,7 +132,7 @@ any CrawbarSequence() {
 
     Wizard::CreateDialog();
 
-    Wizard::SetDesktopTitleAndIcon("crawbar");
+    Wizard::SetDesktopTitleAndIcon("crowbar");
 
     any ret = Sequencer::Run(aliases, sequence);
 
@@ -141,14 +141,14 @@ any CrawbarSequence() {
 }
 
 /**
- * Whole configuration of crawbar but without reading and writing.
+ * Whole configuration of crowbar but without reading and writing.
  * For use with autoinstallation.
  * @return sequence result
  */
-any CrawbarAutoSequence() {
+any CrowbarAutoSequence() {
 
     /* Initialization dialog caption */
-    string caption = _("Crawbar Configuration");
+    string caption = _("Crowbar Configuration");
     /* Initialization dialog contents */
     term contents = `Label(_("Initializing..."));
 

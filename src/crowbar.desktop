@@ -5,7 +5,7 @@ Categories=Settings;System;Qt;X-SuSE-YaST;X-SuSE-YaST-Misc;
 X-KDE-ModuleType=Library
 X-KDE-HasReadOnlyMode=true
 X-KDE-Library=yast2
-X-SuSE-YaST-Call=crawbar
+X-SuSE-YaST-Call=crowbar
 
 X-SuSE-YaST-Group=Misc
 X-SuSE-YaST-Argument=
@@ -13,11 +13,11 @@ X-SuSE-YaST-RootOnly=true
 X-SuSE-YaST-AutoInst=
 X-SuSE-YaST-Geometry=
 X-SuSE-YaST-SortKey=
-X-SuSE-YaST-AutoInstResource=crawbar
+X-SuSE-YaST-AutoInstResource=crowbar
 
-Icon=yast-crawbar
-Exec=/usr/bin/xdg-su -c '/sbin/yast2 crawbar'
+Icon=yast-crowbar
+Exec=/usr/bin/xdg-su -c '/sbin/yast2 crowbar'
 
-Name=Crawbar
-GenericName=crawbar
+Name=Crowbar
+GenericName=crowbar
 StartupNotify=true

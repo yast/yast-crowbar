@@ -19,40 +19,40 @@
  */
 
 /**
- * File:	clients/crawbar.ycp
- * Package:	Configuration of crawbar
+ * File:	clients/crowbar.ycp
+ * Package:	Configuration of crowbar
  * Summary:	Main file
  * Authors:	Jiri Suchomel <jsuchome@suse.cz>
  *
- * $Id: crawbar.ycp 27914 2006-02-13 14:32:08Z locilka $
+ * $Id: crowbar.ycp 27914 2006-02-13 14:32:08Z locilka $
  *
- * Main file for crawbar configuration. Uses all other files.
+ * Main file for crowbar configuration. Uses all other files.
  */
 
 {
 
 /***
- * <h3>Configuration of crawbar</h3>
+ * <h3>Configuration of crowbar</h3>
  */
 
-textdomain "crawbar";
+textdomain "crowbar";
 
 /* The main () */
 y2milestone ("----------------------------------------");
-y2milestone ("Crawbar module started");
+y2milestone ("Crowbar module started");
 
 import "Progress";
 import "Report";
 import "Summary";
 
 import "CommandLine";
-include "crawbar/wizards.ycp";
+include "crowbar/wizards.ycp";
 
 map cmdline_description = $[
-    "id"	: "crawbar",
-    // Command line help text for the Xcrawbar module
-    "help"	: _("Configuration of crawbar"),
-    "guihandler"        : CrawbarSequence,
+    "id"	: "crowbar",
+    // Command line help text for the Xcrowbar module
+    "help"	: _("Configuration of crowbar"),
+    "guihandler"        : CrowbarSequence,
 ];
 
 /* is this proposal or not? */
@@ -68,12 +68,12 @@ if(size(args) > 0) {
 /* main ui function */
 any ret = nil;
 
-if(propose) ret = CrawbarAutoSequence();
+if(propose) ret = CrowbarAutoSequence();
 else ret = CommandLine::Run(cmdline_description);
 y2debug("ret=%1", ret);
 
 /* Finish */
-y2milestone("Crawbar module finished");
+y2milestone("Crowbar module finished");
 y2milestone("----------------------------------------");
 
 return ret;

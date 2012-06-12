@@ -6,7 +6,7 @@ BuildRequires:	perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-t
 
 BuildArchitectures:	noarch
 
-Summary:	Configuration of crawbar
+Summary:	Configuration of crowbar
 
 %description
 -
@@ -21,10 +21,10 @@ Summary:	Configuration of crawbar
 
 %files
 %defattr(-,root,root)
-%dir @yncludedir@/crawbar
-@yncludedir@/crawbar/*
-@clientdir@/crawbar.ycp
+%dir @yncludedir@/crowbar
+@yncludedir@/crowbar/*
+@clientdir@/crowbar.ycp
 @moduledir@/JSON.rb
-@moduledir@/Crawbar.*
-@desktopdir@/crawbar.desktop
+@moduledir@/Crowbar.*
+@desktopdir@/crowbar.desktop
 %doc @docdir@

@@ -19,8 +19,8 @@
  */
 
 /**
- * File:	include/crawbar/dialogs.ycp
- * Package:	Configuration of crawbar
+ * File:	include/crowbar/dialogs.ycp
+ * Package:	Configuration of crowbar
  * Summary:	Dialogs definitions
  * Authors:	Jiri Suchomel <jsuchome@suse.cz>
  *
@@ -29,13 +29,13 @@
 
 {
 
-textdomain "crawbar";
+textdomain "crowbar";
 
 import "Label";
 import "Wizard";
-import "Crawbar";
+import "Crowbar";
 
-include "crawbar/helps.ycp";
+include "crowbar/helps.ycp";
 
 /**
  * Configure1 dialog
@@ -43,11 +43,11 @@ include "crawbar/helps.ycp";
  */
 any Configure1Dialog () {
 
-    /* Crawbar configure1 dialog caption */
-    string caption = _("Crawbar Configuration");
+    /* Crowbar configure1 dialog caption */
+    string caption = _("Crowbar Configuration");
 
-    /* Crawbar configure1 dialog contents */
-    term contents = `Label (_("First part of configuration of crawbar"));
+    /* Crowbar configure1 dialog contents */
+    term contents = `Label (_("First part of configuration of crowbar"));
 
     Wizard::SetContentsButtons(caption, contents, HELPS["c1"]:"",
 	    Label::BackButton(), Label::NextButton());
@@ -80,11 +80,11 @@ any Configure1Dialog () {
  */
 any Configure2Dialog () {
 
-    /* Crawbar configure2 dialog caption */
-    string caption = _("Crawbar Configuration");
+    /* Crowbar configure2 dialog caption */
+    string caption = _("Crowbar Configuration");
 
-    /* Crawbar configure2 dialog contents */
-    term contents = `Label (_("Second part of configuration of crawbar"));
+    /* Crowbar configure2 dialog contents */
+    term contents = `Label (_("Second part of configuration of crowbar"));
 
     Wizard::SetContentsButtons(caption, contents, HELPS["c2"]:"",
 	    Label::BackButton(), Label::NextButton());
