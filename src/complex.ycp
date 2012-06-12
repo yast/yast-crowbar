@@ -31,11 +31,13 @@
 
 textdomain "crowbar";
 
+import "Confirm";
+import "Crowbar";
+import "CWM";
+import "CWMTab";
 import "Label";
 import "Popup";
 import "Wizard";
-import "Confirm";
-import "Crowbar";
 
 
 include "crowbar/helps.ycp";
@@ -80,8 +82,8 @@ symbol WriteDialog() {
 /**
  * Overview dialog
  * @return dialog result
- */
-any OverviewDialog() {
+ *
+any OverviewDialogOld() {
 
     // Crowbar overview dialog caption
     string caption = _("Crowbar Configuration Overview");
@@ -99,13 +101,22 @@ any OverviewDialog() {
 
       map network       = networks[name]:$[];
       return `VBox (
-        `TextEntry (`id ("conduit"), _("Conduit"), network["conduit"]:""),
+//        `TextEntry (`id ("conduit"), _("Conduit"), network["conduit"]:""),
         `TextEntry (`id ("subnet"), _("Subnet"), network["subnet"]:""),
         `TextEntry (`id ("netmask"), _("Netmask"), network["netmask"]:""),
-        `TextEntry (`id ("broadcast"), _("Broadcast"), network["broadcast"]:""),
         `VSpacing (0.5),
         `Left (`CheckBox (`id ("add_bridge"), _("Add Bridge"), network["add_bridge"]:false))
       );
+    }
+
+    // take current network data from UI and save it to the global map
+    void store_current_network (string name) {
+      foreach (string key, [ "subnet", "netmask" ], {
+        string value = (string) UI::QueryWidget (`id (key), `Value);
+        networks[name,key]      = value;
+      });
+      networks[name,"add_bridge"] = UI::QueryWidget (`id ("add_bridge"), `Value) == true;
+      return;
     }
 
     term contents       = `HBox (`HSpacing (), `VBox (
@@ -113,12 +124,7 @@ any OverviewDialog() {
       `Left (
         `ComboBox (`id (`networks), `opt (`notify), _("Networks"), network_names)
       ),
-      `ReplacePoint (`id (`rp_network), build_ui_for_network ("admin")),
-      /*
-      `HBox (
-        `PushButton (`id (`add_button), `opt (`key_F3), "Some button")
-      ),
-      */
+      `ReplacePoint (`id (`rp_network), build_ui_for_network (current_network)),
       `VSpacing ()
     ), `HSpacing ());
 
@@ -135,9 +141,13 @@ any OverviewDialog() {
 	    else continue;
 	}
         else if (ret == `networks) {
-            UI::ReplaceWidget (`id (`rp_network),
-              build_ui_for_network ((string) UI::QueryWidget (`id (`networks), `Value))
-            );
+            string selected     = (string) UI::QueryWidget (`id (`networks), `Value);
+            if (selected != current_network)
+            {
+              store_current_network (current_network);
+              UI::ReplaceWidget (`id (`rp_network), build_ui_for_network (selected));
+              current_network   = selected;
+            }
         }
         else if (ret == `next || ret == `back) {
             break;
@@ -148,6 +158,198 @@ any OverviewDialog() {
         }
     }
 
+    if (ret == `next)
+    {
+        store_current_network (current_network);
+        Crowbar::networks        = networks;
+    }
+    return ret;
+}
+*/
+
+    map<string,map> networks    = $[];
+
+    string current_network      = "admin";
+
+  /**
+   * universal widget: initialize the string value of widget @param
+   */
+  define void InitNetwork (string id) {
+    UI::ChangeWidget (`id (id), `Value, networks[current_network,id]:"");
+  }
+
+  /**
+   * store the string value of given widget
+   */
+  define void StoreNetwork (string key, map event) {
+    networks[current_network,key]      = UI::QueryWidget (`id(key), `Value);
+  }
+
+  /**
+   * handler for general string-value widgets: store their value on exit/save
+   */
+  define symbol HandleNetwork (string key, map event) {
+    // store the value on exiting
+    if (event["ID"]:nil == `next) StoreNetwork (key, event);
+    return nil;
+  }
+
+  /**
+   * universal widget: initialize the string value of widget @param
+   */
+  define void InitCheckBox (string id) {
+    UI::ChangeWidget (`id (id), `Value, networks[current_network,id]:false);
+  }
+
+  /**
+   * initialize the value of combo box
+   */
+  define void InitCombo (string id) {
+    list<term> items = maplist (string name, map n, networks, {
+      return `item (`id (name), name, name == "admin");
+    });
+    UI::ChangeWidget (`id (id), `Items, items);
+  }
+
+  /**
+   * handler network selection combo
+   */
+  define symbol HandleNetworkSelect (string key, map event) {
+    // store the value on exiting
+    if (event["ID"]:nil == `next) StoreNetwork (key, event);
+    string selected = (string) UI::QueryWidget (`id(key), `Value);
+    if (selected != current_network)
+    {
+      foreach (string key, ["netmask", "subnet", "add_bridge"], {
+        StoreNetwork (key, $[]);
+      });
+      current_network   = selected;
+      foreach (string key, ["netmask", "subnet"], {
+        InitNetwork (key);
+      });
+      InitCheckBox ("add_bridge");
+    }
+    return nil;
+  }
+
+map<string, map> widget_description	= $[
+    "administrator" : $[
+	"widget"	: `textentry,
+	// textentry label
+	"label"		: _("Administrator"),
+	// help text
+	"help"		: _("<p>adminhelp</p>"),
+    ],
+    // ---------------- widgets for Network tab
+    "network_select" : $[
+	"widget"	: `combobox,
+	"opt"		: [ `hstretch, `notify ],
+	// checkbox label
+	"label"		: _("Networks"),
+	// help text
+	"help"		: _("FIXME"),
+	"init"		: InitCombo,
+	"handle"	: HandleNetworkSelect,
+    ],
+    "netmask" : $[
+	"widget"	: `textentry,
+	// textentry label
+	"label"		: _("Netmask"),
+	// help text
+	"help"		: _("<p>netmask help</p>"),
+	"init"		: InitNetwork,
+	"store"		: StoreNetwork,
+	"handle"	: HandleNetwork,
+    ],
+    "subnet" : $[
+	"widget"	: `textentry,
+	// textentry label
+	"label"		: _("Subnet"),
+	// help text
+	"help"		: _("<p>subnet help</p>"),
+	"init"		: InitNetwork,
+	"store"		: StoreNetwork,
+	"handle"	: HandleNetwork,
+    ],
+    "add_bridge" : $[
+	"widget"	: `checkbox,
+	// checkbox label
+	"label"		: _("Add Bridge"),
+	// help text
+	"help"		: _("<p>add bridge</p>"),
+	"init"		: InitCheckBox,
+	"store"		: StoreNetwork,
+	"handle"	: HandleNetwork,
+    ],
+];
+
+// description of tab layouts
+map get_tabs_descr () {
+    return $[
+    "admin" : $[
+	// tab header
+	"header"	: _("Administration Settings"),
+	"contents"	: `HBox (`HSpacing(2), `VBox (
+	    `VSpacing (0.4),
+            "administrator",
+	    `VStretch ()
+	), `HSpacing(2)),
+	"widget_names" : [
+            "administrator",
+	],
+    ],
+    "networks"	: $[
+	// tab header
+	"header"	: _("Networks"),
+	"contents"	: `HBox (`HSpacing(2), `VBox (
+	    `VSpacing (0.4),
+            "network_select",
+	    `VSpacing (),
+	    "netmask",
+	    "subnet",
+	    `VSpacing (0.4),
+	    `Left ("add_bridge"),
+	    `VStretch ()
+	), `HSpacing (2)),
+	"widget_names" : [
+            "network_select", "netmask", "subnet", "add_bridge",
+	],
+    ],
+    ];
+}
+
+symbol OverviewDialog() {
+
+    networks    = Crowbar::networks;
+
+    widget_description["tab"] = CWMTab::CreateWidget($[
+	"tab_order"	: [ "admin", "networks" ],
+	"tabs"		: get_tabs_descr (),
+	"widget_descr"	: widget_description,
+	"initial_tab"	: "admin",
+    ]);
+
+    Wizard::SetContentsButtons("", `VBox (), HELPS["overview"]:"",
+        Label::BackButton(), Label::FinishButton());
+
+    symbol ret = CWM::ShowAndRun ($[
+	"widget_names"		: [
+	    "tab"
+	],
+	"widget_descr"		: widget_description,
+	"contents"		: `VBox ("tab"),
+	// default dialog caption
+        "caption"               : _("Crowbar Configuration Overview"),
+	"abort_button"		: nil,
+    ]);
+    y2milestone ("Returning %1", ret);
+    Popup::Message (tostring (ret));
+    if (ret == `next)
+    {
+      Crowbar::networks        = networks;
+    }
+// FIXME validate the numbers
+// FIXME compute Broadcast address
     return ret;
 }
 
