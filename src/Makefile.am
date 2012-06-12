@@ -3,9 +3,7 @@
 yncludedir = @yncludedir@/crawbar
 
 client_DATA =			\
-	crawbar.ycp		\
-	crawbar_auto.ycp	\
-	crawbar_proposal.ycp
+	crawbar.ycp
 
 ynclude_DATA =			\
 	helps.ycp		\
@@ -17,9 +15,7 @@ desktop_DATA =			\
 	crawbar.desktop
 
 module_DATA =			\
-	Crawbar.ycp		\
-	Crawbar2.pm		\
-	Crawbar3.py
+	Crawbar.rb
 
 # create a symlink for local build, #145327
 crawbar:
