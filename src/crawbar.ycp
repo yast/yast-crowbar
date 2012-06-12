@@ -41,7 +41,6 @@ textdomain "crawbar";
 y2milestone ("----------------------------------------");
 y2milestone ("Crawbar module started");
 
-import "Crawbar";
 import "Progress";
 import "Report";
 import "Summary";
@@ -68,8 +67,6 @@ if(size(args) > 0) {
 
 /* main ui function */
 any ret = nil;
-
-y2internal ("parsed: %1", Crawbar::parse ("/tmp/bc-template-network.json"));
 
 if(propose) ret = CrawbarAutoSequence();
 else ret = CommandLine::Run(cmdline_description);
