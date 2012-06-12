@@ -343,7 +343,6 @@ symbol OverviewDialog() {
 	"abort_button"		: nil,
     ]);
     y2milestone ("Returning %1", ret);
-    Popup::Message (tostring (ret));
     if (ret == `next)
     {
       Crowbar::networks        = networks;
