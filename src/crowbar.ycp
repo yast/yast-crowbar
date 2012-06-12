@@ -41,6 +41,7 @@ textdomain "crowbar";
 y2milestone ("----------------------------------------");
 y2milestone ("Crowbar module started");
 
+import "Crowbar";
 import "Progress";
 import "Report";
 import "Summary";
@@ -55,21 +56,21 @@ map cmdline_description = $[
     "guihandler"        : CrowbarSequence,
 ];
 
-/* is this proposal or not? */
-boolean propose = false;
+// is path to data file given?
+boolean custom_path = false;
 list args = WFM::Args();
 if(size(args) > 0) {
-    if(is(WFM::Args(0), path) && WFM::Args(0) == .propose) {
-        y2milestone("Using PROPOSE mode");
-        propose = true;
+    if (is(WFM::Args(0), string))
+    {
+        string arg      = (string)WFM::Args(0);
+        y2milestone ("taking path to config file from command line: %1", arg);
+        Crowbar::file_name    = arg;
+        custom_path           = true;
     }
 }
 
-/* main ui function */
-any ret = nil;
+any ret = custom_path ? CrowbarSequence () : CommandLine::Run(cmdline_description);
 
-if(propose) ret = CrowbarAutoSequence();
-else ret = CommandLine::Run(cmdline_description);
 y2debug("ret=%1", ret);
 
 /* Finish */
