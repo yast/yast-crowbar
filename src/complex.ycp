@@ -34,7 +34,6 @@ textdomain "crowbar";
 import "Label";
 import "Popup";
 import "Wizard";
-import "UIHelper";
 import "Confirm";
 import "Crowbar";
 

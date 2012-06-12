@@ -76,13 +76,6 @@ global boolean Modified() {
     return modified;
 }
 
-/**
- * Mark as modified, for Autoyast.
- */
-global void SetModified(boolean value) {
-      modified = true;
-  }
-
 
 /**
  * Read all crowbar settings

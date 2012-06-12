@@ -8,7 +8,6 @@ client_DATA =			\
 ynclude_DATA =			\
 	helps.ycp		\
 	wizards.ycp		\
-	dialogs.ycp		\
 	complex.ycp
 
 desktop_DATA =			\

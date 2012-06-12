@@ -35,35 +35,6 @@ import "Sequencer";
 import "Wizard";
 
 include "crowbar/complex.ycp";
-include "crowbar/dialogs.ycp";
-
-/**
- * Add a configuration of crowbar
- * @return sequence result
- */
-any AddSequence() {
-
-    /* FIXME: adapt to your needs */
-    map aliases = $[
-	"config1"	: ``(Configure1Dialog()),
-	"config2"	: ``(Configure2Dialog()),
-    ];
-
-    /* FIXME: adapt to your needs */
-    map sequence = $[
-	"ws_start" : "config1",
-	"config1" : $[
-	    `abort	: `abort,
-	    `next	: "config2"
-	],
-	"config2" : $[
-	    `abort	: `abort,
-	    `next	: `next
-	]
-    ];
-
-    return Sequencer::Run(aliases, sequence);
-}
 
 /**
  * Main workflow of the crowbar configuration
@@ -71,30 +42,16 @@ any AddSequence() {
  */
 any MainSequence() {
 
-    /* FIXME: adapt to your needs */
     map aliases = $[
 	"overview"	:   ``( OverviewDialog() ),
-	"add"		: [ ``( AddSequence() ), true ],
-	"edit"		: [ ``( AddSequence() ), true ]
     ];
 
-    /* FIXME: adapt to your needs */
     map sequence = $[
 	"ws_start" : "overview",
 	"overview" : $[
 	    `abort	: `abort,
 	    `next	: `next,
-	    `add	: "add",
-	    `edit	: "edit",
 	],
-	"add" : $[
-	    `abort	: `abort,
-	    `next	: "overview",
-	],
-	"edit" : $[
-	    `abort	: `abort,
-	    `next	: "overview",
-	]
     ];
 
     any ret = Sequencer::Run(aliases, sequence);

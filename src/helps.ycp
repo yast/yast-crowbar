@@ -36,81 +36,23 @@ textdomain "crowbar";
  */
 map HELPS = $[
 
-    /* Read dialog help 1/2 */
-    "read" : _("<p><b><big>Initializing crowbar Configuration</big></b><br>
+    // Read dialog help
+    "read" : _("<p><b><big>Initializing Crowbar Configuration</big></b><br>
 Please wait...<br></p>
-") +
-
-    /* Read dialog help 2/2 */
-    _("<p><b><big>Aborting Initialization:</big></b><br>
-Safely abort the configuration utility by pressing <b>Abort</b> now.</p>
 "),
 
-    /* Write dialog help 1/2 */
-    "write" : _("<p><b><big>Saving crowbar Configuration</big></b><br>
+    // Write dialog help
+    "write" : _("<p><b><big>Saving Crowbar Configuration</big></b><br>
 Please wait...<br></p>
-") +
-
-    /* Write dialog help 2/2 */
-_("<p><b><big>Aborting Saving:</big></b><br>
-Abort the save procedure by pressing <b>Abort</b>.
-An additional dialog informs whether it is safe to do so.
-</p>
 "),
 
-    /* Summary dialog help 1/3 */
-    "summary" : _("<p><b><big>Crowbar Configuration</big></b><br>
-Configure crowbar here.<br></p>
-") +
-
-    /* Summary dialog help 2/3 */
-    _("<p><b><big>Adding a crowbar:</big></b><br>
-Choose an crowbar from the list of detected crowbars.
-If your crowbar was not detected, use <b>Other (not detected)</b>.
-Then press <b>Configure</b>.</p>
-") +
-
-    /* Summary dialog help 3/3 */
-    _("<p><b><big>Editing or Deleting:</big></b><br>
-If you press <b>Edit</b>, an additional dialog in which to change
-the configuration opens.</p>
-"),
-
-    /* Ovreview dialog help 1/3 */
-    "overview" : _("<p><b><big>Crowbar Configuration Overview</big></b><br>
-Obtain an overview of installed crowbars. Additionally
-edit their configurations.<br></p>
-") +
-
-    /* Ovreview dialog help 2/3 */
-_("<p><b><big>Adding a crowbar:</big></b><br>
-Press <b>Add</b> to configure a crowbar.</p>") +
-
-    /* Ovreview dialog help 3/3 */
-_("<p><b><big>Editing or Deleting:</big></b><br>
-Choose a crowbar to change or remove.
-Then press <b>Edit</b> or <b>Delete</b> as desired.</p>
-"),
-
-    /* Configure1 dialog help 1/2 */
-    "c1" : _("<p><b><big>Configuration Part One</big></b><br>
-Press <b>Next</b> to continue.
-<br></p>") +
-
-    /* Configure1 dialog help 2/2 */
-_("<p><b><big>Selecting Something</big></b><br>
-It is not possible. You must code it first. :-)
-</p>"),
-
-    /* Configure2 dialog help 1/2 */
-    "c2" : _("<p><b><big>Configuration Part Two</big></b><br>
-Press <b>Next</b> to continue.
+    // Overview dialog help
+    "overview" : _("<p><b><big>Crowbar Configuration Overview</big></b>
 <br></p>
 ") +
 
-    /* Configure2 dialog help 2/2 */
-_("<p><b><big>Selecting Something</big></b><br>
-It is not possible. You must code it first. :-)
+    // Ovreview dialog help
+_("<p><b><big>FIXME some nice help text here</big></b><br>
 </p>"),
 
 ];
