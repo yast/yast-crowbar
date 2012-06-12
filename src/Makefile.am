@@ -1,9 +1,9 @@
-# Makefile.am for crawbar/src
+# Makefile.am for crowbar/src
 
-yncludedir = @yncludedir@/crawbar
+yncludedir = @yncludedir@/crowbar
 
 client_DATA =			\
-	crawbar.ycp
+	crowbar.ycp
 
 ynclude_DATA =			\
 	helps.ycp		\
@@ -12,15 +12,16 @@ ynclude_DATA =			\
 	complex.ycp
 
 desktop_DATA =			\
-	crawbar.desktop
+	crowbar.desktop
 
 module_DATA =			\
-	Crawbar.rb
+        JSON.rb                 \
+	Crowbar.ycp
 
 # create a symlink for local build, #145327
-crawbar:
+crowbar:
 	ln -sf . $@
-ycpchook = crawbar
+ycpchook = crowbar
 
 EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA)
 
