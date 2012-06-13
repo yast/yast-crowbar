@@ -369,7 +369,6 @@ symbol OverviewDialog() {
       Crowbar::networks = networks;
       Crowbar::users    = users;
     }
-// FIXME validate the numbers
     return ret;
 }
 
