@@ -26,6 +26,7 @@ Summary:	Configuration of crowbar
 %dir @yncludedir@/crowbar
 @yncludedir@/crowbar/*
 @clientdir@/crowbar.ycp
+@clientdir@/inst_crowbar.ycp
 @moduledir@/JSON.rb
 @moduledir@/Crowbar.*
 @desktopdir@/crowbar.desktop
