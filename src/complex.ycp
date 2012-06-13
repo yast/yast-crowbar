@@ -40,23 +40,10 @@ import "Popup";
 import "Wizard";
 import "IP";
 
-
 include "crowbar/helps.ycp";
-
-/**
- * Return a modification status
- * @return true if data was modified
- */
-boolean Modified() {
-    return Crowbar::Modified();
-}
 
 boolean ReallyAbort() {
     return !Crowbar::Modified() || Popup::ReallyAbort(true);
-}
-
-boolean PollAbort() {
-    return UI::PollInput() == `abort;
 }
 
 /**
@@ -80,93 +67,6 @@ symbol WriteDialog() {
     return ret ? `next : `abort;
 }
 
-/**
- * Overview dialog
- * @return dialog result
- *
-any OverviewDialogOld() {
-
-    // Crowbar overview dialog caption
-    string caption = _("Crowbar Configuration Overview");
-
-    list overview = [];
-
-    map<string,map> networks    = Crowbar::networks;
-    y2internal ("networks: %1", networks);
-
-    list<term> network_names  = maplist (string name, map n, networks, {
-      return `item (`id (name), name, name == "admin");
-    });
-
-    term build_ui_for_network (string name) {
-
-      map network       = networks[name]:$[];
-      return `VBox (
-//        `TextEntry (`id ("conduit"), _("Conduit"), network["conduit"]:""),
-        `TextEntry (`id ("subnet"), _("Subnet"), network["subnet"]:""),
-        `TextEntry (`id ("netmask"), _("Netmask"), network["netmask"]:""),
-        `VSpacing (0.5),
-        `Left (`CheckBox (`id ("add_bridge"), _("Add Bridge"), network["add_bridge"]:false))
-      );
-    }
-
-    // take current network data from UI and save it to the global map
-    void store_current_network (string name) {
-      foreach (string key, [ "subnet", "netmask" ], {
-        string value = (string) UI::QueryWidget (`id (key), `Value);
-        networks[name,key]      = value;
-      });
-      networks[name,"add_bridge"] = UI::QueryWidget (`id ("add_bridge"), `Value) == true;
-      return;
-    }
-
-    term contents       = `HBox (`HSpacing (), `VBox (
-      `VSpacing (),
-      `Left (
-        `ComboBox (`id (`networks), `opt (`notify), _("Networks"), network_names)
-      ),
-      `ReplacePoint (`id (`rp_network), build_ui_for_network (current_network)),
-      `VSpacing ()
-    ), `HSpacing ());
-
-    Wizard::SetContentsButtons(caption, contents, HELPS["overview"]:"",
-        Label::BackButton(), Label::FinishButton());
-
-    any ret = nil;
-    while(true) {
-
-	ret = UI::UserInput();
-
-	if (ret == `abort || ret == `cancel) {
-	    if (ReallyAbort()) break;
-	    else continue;
-	}
-        else if (ret == `networks) {
-            string selected     = (string) UI::QueryWidget (`id (`networks), `Value);
-            if (selected != current_network)
-            {
-              store_current_network (current_network);
-              UI::ReplaceWidget (`id (`rp_network), build_ui_for_network (selected));
-              current_network   = selected;
-            }
-        }
-        else if (ret == `next || ret == `back) {
-            break;
-        }
-        else {
-            y2error("unexpected retcode: %1", ret);
-            continue;
-        }
-    }
-
-    if (ret == `next)
-    {
-        store_current_network (current_network);
-        Crowbar::networks        = networks;
-    }
-    return ret;
-}
-*/
 
     map<string,map> networks    = $[];
 
