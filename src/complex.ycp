@@ -130,6 +130,28 @@ Try again."));
       return IP::ComputeBroadcast( GetSubnet(), GetNetmask());
   }
 
+  define string GetValue( string name)
+  {
+      switch( name)
+      {
+           case "subnet": return GetSubnet();
+           case "netmask": return GetNetmask();
+           case "broadcast": return GetBroadcast();
+      }
+      return "";
+  }
+
+  define term CreateItem( string name)
+  {
+      return `item( `id( name), name, networks[ name, "subnet"]:"", networks[ name, "netmask"]:"");
+  }
+
+  define list<term> CreateItemList()
+  {
+      return maplist (string name, map n, networks, {
+          return CreateItem( name);
+      });
+  }
   /**
    * universal widget: initialize the string value of widget @param
    */
@@ -158,7 +180,13 @@ Try again."));
     if( event["EventReason"]:"" == "ValueChanged")
     {
         if( IP::Check( GetSubnet()) && IP::Check( GetNetmask()))
+        {
             UI::ChangeWidget( `id( "broadcast"), `Value, GetBroadcast());
+            StoreNetwork( event[ "ID"]:"", event);
+
+            list<term> items = CreateItemList();
+            UI::ChangeWidget( `id( "network_select"), `Items, items);
+        }
     }
     if (event["ID"]:nil == `next) StoreNetwork (key, event);
     return nil;
@@ -198,16 +226,7 @@ Try again."));
    * initialize the value of combo box
    */
   define void InitNetworkSelect (string id) {
-    list<term> items = maplist (string name, map n, networks, {
-      term it = `item( `id( name));
-
-      it = add( it, name);
-      it = add( it, networks[ name, "subnet"]:"");
-      it = add( it, networks[ name, "netmask"]:"");
-
-      return it;
-    });
-    UI::ChangeWidget (`id ( id), `Items, items);
+    UI::ChangeWidget (`id ( id), `Items, CreateItemList());
   }
   /**
    * handler network selection combo
