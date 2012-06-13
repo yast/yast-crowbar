@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Jun 13 16:55:53 CEST 2012 - mfilka@suse.cz
+
+- changed network list from combo to table
+- 2.17.4
+
+-------------------------------------------------------------------
 Wed Jun 13 13:10:53 CEST 2012 - jsuchome@suse.cz
 
 - save password settings

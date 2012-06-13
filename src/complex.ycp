@@ -197,27 +197,34 @@ Try again."));
   /**
    * initialize the value of combo box
    */
-  define void InitCombo (string id) {
+  define void InitNetworkSelect (string id) {
     list<term> items = maplist (string name, map n, networks, {
-      return `item (`id (name), name, name == "admin");
-    });
-    UI::ChangeWidget (`id (id), `Items, items);
-  }
+      term it = `item( `id( name));
 
+      it = add( it, name);
+      it = add( it, networks[ name, "subnet"]:"");
+      it = add( it, networks[ name, "netmask"]:"");
+
+      return it;
+    });
+    UI::ChangeWidget (`id ( id), `Items, items);
+  }
   /**
    * handler network selection combo
    */
   define symbol HandleNetworkSelect (string key, map event) {
+    y2milestone( "HandleNetworkSelect, event: %1", event);
     // store the value on exiting
     if (event["ID"]:nil == `next) StoreNetwork (key, event);
     string selected = (string) UI::QueryWidget (`id(key), `Value);
+    y2milestone( "HandleNetworkSelect, selected: %1", selected);
     if (selected != current_network)
     {
       foreach (string key, ["netmask", "subnet", "add_bridge"], {
         StoreNetwork (key, $[]);
       });
       current_network   = selected;
-      foreach (string key, ["netmask", "subnet"], {
+      foreach (string key, ["netmask", "subnet", "broadcast"], {
         InitNetwork (key);
       });
       InitCheckBox ("add_bridge");
@@ -248,14 +255,17 @@ map<string, map> widget_description	= $[
     ],
     // ---------------- widgets for Network tab
     "network_select" : $[
-	"widget"	: `combobox,
-	"opt"		: [ `hstretch, `notify ],
-	// checkbox label
-	"label"		: _("Networks"),
-	// help text
-	"help"		: _("FIXME"),
-	"init"		: InitCombo,
-	"handle"	: HandleNetworkSelect,
+        "widget"        : `custom,
+        "custom_widget" : `VBox(
+                            `VWeight( 2,
+                              `Table( `id( "network_select"),
+                                      `opt( `notify, `immediate, `hstretch),
+                                      `header(_("Network"), _("Subnet Address"), _( "Network Mask"))
+                              )
+                            )
+                          ),
+        "init"          : InitNetworkSelect,
+        "handle"        : HandleNetworkSelect,
     ],
     "subnet" : $[
 	"widget"	: `textentry,
@@ -334,8 +344,7 @@ map get_tabs_descr () {
 	    "netmask",
 	    "broadcast",
 	    `VSpacing (0.4),
-	    `Left ("add_bridge"),
-	    `VStretch ()
+	    `Left ("add_bridge")
 	), `HSpacing (2)),
 	"widget_names" : [
             "network_select", "subnet", "netmask", "broadcast", "add_bridge",
