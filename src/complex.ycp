@@ -85,8 +85,24 @@ symbol WriteDialog() {
   }
 
   define symbol HandlePassword (string key, map event) {
-y2internal ( "Handle %1, %2", key, event["EventReason"]:"" );
+    if (event["ID"]:nil == `next) StorePassword (key, event);
     return nil;
+  }
+
+  /**
+   * Validation function for widgets with time values
+   */
+  define boolean ValidatePassword (string key, map event) {
+    if (UI::QueryWidget (`id("password"), `Value) !=
+        UI::QueryWidget (`id("repeat_password"), `Value))
+    {
+      // error popup
+      Popup::Error(_("The passwords do not match.
+Try again."));
+      UI::SetFocus (`id(key));
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -169,6 +185,8 @@ map<string, map> widget_description	= $[
 	"init"		: InitPassword,
 	"store"		: StorePassword,
 	"handle"	: HandlePassword,
+	"validate_type"	: `function,
+	"validate_function"	: ValidatePassword,
     ],
     "repeat_password" : $[
 	"widget"	: `password,
