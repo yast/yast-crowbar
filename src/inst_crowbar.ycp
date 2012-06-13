@@ -22,6 +22,7 @@
  * Package:     Crowbar configuration
  * Summary:     Client for running configuration during installation
  * Authors:     Jiri Suchomel <jsuchome@suse.cz>
+ *              Michal Filka <mfilka@suse.cz>
  *
  *
  * This client should be called during 2nd stage of installation

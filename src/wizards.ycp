@@ -22,7 +22,8 @@
  * File:	include/crowbar/wizards.ycp
  * Package:	Configuration of crowbar
  * Summary:	Wizards definitions
- * Authors:	Jiri Suchomel <jsuchome@suse.cz>
+ * Authors:     Jiri Suchomel <jsuchome@suse.cz>
+ *              Michal Filka <mfilka@suse.cz>
  *
  * $Id: wizards.ycp 65777 2011-09-19 08:06:31Z visnov $
  */

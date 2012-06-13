@@ -22,7 +22,8 @@
  * File:	modules/Crowbar.ycp
  * Package:	Configuration of crowbar
  * Summary:	Crowbar settings, input and output functions
- * Authors:	Jiri Suchomel <jsuchome@suse.cz>
+ * Authors:     Jiri Suchomel <jsuchome@suse.cz>
+ *              Michal Filka <mfilka@suse.cz>
  *
  * $Id: Crowbar.ycp 41350 2007-10-10 16:59:00Z dfiser $
  *

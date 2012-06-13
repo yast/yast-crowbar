@@ -22,7 +22,8 @@
  * File:	include/crowbar/complex.ycp
  * Package:	Configuration of crowbar
  * Summary:	Dialogs definitions
- * Authors:	Jiri Suchomel <jsuchome@suse.cz>
+ * Authors:     Jiri Suchomel <jsuchome@suse.cz>,
+ *              Michal Filka <mfilka@suse.cz>
  *
  * $Id: complex.ycp 65771 2011-09-19 07:37:30Z visnov $
  */

@@ -22,7 +22,8 @@
  * File:	include/crowbar/helps.ycp
  * Package:	Configuration of crowbar
  * Summary:	Help texts of all the dialogs
- * Authors:	Jiri Suchomel <jsuchome@suse.cz>
+ * Authors:     Jiri Suchomel <jsuchome@suse.cz>
+ *              Michal Filka <mfilka@suse.cz>
  *
  * $Id: helps.ycp 27914 2006-02-13 14:32:08Z locilka $
  */
