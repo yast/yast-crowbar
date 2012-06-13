@@ -213,11 +213,9 @@ Try again."));
    * handler network selection combo
    */
   define symbol HandleNetworkSelect (string key, map event) {
-    y2milestone( "HandleNetworkSelect, event: %1", event);
     // store the value on exiting
     if (event["ID"]:nil == `next) StoreNetwork (key, event);
     string selected = (string) UI::QueryWidget (`id(key), `Value);
-    y2milestone( "HandleNetworkSelect, selected: %1", selected);
     if (selected != current_network)
     {
       foreach (string key, ["netmask", "subnet", "add_bridge"], {
