@@ -376,15 +376,15 @@ symbol OverviewDialog() {
 	"contents"		: `VBox ("tab"),
 	// default dialog caption
         "caption"               : _("Crowbar Configuration Overview"),
-	"abort_button"		: nil,
-	"next_button"		: Stage::cont () ? Label::NextButton () : Label::FinishButton (),
+	"abort_button"		: Stage::cont () ? Label::AbortButton () : nil,
+	"next_button"		: Stage::cont () ? Label::NextButton () : Label::OKButton (),
+	"back_button"		: Stage::cont () ? Label::BackButton () : Label::CancelButton (),
     ]);
     if (ret == `next)
     {
       Crowbar::networks = networks;
       Crowbar::users    = users;
     }
-// FIXME validate the numbers
     return ret;
 }
 

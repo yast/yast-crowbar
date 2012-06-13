@@ -3,7 +3,8 @@
 yncludedir = @yncludedir@/crowbar
 
 client_DATA =			\
-	crowbar.ycp
+	crowbar.ycp             \
+        inst_crowbar.ycp
 
 ynclude_DATA =			\
 	helps.ycp		\

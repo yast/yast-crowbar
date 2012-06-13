@@ -4,7 +4,7 @@
 Requires:	yast2 yast2-ruby-bindings rubygem-json
 BuildRequires:	perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-testsuite yast2-ruby-bindings rubygem-json
 
-Requires:       yast2-ruby-bindings >= 0.3.9
+Requires:       yast2-ruby-bindings
 
 BuildArchitectures:	noarch
 
@@ -26,6 +26,7 @@ Summary:	Configuration of crowbar
 %dir @yncludedir@/crowbar
 @yncludedir@/crowbar/*
 @clientdir@/crowbar.ycp
+@clientdir@/inst_crowbar.ycp
 @moduledir@/JSON.rb
 @moduledir@/Crowbar.*
 @desktopdir@/crowbar.desktop
