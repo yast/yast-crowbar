@@ -44,17 +44,29 @@ import "Message";
 /**
  * Path to the file with JSON data
  */
-global string file_name = "/opt/dell/barclamps/dns/chef/data_bags/crowbar/bc-template-network.json";
+global string network_file = "/opt/dell/barclamps/dns/chef/data_bags/crowbar/bc-template-network.json";
+
+global string crowbar_file = "/opt/dell/barclamps/crowbar/chef/data_bags/crowbar/bc-template-crowbar.json";
 
 /**
- * map of configuration data
+ * map of network template configuration data
  */
-global map crowbar      = $[];
+map template_network = $[];
+
+/**
+ * map of crowbar template configuration data
+ */
+map template_crowbar = $[];
 
 /**
  * networks subset of global configuration map
  */
-global map<string,map> networks     = $[];
+global map<string,map> networks = $[];
+
+/**
+ * users subset of global crowbar configuration map
+ */
+global map<string,map> users    = $[];
 
 /**
  * Prototypes
@@ -100,15 +112,24 @@ global boolean Read() {
 	""
     );
 
-    if (!FileUtils::Exists (file_name))
+    if (!FileUtils::Exists (network_file))
     {
-        Report::Error (Message::CannotOpenFile (file_name));
+        Report::Error (Message::CannotOpenFile (network_file));
         return false;
     }
 
-    crowbar     = (map) JSON::read (file_name);
+    if (!FileUtils::Exists (crowbar_file))
+    {
+        Report::Error (Message::CannotOpenFile (crowbar_file));
+        return false;
+    }
 
-    networks    = crowbar["attributes","network","networks"]:$[];
+
+    template_network    = (map) JSON::read (network_file);
+    networks            = template_network["attributes","network","networks"]:$[];
+
+    template_crowbar    = (map) JSON::read (crowbar_file);
+    users               = template_crowbar["attributes","crowbar","users"]:$[];
 
     Progress::NextStage();
 
@@ -141,11 +162,14 @@ global boolean Write() {
     );
 
 
-    crowbar["attributes","network","networks"]  = networks;
+    template_network["attributes","network","networks"]  = networks;
 
     y2internal ("networks to write: %1", networks);
-    y2security ("file %1", file_name);
-    JSON::write (crowbar, file_name);
+    JSON::write (template_network, network_file);
+
+    template_crowbar["attributes","crowbar","users"]    = users;
+    y2internal ("crowbar users to write: %1", users);
+    JSON::write (template_crowbar, crowbar_file);
 
     Progress::NextStage();
 
