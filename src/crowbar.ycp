@@ -64,7 +64,7 @@ if(size(args) > 0) {
     {
         string arg      = (string)WFM::Args(0);
         y2milestone ("taking path to config file from command line: %1", arg);
-        Crowbar::file_name    = arg;
+        Crowbar::network_file    = arg;
         custom_path           = true;
     }
 }

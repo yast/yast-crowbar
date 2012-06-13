@@ -40,23 +40,10 @@ import "Popup";
 import "Wizard";
 import "IP";
 
-
 include "crowbar/helps.ycp";
-
-/**
- * Return a modification status
- * @return true if data was modified
- */
-boolean Modified() {
-    return Crowbar::Modified();
-}
 
 boolean ReallyAbort() {
     return !Crowbar::Modified() || Popup::ReallyAbort(true);
-}
-
-boolean PollAbort() {
-    return UI::PollInput() == `abort;
 }
 
 /**
@@ -80,97 +67,43 @@ symbol WriteDialog() {
     return ret ? `next : `abort;
 }
 
-/**
- * Overview dialog
- * @return dialog result
- *
-any OverviewDialogOld() {
 
-    // Crowbar overview dialog caption
-    string caption = _("Crowbar Configuration Overview");
-
-    list overview = [];
-
-    map<string,map> networks    = Crowbar::networks;
-    y2internal ("networks: %1", networks);
-
-    list<term> network_names  = maplist (string name, map n, networks, {
-      return `item (`id (name), name, name == "admin");
-    });
-
-    term build_ui_for_network (string name) {
-
-      map network       = networks[name]:$[];
-      return `VBox (
-//        `TextEntry (`id ("conduit"), _("Conduit"), network["conduit"]:""),
-        `TextEntry (`id ("subnet"), _("Subnet"), network["subnet"]:""),
-        `TextEntry (`id ("netmask"), _("Netmask"), network["netmask"]:""),
-        `VSpacing (0.5),
-        `Left (`CheckBox (`id ("add_bridge"), _("Add Bridge"), network["add_bridge"]:false))
-      );
-    }
-
-    // take current network data from UI and save it to the global map
-    void store_current_network (string name) {
-      foreach (string key, [ "subnet", "netmask" ], {
-        string value = (string) UI::QueryWidget (`id (key), `Value);
-        networks[name,key]      = value;
-      });
-      networks[name,"add_bridge"] = UI::QueryWidget (`id ("add_bridge"), `Value) == true;
-      return;
-    }
-
-    term contents       = `HBox (`HSpacing (), `VBox (
-      `VSpacing (),
-      `Left (
-        `ComboBox (`id (`networks), `opt (`notify), _("Networks"), network_names)
-      ),
-      `ReplacePoint (`id (`rp_network), build_ui_for_network (current_network)),
-      `VSpacing ()
-    ), `HSpacing ());
-
-    Wizard::SetContentsButtons(caption, contents, HELPS["overview"]:"",
-        Label::BackButton(), Label::FinishButton());
-
-    any ret = nil;
-    while(true) {
-
-	ret = UI::UserInput();
-
-	if (ret == `abort || ret == `cancel) {
-	    if (ReallyAbort()) break;
-	    else continue;
-	}
-        else if (ret == `networks) {
-            string selected     = (string) UI::QueryWidget (`id (`networks), `Value);
-            if (selected != current_network)
-            {
-              store_current_network (current_network);
-              UI::ReplaceWidget (`id (`rp_network), build_ui_for_network (selected));
-              current_network   = selected;
-            }
-        }
-        else if (ret == `next || ret == `back) {
-            break;
-        }
-        else {
-            y2error("unexpected retcode: %1", ret);
-            continue;
-        }
-    }
-
-    if (ret == `next)
-    {
-        store_current_network (current_network);
-        Crowbar::networks        = networks;
-    }
-    return ret;
-}
-*/
-
+    // local copy of network settings
     map<string,map> networks    = $[];
 
+    // local copy of user settings
+    map<string,map> users       = $[];
+
     string current_network      = "admin";
+
+  define void InitPassword (string id) {
+    UI::ChangeWidget (`id (id), `Value, users["crowbar","password"]:"");
+  }
+
+  define void StorePassword (string key, map event) {
+    users["crowbar","password"] = UI::QueryWidget (`id(key), `Value);
+  }
+
+  define symbol HandlePassword (string key, map event) {
+    if (event["ID"]:nil == `next) StorePassword (key, event);
+    return nil;
+  }
+
+  /**
+   * Validation function for widgets with time values
+   */
+  define boolean ValidatePassword (string key, map event) {
+    if (UI::QueryWidget (`id("password"), `Value) !=
+        UI::QueryWidget (`id("repeat_password"), `Value))
+    {
+      // error popup
+      Popup::Error(_("The passwords do not match.
+Try again."));
+      UI::SetFocus (`id(key));
+      return false;
+    }
+    return true;
+  }
 
   define string GetSubnet()
   {
@@ -200,7 +133,6 @@ any OverviewDialogOld() {
    * handler for general string-value widgets: store their value on exit/save
    */
   define symbol HandleNetwork (string key, map event) {
-    y2milestone( "HandleNetwork %1, %2", key, event["EventReason"]:"" );
     // store the value on exiting
     if( event["EventReason"]:"" == "ValueChanged")
     {
@@ -276,12 +208,25 @@ any OverviewDialogOld() {
   }
 
 map<string, map> widget_description	= $[
-    "administrator" : $[
-	"widget"	: `textentry,
+    "password" : $[
+	"widget"	: `password,
+	"opt"		: [ `hstretch ],
 	// textentry label
-	"label"		: _("Administrator"),
+	"label"		: _("Password for Crowbar Administrator"),
 	// help text
 	"help"		: _("<p>adminhelp</p>"),
+	"init"		: InitPassword,
+	"store"		: StorePassword,
+	"handle"	: HandlePassword,
+	"validate_type"	: `function,
+	"validate_function"	: ValidatePassword,
+    ],
+    "repeat_password" : $[
+	"widget"	: `password,
+	"opt"		: [ `hstretch ],
+	// textentry label
+	"label"		: _("Repeat the Password"),
+	"init"		: InitPassword,
     ],
     // ---------------- widgets for Network tab
     "network_select" : $[
@@ -348,19 +293,20 @@ map get_tabs_descr () {
 	// tab header
 	"header"	: _("Administration Settings"),
 	"contents"	: `HBox (`HSpacing(2), `VBox (
-	    `VSpacing (0.4),
-            "administrator",
+	    `VSpacing (),
+            "password",
+            "repeat_password",
 	    `VStretch ()
 	), `HSpacing(2)),
 	"widget_names" : [
-            "administrator",
+            "password", "repeat_password"
 	],
     ],
     "networks"	: $[
 	// tab header
 	"header"	: _("Networks"),
 	"contents"	: `HBox (`HSpacing(2), `VBox (
-	    `VSpacing (0.4),
+	    `VSpacing (),
             "network_select",
 	    `VSpacing (),
 	    "subnet",
@@ -380,6 +326,7 @@ map get_tabs_descr () {
 symbol OverviewDialog() {
 
     networks    = Crowbar::networks;
+    users       = Crowbar::users;
 
     widget_description["tab"] = CWMTab::CreateWidget($[
 	"tab_order"	: [ "admin", "networks" ],
@@ -401,13 +348,12 @@ symbol OverviewDialog() {
         "caption"               : _("Crowbar Configuration Overview"),
 	"abort_button"		: nil,
     ]);
-    y2milestone ("Returning %1", ret);
     if (ret == `next)
     {
-      Crowbar::networks        = networks;
+      Crowbar::networks = networks;
+      Crowbar::users    = users;
     }
 // FIXME validate the numbers
-// FIXME compute Broadcast address
     return ret;
 }
 
