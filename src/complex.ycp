@@ -266,6 +266,7 @@ map<string, map> widget_description	= $[
 	// textentry label
 	"label"		: _("Subnet"),
         "handle_events" : [ "ValueChanged" ],
+        "valid_chars"   : IP::ValidChars4 + IP::ValidChars6,
 	// help text
 	"help"		: _("<p>subnet help</p>"),
 	"init"		: InitNetwork,
@@ -278,6 +279,7 @@ map<string, map> widget_description	= $[
 	// textentry label
 	"label"		: _("Netmask"),
         "handle_events" : [ "ValueChanged" ],
+        "valid_chars"   : IP::ValidChars4 + IP::ValidChars6,
 	// help text
 	"help"		: _("<p>netmask help</p>"),
 	"init"		: InitNetwork,
@@ -288,6 +290,7 @@ map<string, map> widget_description	= $[
     "broadcast" : $[
 	"widget"	: `textentry,
 	"label"		: _("Broadcast"),
+        "valid_chars"   : IP::ValidChars4 + IP::ValidChars6,
 	"help"		: _("<p>broadcast</p>"),
 	"opt"		: [ `disabled ]
     ],
