@@ -38,6 +38,7 @@ import "CWMTab";
 import "Label";
 import "Popup";
 import "Wizard";
+import "IP";
 
 
 include "crowbar/helps.ycp";
@@ -189,7 +190,16 @@ any OverviewDialogOld() {
    * handler for general string-value widgets: store their value on exit/save
    */
   define symbol HandleNetwork (string key, map event) {
+    y2milestone( "HandleNetwork %1, %2", key, event["EventReason"]:"" );
     // store the value on exiting
+    if( event["EventReason"]:"" == "ValueChanged")
+    {
+        string subnet = (string) UI::QueryWidget( `id( "subnet"), `Value);
+        string netmask = (string) UI::QueryWidget( `id( "netmask"), `Value);
+
+        if( IP::Check( subnet) && IP::Check( netmask))
+            UI::ChangeWidget( `id( "broadcast"), `Value, IP::ComputeBroadcast( subnet, netmask));
+    }
     if (event["ID"]:nil == `next) StoreNetwork (key, event);
     return nil;
   }
@@ -251,25 +261,35 @@ map<string, map> widget_description	= $[
 	"init"		: InitCombo,
 	"handle"	: HandleNetworkSelect,
     ],
-    "netmask" : $[
-	"widget"	: `textentry,
-	// textentry label
-	"label"		: _("Netmask"),
-	// help text
-	"help"		: _("<p>netmask help</p>"),
-	"init"		: InitNetwork,
-	"store"		: StoreNetwork,
-	"handle"	: HandleNetwork,
-    ],
     "subnet" : $[
 	"widget"	: `textentry,
 	// textentry label
 	"label"		: _("Subnet"),
+        "handle_events" : [ "ValueChanged" ],
 	// help text
 	"help"		: _("<p>subnet help</p>"),
 	"init"		: InitNetwork,
 	"store"		: StoreNetwork,
 	"handle"	: HandleNetwork,
+        "opt"           : [ `notify ],
+    ],
+    "netmask" : $[
+	"widget"	: `textentry,
+	// textentry label
+	"label"		: _("Netmask"),
+        "handle_events" : [ "ValueChanged" ],
+	// help text
+	"help"		: _("<p>netmask help</p>"),
+	"init"		: InitNetwork,
+	"store"		: StoreNetwork,
+	"handle"	: HandleNetwork,
+        "opt"           : [ `notify ],
+    ],
+    "broadcast" : $[
+	"widget"	: `textentry,
+	"label"		: _("Broadcast"),
+	"help"		: _("<p>broadcast</p>"),
+	"opt"		: [ `disabled ]
     ],
     "add_bridge" : $[
 	"widget"	: `checkbox,
@@ -305,14 +325,15 @@ map get_tabs_descr () {
 	    `VSpacing (0.4),
             "network_select",
 	    `VSpacing (),
-	    "netmask",
 	    "subnet",
+	    "netmask",
+	    "broadcast",
 	    `VSpacing (0.4),
 	    `Left ("add_bridge"),
 	    `VStretch ()
 	), `HSpacing (2)),
 	"widget_names" : [
-            "network_select", "netmask", "subnet", "add_bridge",
+            "network_select", "subnet", "netmask", "broadcast", "add_bridge",
 	],
     ],
     ];

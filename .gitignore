@@ -1,5 +1,6 @@
 Makefile
 Makefile.in
+Makefile.am
 aclocal.m4
 autom4te.cache
 config.cache
@@ -28,3 +29,6 @@ Makefile.am.common
 tmp.*
 *.log
 *.ybc
+*.sw?
+*.bkp
+yast2-crowbar-*/

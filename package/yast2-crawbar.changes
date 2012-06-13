@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed 13 11:30:58 CEST 2012 - mfilka@suse.cz
+
+- counts broadcast addr according given netmask and subnet
+
+-------------------------------------------------------------------
 Tue Jun 12 19:20:58 CEST 2012 - jsuchome@suse.cz
 
 - changed UI to use tabs
