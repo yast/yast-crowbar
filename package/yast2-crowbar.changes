@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Wed Jun 13 17:31:05 CEST 2012 - jsuchome@suse.cz
+
+- changed locations of JSON files
+- 2.17.6 
+
+-------------------------------------------------------------------
+Wed Jun 13 17:10:18 CEST 2012 - jsuchome@suse.cz
+
+- adapted to work on SP2
+- 2.17.5 
+
+-------------------------------------------------------------------
 Wed Jun 13 16:55:53 CEST 2012 - mfilka@suse.cz
 
 - changed network list from combo to table

@@ -22,7 +22,8 @@
  * File:	modules/Crowbar.ycp
  * Package:	Configuration of crowbar
  * Summary:	Crowbar settings, input and output functions
- * Authors:	Jiri Suchomel <jsuchome@suse.cz>
+ * Authors:     Jiri Suchomel <jsuchome@suse.cz>
+ *              Michal Filka <mfilka@suse.cz>
  *
  * $Id: Crowbar.ycp 41350 2007-10-10 16:59:00Z dfiser $
  *
@@ -42,11 +43,10 @@ import "Report";
 import "Message";
 
 /**
- * Path to the file with JSON data
+ * Path to the files with JSON data
  */
-global string network_file = "/opt/dell/barclamps/dns/chef/data_bags/crowbar/bc-template-network.json";
-
-global string crowbar_file = "/opt/dell/barclamps/crowbar/chef/data_bags/crowbar/bc-template-crowbar.json";
+global string network_file = "/opt/dell/chef/data_bags/crowbar/bc-template-network.json";
+global string crowbar_file = "/opt/dell/chef/data_bags/crowbar/bc-template-crowbar.json";
 
 /**
  * map of network template configuration data
