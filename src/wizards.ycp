@@ -89,7 +89,8 @@ any CrowbarSequence() {
 
     Wizard::CreateDialog();
 
-    Wizard::SetDesktopTitleAndIcon("crowbar");
+    Wizard::SetDesktopTitle("crowbar");
+    Wizard::SetDesktopIcon("crowbar");
 
     any ret = Sequencer::Run(aliases, sequence);
 
