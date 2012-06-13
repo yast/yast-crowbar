@@ -68,9 +68,26 @@ symbol WriteDialog() {
 }
 
 
+    // local copy of network settings
     map<string,map> networks    = $[];
 
+    // local copy of user settings
+    map<string,map> users       = $[];
+
     string current_network      = "admin";
+
+  define void InitPassword (string id) {
+    UI::ChangeWidget (`id (id), `Value, users["crowbar","password"]:"");
+  }
+
+  define void StorePassword (string key, map event) {
+    users["crowbar","password"] = UI::QueryWidget (`id(key), `Value);
+  }
+
+  define symbol HandlePassword (string key, map event) {
+y2internal ( "Handle %1, %2", key, event["EventReason"]:"" );
+    return nil;
+  }
 
   /**
    * universal widget: initialize the string value of widget @param
@@ -90,7 +107,6 @@ symbol WriteDialog() {
    * handler for general string-value widgets: store their value on exit/save
    */
   define symbol HandleNetwork (string key, map event) {
-    y2milestone( "HandleNetwork %1, %2", key, event["EventReason"]:"" );
     // store the value on exiting
     if( event["EventReason"]:"" == "ValueChanged")
     {
@@ -143,12 +159,23 @@ symbol WriteDialog() {
   }
 
 map<string, map> widget_description	= $[
-    "administrator" : $[
-	"widget"	: `textentry,
+    "password" : $[
+	"widget"	: `password,
+	"opt"		: [ `hstretch ],
 	// textentry label
-	"label"		: _("Administrator"),
+	"label"		: _("Password for Crowbar Administrator"),
 	// help text
 	"help"		: _("<p>adminhelp</p>"),
+	"init"		: InitPassword,
+	"store"		: StorePassword,
+	"handle"	: HandlePassword,
+    ],
+    "repeat_password" : $[
+	"widget"	: `password,
+	"opt"		: [ `hstretch ],
+	// textentry label
+	"label"		: _("Repeat the Password"),
+	"init"		: InitPassword,
     ],
     // ---------------- widgets for Network tab
     "network_select" : $[
@@ -213,19 +240,20 @@ map get_tabs_descr () {
 	// tab header
 	"header"	: _("Administration Settings"),
 	"contents"	: `HBox (`HSpacing(2), `VBox (
-	    `VSpacing (0.4),
-            "administrator",
+	    `VSpacing (),
+            "password",
+            "repeat_password",
 	    `VStretch ()
 	), `HSpacing(2)),
 	"widget_names" : [
-            "administrator",
+            "password", "repeat_password"
 	],
     ],
     "networks"	: $[
 	// tab header
 	"header"	: _("Networks"),
 	"contents"	: `HBox (`HSpacing(2), `VBox (
-	    `VSpacing (0.4),
+	    `VSpacing (),
             "network_select",
 	    `VSpacing (),
 	    "subnet",
@@ -245,6 +273,7 @@ map get_tabs_descr () {
 symbol OverviewDialog() {
 
     networks    = Crowbar::networks;
+    users       = Crowbar::users;
 
     widget_description["tab"] = CWMTab::CreateWidget($[
 	"tab_order"	: [ "admin", "networks" ],
@@ -266,13 +295,12 @@ symbol OverviewDialog() {
         "caption"               : _("Crowbar Configuration Overview"),
 	"abort_button"		: nil,
     ]);
-    y2milestone ("Returning %1", ret);
     if (ret == `next)
     {
-      Crowbar::networks        = networks;
+      Crowbar::networks = networks;
+      Crowbar::users    = users;
     }
 // FIXME validate the numbers
-// FIXME compute Broadcast address
     return ret;
 }
 
