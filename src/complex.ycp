@@ -172,6 +172,16 @@ any OverviewDialogOld() {
 
     string current_network      = "admin";
 
+  define string GetSubnet()
+  {
+        return (string) UI::QueryWidget( `id( "subnet"), `Value);
+  }
+
+  define string GetNetmask()
+  {
+        return (string) UI::QueryWidget( `id( "netmask"), `Value);
+  }
+
   /**
    * universal widget: initialize the string value of widget @param
    */
@@ -194,14 +204,37 @@ any OverviewDialogOld() {
     // store the value on exiting
     if( event["EventReason"]:"" == "ValueChanged")
     {
-        string subnet = (string) UI::QueryWidget( `id( "subnet"), `Value);
-        string netmask = (string) UI::QueryWidget( `id( "netmask"), `Value);
+        string subnet = GetSubnet();
+        string netmask = GetNetmask();
 
         if( IP::Check( subnet) && IP::Check( netmask))
             UI::ChangeWidget( `id( "broadcast"), `Value, IP::ComputeBroadcast( subnet, netmask));
     }
     if (event["ID"]:nil == `next) StoreNetwork (key, event);
     return nil;
+  }
+
+  define boolean ValidateNetwork( string key, map event)
+  {
+      boolean ret = true;
+      string subnet = GetSubnet();
+      string netmask = GetNetmask();
+
+      ret = IP::Check4( netmask) || IP::Check6( netmask);
+      if( !ret)
+      {
+          Popup::Error( _( "The netmask is invalid."));
+          return false;
+      }
+
+      ret = IP::Check4( subnet) || IP::Check6( subnet);
+      if( !ret)
+      {
+          Popup::Error( _( "The IP address is invalid."));
+          return false;
+      }
+
+      return ret;
   }
 
   /**
@@ -266,6 +299,8 @@ map<string, map> widget_description	= $[
 	// textentry label
 	"label"		: _("Subnet"),
         "handle_events" : [ "ValueChanged" ],
+        "validate_type" : `function,
+        "validate_function": ValidateNetwork,
         "valid_chars"   : IP::ValidChars4 + IP::ValidChars6,
 	// help text
 	"help"		: _("<p>subnet help</p>"),
