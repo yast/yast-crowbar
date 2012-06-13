@@ -37,6 +37,7 @@ import "CWM";
 import "CWMTab";
 import "Label";
 import "Popup";
+import "Stage";
 import "Wizard";
 import "IP";
 
@@ -361,6 +362,7 @@ symbol OverviewDialog() {
 	// default dialog caption
         "caption"               : _("Crowbar Configuration Overview"),
 	"abort_button"		: nil,
+	"next_button"		: Stage::cont () ? Label::NextButton () : Label::FinishButton (),
     ]);
     if (ret == `next)
     {
