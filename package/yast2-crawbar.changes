@@ -3,6 +3,7 @@ Wed 13 11:57:58 CEST 2012 - mfilka@suse.cz
 
 - allow only valid IPv4 or IPv6 chars for netmask and subnet
 - validate netmask and subnet
+- fill in broadcast when switch to network tab
 
 -------------------------------------------------------------------
 Wed 13 11:30:58 CEST 2012 - mfilka@suse.cz
