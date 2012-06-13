@@ -134,6 +134,12 @@ Try again."));
    * universal widget: initialize the string value of widget @param
    */
   define void InitNetwork (string id) {
+    if( id == "broadcast")
+    {
+        UI::ChangeWidget (`id (id), `Value, GetBroadcast());
+        return;
+    }
+
     UI::ChangeWidget (`id (id), `Value, networks[current_network,id]:"");
   }
 
