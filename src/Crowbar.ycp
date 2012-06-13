@@ -165,11 +165,17 @@ global boolean Write() {
     template_network["attributes","network","networks"]  = networks;
 
     y2internal ("networks to write: %1", networks);
-    JSON::write (template_network, network_file);
+    if (JSON::write (template_network, network_file) == nil)
+    {
+      Report::Error (Message::ErrorWritingFile (network_file));
+    }
 
     template_crowbar["attributes","crowbar","users"]    = users;
     y2internal ("crowbar users to write: %1", users);
-    JSON::write (template_crowbar, crowbar_file);
+    if (JSON::write (template_crowbar, crowbar_file) == nil)
+    {
+      Report::Error (Message::ErrorWritingFile (crowbar_file));
+    }
 
     Progress::NextStage();
 

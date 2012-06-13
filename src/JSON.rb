@@ -37,10 +37,15 @@ module JSON
   # write whole json map into new file
   def self.write(json,file_name)
     if json.is_a? Hash
-      File.open(file_name, 'w') do |f|  
-        f.puts JSON.pretty_generate json
+      begin
+        File.open(file_name, 'w') do |f|  
+          f.puts JSON.pretty_generate json
+        end
+      rescue Errno::EACCES => e
+         raise e
       end
     end
+    return true
   end
 
 end
