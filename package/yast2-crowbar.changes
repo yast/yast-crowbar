@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Jun 27 10:46:20 CEST 2012 - jsuchome@suse.cz
+
+- save broadcast values
+- initialize table with current item
+- added option to edit VLAN ID's (bnc#767902)
+- 2.17.7 
+
+-------------------------------------------------------------------
 Wed Jun 13 17:31:05 CEST 2012 - jsuchome@suse.cz
 
 - changed locations of JSON files
