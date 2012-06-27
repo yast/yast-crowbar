@@ -24,14 +24,14 @@ Wed Jun 13 13:10:53 CEST 2012 - jsuchome@suse.cz
 - 2.17.3 
 
 -------------------------------------------------------------------
-Wed 13 11:57:58 CEST 2012 - mfilka@suse.cz
+Wed Jun 13 11:57:58 CEST 2012 - mfilka@suse.cz
 
 - allow only valid IPv4 or IPv6 chars for netmask and subnet
 - validate netmask and subnet
 - fill in broadcast when switch to network tab
 
 -------------------------------------------------------------------
-Wed 13 11:30:58 CEST 2012 - mfilka@suse.cz
+Wed Jun 13 11:30:58 CEST 2012 - mfilka@suse.cz
 
 - counts broadcast addr according given netmask and subnet
 
