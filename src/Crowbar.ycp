@@ -171,7 +171,6 @@ global boolean Write() {
     }
 
     template_crowbar["attributes","crowbar","users"]    = users;
-    y2internal ("crowbar users to write: %1", users);
     if (JSON::write (template_crowbar, crowbar_file) == nil)
     {
       Report::Error (Message::ErrorWritingFile (crowbar_file));
