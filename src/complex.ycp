@@ -167,6 +167,14 @@ Try again."));
   }
 
   /**
+   * universal widget: initialize the integer value of widget @param
+   */
+  define void InitInteger (string id) {
+
+    UI::ChangeWidget (`id (id), `Value, networks[current_network,id]:0);
+  }
+
+  /**
    * store the string value of given widget
    */
   define void StoreNetwork (string key, map event) {
@@ -238,7 +246,7 @@ Try again."));
     string selected = (string) UI::QueryWidget (`id(key), `Value);
     if (selected != current_network)
     {
-      foreach (string key, ["netmask", "subnet", "add_bridge"], {
+      foreach (string key, ["netmask", "subnet", "add_bridge", "vlan"], {
         StoreNetwork (key, $[]);
       });
       current_network   = selected;
@@ -246,6 +254,7 @@ Try again."));
         InitNetwork (key);
       });
       InitCheckBox ("add_bridge");
+      InitInteger ("vlan");
     }
     return nil;
   }
@@ -284,6 +293,17 @@ map<string, map> widget_description	= $[
                           ),
         "init"          : InitNetworkSelect,
         "handle"        : HandleNetworkSelect,
+    ],
+    "vlan" : $[
+	"widget"	: `intfield,
+	// textentry label
+	"label"		: _("VLAN ID"),
+	// help text
+	"help"		: _("<p>vlan help</p>"),
+	"init"		: InitInteger,
+	"store"		: StoreNetwork,
+	"handle"	: HandleNetwork,
+        "opt"           : [ `notify ],
     ],
     "subnet" : $[
 	"widget"	: `textentry,
@@ -358,14 +378,17 @@ map get_tabs_descr () {
 	    `VSpacing (),
             "network_select",
 	    `VSpacing (),
-	    "subnet",
-	    "netmask",
-	    "broadcast",
+            "vlan",
+            `HBox (
+	      "subnet",
+	      "netmask",
+	      "broadcast"
+            ),
 	    `VSpacing (0.4),
 	    `Left ("add_bridge")
 	), `HSpacing (2)),
 	"widget_names" : [
-            "network_select", "subnet", "netmask", "broadcast", "add_bridge",
+            "network_select", "vlan", "subnet", "netmask", "broadcast", "add_bridge",
 	],
     ],
     ];
