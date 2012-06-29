@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Jun 29 14:19:01 CEST 2012 - jsuchome@suse.cz
+
+- added support for IP ranges (bnc#767916)
+- 2.17.8 
+
+-------------------------------------------------------------------
 Wed Jun 27 10:46:20 CEST 2012 - jsuchome@suse.cz
 
 - save broadcast values

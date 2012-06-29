@@ -217,14 +217,16 @@ Try again."));
       ret = ( key != "netmask") || IP::Check4( netmask) || IP::Check6( netmask);
       if( !ret)
       {
-          Popup::Error( _( "The netmask is invalid."));
+          // error popup
+          Popup::Error (sformat (_("The netmask is invalid.\n%1"), IP::Valid4 ()));
           return false;
       }
 
       ret = ( key != "subnet") || IP::Check4( subnet) || IP::Check6( subnet);
       if( !ret)
       {
-          Popup::Error( _( "The IP address is invalid."));
+          // error popup
+          Popup::Error (sformat (_("The IP address is invalid.\n%1"), IP::Valid4 ()));
           return false;
       }
 
@@ -267,9 +269,11 @@ Try again."));
     if (ID != key)
       return nil;
 
+
+    map<string,map> ranges      = networks[current_network,"ranges"]:$[];
     term ranges_term    = `VBox ();
 
-    foreach (string name, map range, (map<string,map>) networks[current_network,"ranges"]:$[], {
+    foreach (string name, map range, ranges, {
 
       term r = `Frame (name, `HBox (
         `InputField (`id (name + "_start"), `opt (`hstretch),
@@ -294,7 +298,7 @@ Try again."));
       `VSpacing (0.5)), `HSpacing (1))
     );
 
-    foreach (string name, map range, (map<string,map>) networks[current_network,"ranges"]:$[], {
+    foreach (string name, map range, ranges, {
       UI::ChangeWidget (`id (name + "_start"),`ValidChars, IP::ValidChars4 + IP::ValidChars6);
       UI::ChangeWidget (`id (name + "_end"),`ValidChars, IP::ValidChars4 + IP::ValidChars6);
     });
@@ -309,10 +313,40 @@ Try again."));
         }
         if (ret == `ok)
         {
-        // FIXME read the numbers
-        // FIXME check the numbers
-        // FIXME save the numbers
-          break;
+          string widget         = "";
+          foreach (string name, map range, ranges, {
+            if (widget != "")
+            {
+              return;
+            }
+            foreach (string part, [ "start", "end" ], {
+              string ip   = (string) UI::QueryWidget (`id (name + "_" + part), `Value);
+              if (!IP::Check (ip))
+              {
+                Popup::Error (IP::Valid4 ());
+                widget  = name + "_" + part;
+              }
+              ranges[name,part] = ip;
+            });
+            if (widget == "" &&
+                IP::ToInteger (ranges[name,"start"]:"") > IP::ToInteger (ranges[name,"end"]:""))
+            {
+              // error message
+              Popup::Message(_("The lowest address must be lower than the highest one."));
+              widget  = name + "_end";
+            }
+          });
+          if (widget == "")
+          {
+            networks[current_network,"ranges"]  = ranges;
+            break;
+          }
+          else
+          {
+            ret = `not_next;
+            UI::SetFocus (`id (widget));
+            continue;
+          }
         }
     }
 
