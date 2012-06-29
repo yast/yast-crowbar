@@ -246,16 +246,77 @@ Try again."));
     string selected = (string) UI::QueryWidget (`id(key), `Value);
     if (selected != current_network)
     {
-      foreach (string key, ["netmask", "subnet", "add_bridge", "vlan", "broadcast"], {
+      foreach (string key, ["netmask", "subnet", "add_bridge", "vlan", "broadcast", "router"], {
         StoreNetwork (key, $[]);
       });
       current_network   = selected;
-      foreach (string key, ["netmask", "subnet", "broadcast"], {
+      foreach (string key, ["netmask", "subnet", "broadcast", "router"], {
         InitNetwork (key);
       });
       InitCheckBox ("add_bridge");
       InitInteger ("vlan");
     }
+    return nil;
+  }
+
+  /**
+   * handler for ranges button
+   */
+  symbol HandleRangesButton (string key, map event) {
+    any ID	= event["ID"]:nil;
+    if (ID != key)
+      return nil;
+
+    term ranges_term    = `VBox ();
+
+    foreach (string name, map range, (map<string,map>) networks[current_network,"ranges"]:$[], {
+
+      term r = `Frame (name, `HBox (
+        `InputField (`id (name + "_start"), `opt (`hstretch),
+          // inputfield label
+          _("Min IP Address"), range["start"]:""),
+        `InputField (`id (name + "_end"), `opt (`hstretch),
+          // inputfield label
+          _("Max IP Address"), range["end"]:"")
+      ));
+      ranges_term       = add (ranges_term, r);
+    });
+
+    UI::OpenDialog (`opt (`decorated), `HBox (`HSpacing (1), `VBox(
+      `VSpacing (0.5),
+      `HSpacing (65),
+      ranges_term,
+      `VSpacing (0.5),
+      `ButtonBox (
+        `PushButton (`id(`ok), Label::OKButton()),
+        `PushButton (`id(`cancel), Label::CancelButton())
+      ),
+      `VSpacing (0.5)), `HSpacing (1))
+    );
+
+    foreach (string name, map range, (map<string,map>) networks[current_network,"ranges"]:$[], {
+      UI::ChangeWidget (`id (name + "_start"),`ValidChars, IP::ValidChars4 + IP::ValidChars6);
+      UI::ChangeWidget (`id (name + "_end"),`ValidChars, IP::ValidChars4 + IP::ValidChars6);
+    });
+
+    symbol ret = `not_next;
+    while (true)
+    {
+	ret     = (symbol) UI::UserInput ();
+        if (ret == `cancel)
+        {
+          break;
+        }
+        if (ret == `ok)
+        {
+        // FIXME read the numbers
+        // FIXME check the numbers
+        // FIXME save the numbers
+          break;
+        }
+    }
+
+    UI::CloseDialog ();
     return nil;
   }
 
@@ -303,6 +364,20 @@ map<string, map> widget_description	= $[
 	"init"		: InitInteger,
 	"store"		: StoreNetwork,
 	"handle"	: HandleNetwork,
+    ],
+    "router" : $[
+	"widget"	: `textentry,
+	// textentry label
+	"label"		: _("Router"),
+        "validate_type" : `function,
+        "validate_function": ValidateNetwork,
+        "valid_chars"   : IP::ValidChars4 + IP::ValidChars6,
+	// help text
+	"help"		: _("<p>router help</p>"),
+	"init"		: InitNetwork,
+	"store"		: StoreNetwork,
+	"handle"	: HandleNetwork,
+        "opt"           : [ `notify ],
     ],
     "subnet" : $[
 	"widget"	: `textentry,
@@ -353,6 +428,13 @@ map<string, map> widget_description	= $[
 	"store"		: StoreNetwork,
 	"handle"	: HandleNetwork,
     ],
+    "ranges_button"	: $[
+	"widget"	: `push_button,
+	// push button label
+	"label"		: _("&Edit Ranges..."),
+	"help"		: _("<p>ranges help</p>"),
+	"handle"	: HandleRangesButton
+    ],
 ];
 
 // description of tab layouts
@@ -377,18 +459,21 @@ map get_tabs_descr () {
 	"contents"	: `HBox (`HSpacing(2), `VBox (
 	    `VSpacing (),
             "network_select",
-	    `VSpacing (),
+	    `Left ("add_bridge"),
+	    `VSpacing (0.4),
             "vlan",
+            "router",
             `HBox (
 	      "subnet",
 	      "netmask",
 	      "broadcast"
             ),
 	    `VSpacing (0.4),
-	    `Left ("add_bridge")
+            `Right ("ranges_button")
 	), `HSpacing (2)),
 	"widget_names" : [
-            "network_select", "vlan", "subnet", "netmask", "broadcast", "add_bridge",
+            "network_select", "vlan", "router", "subnet", "netmask", "broadcast", "add_bridge",
+            "ranges_button"
 	],
     ],
     ];
