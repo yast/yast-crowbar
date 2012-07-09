@@ -186,6 +186,12 @@ Try again."));
    * store the string value of given widget
    */
   define void StoreNetwork (string key, map event) {
+    if (key == "router")
+    {
+      // do not save empty router values to json
+      if (UI::QueryWidget (`id(key), `Value) == "")
+        return;
+    }
     networks[current_network,key]      = UI::QueryWidget (`id(key), `Value);
   }
 
