@@ -131,17 +131,6 @@ Try again."));
       return IP::ComputeBroadcast( GetSubnet(), GetNetmask());
   }
 
-  define string GetValue( string name)
-  {
-      switch( name)
-      {
-           case "subnet": return GetSubnet();
-           case "netmask": return GetNetmask();
-           case "broadcast": return GetBroadcast();
-      }
-      return "";
-  }
-
   define term CreateItem( string name)
   {
       return `item( `id( name), name, networks[ name, "subnet"]:"", networks[ name, "netmask"]:"");
@@ -172,6 +161,10 @@ Try again."));
   define void InitInteger (string id) {
 
     UI::ChangeWidget (`id (id), `Value, networks[current_network,id]:0);
+    if (id == "vlan")
+    {
+        UI::ChangeWidget (`id (id), `Enabled, networks[current_network,"use_vlan"]:false == true);
+    }
   }
 
   /**
@@ -199,10 +192,15 @@ Try again."));
    * handler for general string-value widgets: store their value on exit/save
    */
   define symbol HandleNetwork (string key, map event) {
-    // store the value on exiting
-    if( event["EventReason"]:"" == "ValueChanged")
+
+    if (key == "use_vlan" && event["ID"]:"" == "use_vlan")
     {
-        if( IP::Check( GetSubnet()) && IP::Check( GetNetmask()))
+        UI::ChangeWidget (`id ("vlan"), `Enabled, UI::QueryWidget (`id(key), `Value) == true);
+    }
+    // store the value on exiting
+    if (event["EventReason"]:"" == "ValueChanged")
+    {
+        if (IP::Check( GetSubnet()) && IP::Check( GetNetmask()))
         {
             UI::ChangeWidget( `id( "broadcast"), `Value, GetBroadcast());
             StoreNetwork( event[ "ID"]:"", event);
@@ -235,7 +233,7 @@ Try again."));
           Popup::Error (sformat (_("The IP address is invalid.\n%1"), IP::Valid4 ()));
           return false;
       }
-
+// FIXME check if IP is within the range
       return ret;
   }
 
@@ -254,13 +252,14 @@ Try again."));
     string selected = (string) UI::QueryWidget (`id(key), `Value);
     if (selected != current_network)
     {
-      foreach (string key, ["netmask", "subnet", "add_bridge", "vlan", "broadcast", "router"], {
+      foreach (string key, ["netmask", "subnet", "add_bridge", "use_vlan", "vlan", "broadcast", "router"], {
         StoreNetwork (key, $[]);
       });
       current_network   = selected;
       foreach (string key, ["netmask", "subnet", "broadcast", "router"], {
         InitNetwork (key);
       });
+      InitCheckBox ("use_vlan");
       InitCheckBox ("add_bridge");
       InitInteger ("vlan");
     }
@@ -395,6 +394,17 @@ map<string, map> widget_description	= $[
         "init"          : InitNetworkSelect,
         "handle"        : HandleNetworkSelect,
     ],
+    "use_vlan" : $[
+	"widget"	: `checkbox,
+	// checkbox label
+	"label"		: _("Use VLAN"),
+	// help text
+	"help"		: _("<p>use vlan</p>"),
+	"init"		: InitCheckBox,
+	"store"		: StoreNetwork,
+	"handle"	: HandleNetwork,
+        "opt"           : [ `notify ],
+    ],
     "vlan" : $[
 	"widget"	: `intfield,
 	// textentry label
@@ -404,6 +414,7 @@ map<string, map> widget_description	= $[
 	"init"		: InitInteger,
 	"store"		: StoreNetwork,
 	"handle"	: HandleNetwork,
+	"opt"		: [ `hstretch ],
     ],
     "router" : $[
 	"widget"	: `textentry,
@@ -501,7 +512,14 @@ map get_tabs_descr () {
             "network_select",
 	    `Left ("add_bridge"),
 	    `VSpacing (0.4),
-            "vlan",
+            `HBox (
+              `VBox (
+                "use_vlan",
+                `Label ("")
+              ),
+              `HSpacing (2),
+              "vlan"
+            ),
             "router",
             `HBox (
 	      "subnet",
@@ -513,7 +531,7 @@ map get_tabs_descr () {
 	), `HSpacing (2)),
 	"widget_names" : [
             "network_select", "vlan", "router", "subnet", "netmask", "broadcast", "add_bridge",
-            "ranges_button"
+            "ranges_button", "use_vlan"
 	],
     ],
     ];
