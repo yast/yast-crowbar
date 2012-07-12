@@ -133,7 +133,12 @@ Try again."));
 
   define term CreateItem( string name)
   {
-      return `item( `id( name), name, networks[ name, "subnet"]:"", networks[ name, "netmask"]:"");
+      return `item (`id (name),
+        name,
+        networks[name,"subnet"]:"",
+        networks[name,"netmask"]:"",
+        networks[name,"use_vlan"]:false == true ? UI::Glyph(`CheckMark) : " "
+      );
   }
 
   define list<term> CreateItemList()
@@ -383,14 +388,14 @@ map<string, map> widget_description	= $[
     // ---------------- widgets for Network tab
     "network_select" : $[
         "widget"        : `custom,
-        "custom_widget" : `VBox(
-                            `VWeight( 2,
-                              `Table( `id( "network_select"),
-                                      `opt( `notify, `immediate, `hstretch),
-                                      `header(_("Network"), _("Subnet Address"), _( "Network Mask"))
-                              )
-                            )
-                          ),
+        "custom_widget" :
+          `VBox (
+              `VWeight (2, `Table (`id( "network_select"),
+                  `opt (`notify, `immediate, `hstretch),
+                  // table header
+                  `header (_("Network"), _("Subnet Address"), _("Network Mask"), _("VLAN"))
+              ))
+          ),
         "init"          : InitNetworkSelect,
         "handle"        : HandleNetworkSelect,
     ],
