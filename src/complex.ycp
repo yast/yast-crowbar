@@ -137,7 +137,8 @@ Try again."));
         name,
         networks[name,"subnet"]:"",
         networks[name,"netmask"]:"",
-        networks[name,"use_vlan"]:false == true ? UI::Glyph(`CheckMark) : " "
+        // table entry (VLAN status)
+        networks[name,"use_vlan"]:false ? sformat ("%1", networks[name,"vlan"]:0) : _("disabled")
       );
   }
 
