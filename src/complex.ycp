@@ -195,18 +195,53 @@ Try again."));
   }
 
   /**
+   * Validate entered network values
+   */
+  define boolean ValidateNetwork( string key, map event)
+  {
+      boolean ret = true;
+      string subnet = GetSubnet();
+      string netmask = GetNetmask();
+      string router = (string) UI::QueryWidget (`id ("router"), `Value);
+
+      ret = (key != "netmask") || IP::Check (netmask);
+      if (!ret)
+      {
+          // error popup
+          Popup::Error (sformat (_("The netmask is invalid.\n%1"), IP::Valid4 ()));
+          return false;
+      }
+
+      ret = (key != "subnet") || IP::Check (subnet);
+      if (!ret)
+      {
+          // error popup
+          Popup::Error (sformat (_("The IP address is invalid.\n%1"), IP::Valid4 ()));
+          return false;
+      }
+      ret = (key != "router") || router == "" || subnet == IP::ComputeNetwork (router, netmask);
+      if (!ret)
+      {
+          // error popup
+          Popup::Error (_("The router address is not part of given network."));
+          return false;
+      }
+      return ret;
+  }
+
+  /**
    * handler for general string-value widgets: store their value on exit/save
    */
   define symbol HandleNetwork (string key, map event) {
 
-    if (key == "use_vlan" && event["ID"]:"" == "use_vlan")
+    if (key == "use_vlan" && event["ID"]:nil == "use_vlan")
     {
         UI::ChangeWidget (`id ("vlan"), `Enabled, UI::QueryWidget (`id(key), `Value) == true);
     }
     // store the value on exiting
     if (event["EventReason"]:"" == "ValueChanged")
     {
-        if (IP::Check( GetSubnet()) && IP::Check( GetNetmask()))
+        if (ValidateNetwork (key, $[]))
         {
             UI::ChangeWidget( `id( "broadcast"), `Value, GetBroadcast());
             StoreNetwork( event[ "ID"]:"", event);
@@ -218,30 +253,6 @@ Try again."));
     return nil;
   }
 
-  define boolean ValidateNetwork( string key, map event)
-  {
-      boolean ret = true;
-      string subnet = GetSubnet();
-      string netmask = GetNetmask();
-
-      ret = ( key != "netmask") || IP::Check4( netmask) || IP::Check6( netmask);
-      if( !ret)
-      {
-          // error popup
-          Popup::Error (sformat (_("The netmask is invalid.\n%1"), IP::Valid4 ()));
-          return false;
-      }
-
-      ret = ( key != "subnet") || IP::Check4( subnet) || IP::Check6( subnet);
-      if( !ret)
-      {
-          // error popup
-          Popup::Error (sformat (_("The IP address is invalid.\n%1"), IP::Valid4 ()));
-          return false;
-      }
-// FIXME check if IP is within the range
-      return ret;
-  }
 
   /**
    * universal widget: initialize the string value of widget @param

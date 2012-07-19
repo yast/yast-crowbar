@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Jul 19 09:49:14 CEST 2012 - jsuchome@suse.cz
+
+- validate if router IP is part of the network 
+
+-------------------------------------------------------------------
 Thu Jul 12 16:36:09 CEST 2012 - jsuchome@suse.cz
 
 - display the VLAN ID instead of check mark 
