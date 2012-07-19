@@ -291,7 +291,8 @@ Try again."));
     if (ID != key)
       return nil;
 
-
+    string subnet               = networks[current_network,"subnet"]:"";
+    string netmask              = networks[current_network,"netmask"]:"";
     map<string,map> ranges      = networks[current_network,"ranges"]:$[];
     term ranges_term    = `VBox ();
 
@@ -336,6 +337,7 @@ Try again."));
         if (ret == `ok)
         {
           string widget         = "";
+          list<list> ranges_l   = [];
           foreach (string name, map range, ranges, {
             if (widget != "")
             {
@@ -348,16 +350,51 @@ Try again."));
                 Popup::Error (IP::Valid4 ());
                 widget  = name + "_" + part;
               }
+              else if (IP::ComputeNetwork (ip, netmask) != subnet)
+              {
+                Popup::Error (sformat (_("The address '%1' is not part of network '%2'."),
+                  ip, current_network));
+                widget  = name + "_" + part;
+              }
               ranges[name,part] = ip;
             });
             if (widget == "" &&
                 IP::ToInteger (ranges[name,"start"]:"") > IP::ToInteger (ranges[name,"end"]:""))
             {
               // error message
-              Popup::Message(_("The lowest address must be lower than the highest one."));
+              Popup::Error (_("The lowest address must be lower than the highest one."));
               widget  = name + "_end";
             }
+            else
+            {
+              ranges_l  = add (ranges_l, [
+                IP::ToInteger (ranges[name,"start"]:""),
+                IP::ToInteger (ranges[name,"end"]:""),
+                name
+              ]);
+            }
           });
+          // check if ranges do not overlap
+          if (widget == "" && size (ranges_l) > 1)
+          {
+            ranges_l    = sort (list a, list b, ranges_l, {
+              return (a[0]:0 <= b[0]:0);
+            });
+            integer i   = 0;
+            while (i < size (ranges_l) - 1) {
+              list this = ranges_l[i]:[];
+              list next = ranges_l[i + 1]:[];
+              if (this[1]:0 >= next[0]:0)
+              {
+                // error message
+                Popup::Error (sformat (_("Ranges '%1' and '%2' are overlapping."),
+                  this[2]:"", next[2]:""));
+                widget  = next[2]:"" + "_start";
+              }
+              i = i + 1;
+            }
+          }
+          // finally, save the ranges
           if (widget == "")
           {
             networks[current_network,"ranges"]  = ranges;

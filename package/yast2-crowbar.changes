@@ -1,7 +1,9 @@
 -------------------------------------------------------------------
-Thu Jul 19 09:49:14 CEST 2012 - jsuchome@suse.cz
+Thu Jul 19 14:52:01 CEST 2012 - jsuchome@suse.cz
 
-- validate if router IP is part of the network 
+- validate if router IP is part of the network (bnc#767916)
+- check if ranges are not overlapping and are in current network
+- 2.17.13
 
 -------------------------------------------------------------------
 Thu Jul 12 16:36:09 CEST 2012 - jsuchome@suse.cz
