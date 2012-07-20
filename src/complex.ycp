@@ -208,7 +208,7 @@ Try again."));
       if (!ret)
       {
           // error popup
-          Popup::Error (sformat (_("The netmask is invalid.\n%1"), IP::Valid4 ()));
+          Popup::Error (sformat (_("The netmask '%1' is invalid.\n%2"), netmask, IP::Valid4 ()));
           return false;
       }
 
@@ -216,15 +216,23 @@ Try again."));
       if (!ret)
       {
           // error popup
-          Popup::Error (sformat (_("The IP address is invalid.\n%1"), IP::Valid4 ()));
+          Popup::Error (sformat (_("The IP address '%1' is invalid.\n%2"), subnet, IP::Valid4 ()));
           return false;
       }
-      ret = (key != "router") || router == "" || subnet == IP::ComputeNetwork (router, netmask);
-      if (!ret)
+      if (key == "router" && router != "")
       {
-          // error popup
-          Popup::Error (_("The router address is not part of given network."));
-          return false;
+          if (!IP::Check (router))
+          {
+            // error popup
+            Popup::Error (sformat (_("The router address '%1' is invalid.\n%2"), router, IP::Valid4 ()));
+            return false;
+          }
+          if (subnet != IP::ComputeNetwork (router, netmask))
+          {
+            // error popup
+            Popup::Error (sformat (_("The router address '%1' is not part of network '%2'."), router, current_network));
+            return false;
+          }
       }
       return ret;
   }
@@ -241,7 +249,7 @@ Try again."));
     // store the value on exiting
     if (event["EventReason"]:"" == "ValueChanged")
     {
-        if (ValidateNetwork (key, $[]))
+        if (IP::Check( GetSubnet()) && IP::Check( GetNetmask()))
         {
             UI::ChangeWidget( `id( "broadcast"), `Value, GetBroadcast());
             StoreNetwork( event[ "ID"]:"", event);
@@ -269,6 +277,15 @@ Try again."));
     string selected = (string) UI::QueryWidget (`id(key), `Value);
     if (selected != current_network)
     {
+      boolean validated = true;
+      foreach (string key, ["netmask", "subnet", "router"], {
+        validated       = validated && ValidateNetwork (key, event);
+      });
+      if (!validated)
+      {
+        UI::ChangeWidget (`id(key), `CurrentItem, current_network);
+        return nil;
+      }
       foreach (string key, ["netmask", "subnet", "add_bridge", "use_vlan", "vlan", "broadcast", "router"], {
         StoreNetwork (key, $[]);
       });

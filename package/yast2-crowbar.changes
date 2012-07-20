@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Jul 20 09:53:22 CEST 2012 - jsuchome@suse.cz
+
+- validate router only when table selection changes (bnc#767916)
+- 2.17.14 
+
+-------------------------------------------------------------------
 Thu Jul 19 14:52:01 CEST 2012 - jsuchome@suse.cz
 
 - validate if router IP is part of the network (bnc#767916)
