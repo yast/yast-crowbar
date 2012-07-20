@@ -37,7 +37,7 @@ module "Crowbar";
 textdomain "crowbar";
 
 import "FileUtils";
-import "JSON";
+import "Json";
 import "Progress";
 import "Report";
 import "Message";
@@ -51,12 +51,12 @@ global string crowbar_file = "/opt/dell/chef/data_bags/crowbar/bc-template-crowb
 /**
  * map of network template configuration data
  */
-map template_network = $[];
+map<string,any> template_network = $[];
 
 /**
  * map of crowbar template configuration data
  */
-map template_crowbar = $[];
+map<string,any> template_crowbar = $[];
 
 /**
  * networks subset of global configuration map
@@ -69,14 +69,43 @@ global map<string,map> networks = $[];
 global map<string,map> users    = $[];
 
 /**
- * Prototypes
- */
-global boolean Modified();
-
-/**
  * Data was modified?
  */
 boolean modified = false;
+
+global map<string,any> adapt_map (map<string,any> input_map);
+
+/**
+ * Adapt boolean values so they can be recognized by Perl
+ * BEWARE: this will break any real true/false string values
+ */
+any adapt_value (any value) {
+
+  if (is (value, map))
+  {
+      return adapt_map ((map<string,any>) value);
+  }
+  if (is (value, list))
+  {
+      value = (list<any>) maplist (any item, (list<any>) value, {
+          return adapt_value (item);
+      });
+      return value;
+  }
+  if (is (value, boolean))
+  {
+      return value == true ? "true" : "false";
+  }
+  return value;
+}
+
+global map<string,any> adapt_map (map<string,any> input_map) {
+
+  foreach (string key, any val, input_map, {
+    input_map[key]        = adapt_value (val);
+  });
+  return input_map;
+}
 
 /**
  * Data was modified?
@@ -125,10 +154,10 @@ global boolean Read() {
     }
 
 
-    template_network    = (map) JSON::read (network_file);
+    template_network    = Json::Read (network_file);
     networks            = template_network["attributes","network","networks"]:$[];
 
-    template_crowbar    = (map) JSON::read (crowbar_file);
+    template_crowbar    = Json::Read (crowbar_file);
     users               = template_crowbar["attributes","crowbar","users"]:$[];
 
     Progress::NextStage();
@@ -164,14 +193,13 @@ global boolean Write() {
 
     template_network["attributes","network","networks"]  = networks;
 
-    y2internal ("networks to write: %1", networks);
-    if (JSON::write (template_network, network_file) == nil)
+    if (Json::Write (adapt_map (template_network), network_file) == nil)
     {
       Report::Error (Message::ErrorWritingFile (network_file));
     }
 
     template_crowbar["attributes","crowbar","users"]    = users;
-    if (JSON::write (template_crowbar, crowbar_file) == nil)
+    if (Json::Write (adapt_map (template_crowbar), crowbar_file) == nil)
     {
       Report::Error (Message::ErrorWritingFile (crowbar_file));
     }

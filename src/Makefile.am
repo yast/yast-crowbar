@@ -16,7 +16,8 @@ desktop_DATA =			\
 
 module_DATA =			\
         JSON.rb                 \
-	Crowbar.ycp
+	Crowbar.ycp             \
+        Json.pm
 
 # create a symlink for local build, #145327
 crowbar:

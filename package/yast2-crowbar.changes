@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Jul 20 15:42:39 CEST 2012 - jsuchome@suse.cz
+
+- use perl module instead of ruby one, since yast2-ruby-bindings
+  are not available in proper version (bnc#771920)
+- 2.17.15
+
+-------------------------------------------------------------------
 Fri Jul 20 09:53:22 CEST 2012 - jsuchome@suse.cz
 
 - validate router only when table selection changes (bnc#767916)
