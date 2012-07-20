@@ -30,8 +30,6 @@
 {
   textdomain "crowbar";
 
-  import "Directory";
-  import "FileUtils";
   import "Mode";
   import "Progress";
   import "Stage";
@@ -41,26 +39,7 @@
 
   y2milestone ("Crowbar configuration client (%1, %2)", Mode::mode (), Stage::stage ());
 
-  any ret               = `auto;
-
-  string restart_path	= Directory::vardir + "/restart_yast";
-
-  if (GetInstArgs::going_back())
-  {
-    y2milestone ("going_back -> returning `auto");
-    return ret;
-  }
-
-  // check if YaST was restarted
-  if (FileUtils::Exists (restart_path))
-  {
-    SCR::Execute (.target.remove, restart_path);
-  }
-  else
-  {
-    SCR::Execute (.target.bash, "/bin/touch " + restart_path);
-    return `restart_yast;
-  }
+  any dialog_ret        = `auto;
 
   if (Mode::normal()) Wizard::CreateDialog();
 
