@@ -485,7 +485,7 @@ map<string, map> widget_description	= $[
 	"init"		: InitInteger,
 	"store"		: StoreNetwork,
 	"handle"	: HandleNetwork,
-	"opt"		: [ `hstretch ],
+	"opt"		: [ `notify, `hstretch ],
     ],
     "router" : $[
 	"widget"	: `textentry,

@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jul 30 14:15:44 CEST 2012 - jsuchome@suse.cz
+
+- update VLAN id in the table (bnc#772402)
+- 2.17.16 
+
+-------------------------------------------------------------------
 Fri Jul 20 15:42:39 CEST 2012 - jsuchome@suse.cz
 
 - use perl module instead of ruby one, since yast2-ruby-bindings
