@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Aug  1 09:56:56 CEST 2012 - jsuchome@suse.cz
+
+- enable removing of router value
+- 2.17.17 
+
+-------------------------------------------------------------------
 Mon Jul 30 14:15:44 CEST 2012 - jsuchome@suse.cz
 
 - update VLAN id in the table (bnc#772402)
