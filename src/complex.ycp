@@ -41,6 +41,7 @@ import "Popup";
 import "Stage";
 import "Wizard";
 import "IP";
+import "Netmask";
 
 include "crowbar/helps.ycp";
 
@@ -194,6 +195,11 @@ Try again."));
         }
         return;
     }
+    if( key == "subnet")
+    {
+        networks[ current_network, key] = IP::ComputeNetwork( GetSubnet(), GetNetmask());
+        return;
+    }
     networks[current_network,key]      = UI::QueryWidget (`id(key), `Value);
   }
 
@@ -207,7 +213,7 @@ Try again."));
       string netmask = GetNetmask();
       string router = (string) UI::QueryWidget (`id ("router"), `Value);
 
-      ret = (key != "netmask") || IP::Check (netmask);
+      ret = (key != "netmask") || Netmask::Check(netmask);
       if (!ret)
       {
           // error popup
@@ -255,6 +261,7 @@ Try again."));
         if (IP::Check( GetSubnet()) && IP::Check( GetNetmask()))
         {
             UI::ChangeWidget( `id( "broadcast"), `Value, GetBroadcast());
+//            UI::ChangeWidget( `id( "subnet"), `Value, IP::ComputeNetwork( GetSubnet(), GetNetmask()) );
             StoreNetwork( event[ "ID"]:"", event);
 
             InitNetworkSelect ("network_select");
