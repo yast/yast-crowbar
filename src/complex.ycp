@@ -236,7 +236,7 @@ Try again."));
             Popup::Error (sformat (_("The router address '%1' is invalid.\n%2"), router, IP::Valid4 ()));
             return false;
           }
-          if (subnet != IP::ComputeNetwork (router, netmask))
+          if (IP::ComputeNetwork (subnet,netmask) != IP::ComputeNetwork (router, netmask))
           {
             // error popup
             Popup::Error (sformat (_("The router address '%1' is not part of network '%2'."), router, current_network));
