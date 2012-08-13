@@ -243,6 +243,27 @@ Try again."));
             return false;
           }
       }
+      // check if ranges are still in network
+      if (key == "subnet")
+      {
+          boolean ranges_fine   = true;
+          foreach (string name, map range, networks[current_network,"ranges"]:$[], {
+            foreach (string part, [ "start", "end" ], {
+              string ip   = range[part]:"";
+              if (IP::ComputeNetwork (ip, netmask) != subnet)
+              {
+                ranges_fine    = false;
+              }
+            });
+          });
+          if (!ranges_fine)
+          {
+            // popup message
+            Popup::Warning (sformat (_("Some range addresses are is not part of network '%1'.
+Adapt them using 'Edit ranges' button."), current_network));
+            return false;
+          }
+      }
       return ret;
   }
 
