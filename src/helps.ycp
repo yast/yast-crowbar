@@ -48,12 +48,13 @@ Please wait...<br></p>
 "),
 
     // Overview dialog help
-    "overview" : _("<p><b><big>Crowbar Configuration Overview</big></b>
-<br></p>
-") +
+    "overview" : _("<p><b>Crowbar Configuration Overview</b>
+<br></p>") +
 
     // Ovreview dialog help
-_("<p><b><big>FIXME some nice help text here</big></b><br>
+_("<p>
+See the SUSE Cloud deployment guide for details on the network
+configuration and on using this YaST module.
 </p>"),
 
 ];

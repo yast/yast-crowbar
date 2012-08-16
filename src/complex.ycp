@@ -55,7 +55,7 @@ boolean ReallyAbort() {
  */
 symbol ReadDialog() {
     Wizard::RestoreHelp(HELPS["read"]:"");
-//    if (!Confirm::MustBeRoot()) return `abort;
+    if (!Confirm::MustBeRoot()) return `abort;
     boolean ret = Crowbar::Read();
     return ret ? `next : `abort;
 }
@@ -467,7 +467,7 @@ map<string, map> widget_description	= $[
 	// textentry label
 	"label"		: _("Password for Crowbar Administrator"),
 	// help text
-	"help"		: _("<p>adminhelp</p>"),
+	"help"		: _("<p>Enter the password for Crowbar administrator.</p>"),
 	"init"		: InitPassword,
 	"store"		: StorePassword,
 	"handle"	: HandlePassword,
@@ -482,6 +482,12 @@ map<string, map> widget_description	= $[
 	"init"		: InitPassword,
     ],
     // ---------------- widgets for Network tab
+
+    "network_help"      : $[
+        "widget"        : `empty,
+        // generic help for Network tab
+        "help"          : HELPS["overview"]:"",
+    ],
     "network_select" : $[
         "widget"        : `custom,
         "custom_widget" :
@@ -499,8 +505,7 @@ map<string, map> widget_description	= $[
 	"widget"	: `checkbox,
 	// checkbox label
 	"label"		: _("Use VLAN"),
-	// help text
-	"help"		: _("<p>use vlan</p>"),
+        "no_help"       : true,
 	"init"		: InitCheckBox,
 	"store"		: StoreNetwork,
 	"handle"	: HandleNetwork,
@@ -510,8 +515,7 @@ map<string, map> widget_description	= $[
 	"widget"	: `intfield,
 	// textentry label
 	"label"		: _("VLAN ID"),
-	// help text
-	"help"		: _("<p>vlan help</p>"),
+        "no_help"       : true,
 	"init"		: InitInteger,
 	"store"		: StoreNetwork,
 	"handle"	: HandleNetwork,
@@ -524,8 +528,7 @@ map<string, map> widget_description	= $[
         "validate_type" : `function,
         "validate_function": ValidateNetwork,
         "valid_chars"   : IP::ValidChars4 + IP::ValidChars6,
-	// help text
-	"help"		: _("<p>router help</p>"),
+        "no_help"       : true,
 	"init"		: InitNetwork,
 	"store"		: StoreNetwork,
 	"handle"	: HandleNetwork,
@@ -539,8 +542,7 @@ map<string, map> widget_description	= $[
         "validate_type" : `function,
         "validate_function": ValidateNetwork,
         "valid_chars"   : IP::ValidChars4 + IP::ValidChars6,
-	// help text
-	"help"		: _("<p>subnet help</p>"),
+        "no_help"       : true,
 	"init"		: InitNetwork,
 	"store"		: StoreNetwork,
 	"handle"	: HandleNetwork,
@@ -554,8 +556,7 @@ map<string, map> widget_description	= $[
         "validate_type" : `function,
         "validate_function": ValidateNetwork,
         "valid_chars"   : IP::ValidChars4 + IP::ValidChars6,
-	// help text
-	"help"		: _("<p>netmask help</p>"),
+        "no_help"       : true,
 	"init"		: InitNetwork,
 	"store"		: StoreNetwork,
 	"handle"	: HandleNetwork,
@@ -565,7 +566,7 @@ map<string, map> widget_description	= $[
 	"widget"	: `textentry,
 	"label"		: _("Broadcast"),
         "valid_chars"   : IP::ValidChars4 + IP::ValidChars6,
-	"help"		: _("<p>broadcast</p>"),
+        "no_help"       : true,
 	"init"		: InitNetwork,
 	"store"		: StoreNetwork,
 	"opt"		: [ `disabled ]
@@ -574,8 +575,7 @@ map<string, map> widget_description	= $[
 	"widget"	: `checkbox,
 	// checkbox label
 	"label"		: _("Add Bridge"),
-	// help text
-	"help"		: _("<p>add bridge</p>"),
+        "no_help"       : true,
 	"init"		: InitCheckBox,
 	"store"		: StoreNetwork,
 	"handle"	: HandleNetwork,
@@ -584,7 +584,7 @@ map<string, map> widget_description	= $[
 	"widget"	: `push_button,
 	// push button label
 	"label"		: _("&Edit Ranges..."),
-	"help"		: _("<p>ranges help</p>"),
+        "no_help"       : true,
 	"handle"	: HandleRangesButton
     ],
 ];
@@ -609,6 +609,7 @@ map get_tabs_descr () {
 	// tab header
 	"header"	: _("Networks"),
 	"contents"	: `HBox (`HSpacing(2), `VBox (
+            "network_help",
 	    `VSpacing (),
             "network_select",
 	    `Left ("add_bridge"),
@@ -632,7 +633,7 @@ map get_tabs_descr () {
 	), `HSpacing (2)),
 	"widget_names" : [
             "network_select", "vlan", "router", "subnet", "netmask", "broadcast", "add_bridge",
-            "ranges_button", "use_vlan"
+            "ranges_button", "use_vlan", "network_help",
 	],
     ],
     ];
@@ -650,7 +651,7 @@ symbol OverviewDialog() {
 	"initial_tab"	: "admin",
     ]);
 
-    Wizard::SetContentsButtons("", `VBox (), HELPS["overview"]:"",
+    Wizard::SetContentsButtons("", `VBox (), "",
         Label::BackButton(), Label::FinishButton());
 
     symbol ret = CWM::ShowAndRun ($[
