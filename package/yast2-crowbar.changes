@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Aug 21 09:16:50 CEST 2012 - jsuchome@suse.cz
+
+- do not allow password editing and saving when crowbar was already
+  installed 
+- 2.17.22
+
+-------------------------------------------------------------------
 Thu Aug 16 14:46:47 CEST 2012 - jsuchome@suse.cz
 
 - added basic help text (bnc#773051)

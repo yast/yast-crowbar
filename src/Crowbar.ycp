@@ -47,6 +47,7 @@ import "Message";
  */
 global string network_file = "/opt/dell/chef/data_bags/crowbar/bc-template-network.json";
 global string crowbar_file = "/opt/dell/chef/data_bags/crowbar/bc-template-crowbar.json";
+global string installed_file    = "/opt/dell/crowbar_framework/.crowbar-installed-ok";
 
 /**
  * map of network template configuration data
@@ -198,10 +199,14 @@ global boolean Write() {
       Report::Error (Message::ErrorWritingFile (network_file));
     }
 
-    template_crowbar["attributes","crowbar","users"]    = users;
-    if (Json::Write (adapt_map (template_crowbar), crowbar_file) == nil)
+    // do not allow password editing/saving when crowbar was already installed
+    if (!FileUtils::Exists (installed_file))
     {
-      Report::Error (Message::ErrorWritingFile (crowbar_file));
+      template_crowbar["attributes","crowbar","users"]    = users;
+      if (Json::Write (adapt_map (template_crowbar), crowbar_file) == nil)
+      {
+        Report::Error (Message::ErrorWritingFile (crowbar_file));
+      }
     }
 
     Progress::NextStage();

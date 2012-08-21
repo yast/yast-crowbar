@@ -36,6 +36,7 @@ import "Confirm";
 import "Crowbar";
 import "CWM";
 import "CWMTab";
+import "FileUtils";
 import "Label";
 import "Popup";
 import "Stage";
@@ -81,6 +82,7 @@ symbol WriteDialog() {
 
   define void InitPassword (string id) {
     UI::ChangeWidget (`id (id), `Value, users["crowbar","password"]:"");
+    UI::ChangeWidget (`id (id), `Enabled, !FileUtils::Exists (Crowbar::installed_file));
   }
 
   define void StorePassword (string key, map event) {
@@ -648,7 +650,7 @@ symbol OverviewDialog() {
 	"tab_order"	: [ "admin", "networks" ],
 	"tabs"		: get_tabs_descr (),
 	"widget_descr"	: widget_description,
-	"initial_tab"	: "admin",
+	"initial_tab"	: FileUtils::Exists (Crowbar::installed_file) ? "networks" : "admin",
     ]);
 
     Wizard::SetContentsButtons("", `VBox (), "",
