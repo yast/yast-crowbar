@@ -72,19 +72,19 @@ symbol WriteDialog() {
 }
 
 
-    // local copy of network settings
-    map<string,map> networks    = $[];
+  // local copy of network settings
+  map<string,map> networks    = $[];
 
-    // local copy of user settings
-    map<string,map> users       = $[];
+  // local copy of user settings
+  map<string,map> users       = $[];
 
-    // local copy of teaming options
-    map<string,integer> teaming      = $[];
+  // local copy of teaming options
+  map<string,integer> teaming      = $[];
 
-    // local copy of mode
-    string mode      = "single";
+  // local copy of mode
+  string mode      = "single";
 
-    string current_network      = "admin";
+  string current_network      = "admin";
 
   // functions for handling password widget
   define void InitPassword (string id) {
