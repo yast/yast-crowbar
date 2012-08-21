@@ -65,6 +65,16 @@ map<string,any> template_crowbar = $[];
 global map<string,map> networks = $[];
 
 /**
+ * network teaming subset of global configuration map
+ */
+global map<string,integer> teaming      = $[];
+
+/**
+ * network mode; valid values are: single | dual | team
+ */
+global string mode      = "single";
+
+/**
  * users subset of global crowbar configuration map
  */
 global map<string,map> users    = $[];
@@ -157,6 +167,8 @@ global boolean Read() {
 
     template_network    = Json::Read (network_file);
     networks            = template_network["attributes","network","networks"]:$[];
+    teaming             = template_network["attributes","network","teaming"]:$[];
+    mode                = template_network["attributes","network","mode"]:"";
 
     template_crowbar    = Json::Read (crowbar_file);
     users               = template_crowbar["attributes","crowbar","users"]:$[];
@@ -192,7 +204,9 @@ global boolean Write() {
     );
 
 
-    template_network["attributes","network","networks"]  = networks;
+    template_network["attributes","network","networks"] = networks;
+    template_network["attributes","network","teaming"]  = teaming;
+    template_network["attributes","network","mode"]     = mode;
 
     if (Json::Write (adapt_map (template_network), network_file) == nil)
     {

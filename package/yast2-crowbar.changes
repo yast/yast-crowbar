@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Aug 21 10:42:16 CEST 2012 - jsuchome@suse.cz
+
+- added options to edit network mode
+- 2.17.23 
+
+-------------------------------------------------------------------
 Tue Aug 21 09:16:50 CEST 2012 - jsuchome@suse.cz
 
 - do not allow password editing and saving when crowbar was already

@@ -78,8 +78,15 @@ symbol WriteDialog() {
     // local copy of user settings
     map<string,map> users       = $[];
 
+    // local copy of teaming options
+    map<string,integer> teaming      = $[];
+
+    // local copy of mode
+    string mode      = "single";
+
     string current_network      = "admin";
 
+  // functions for handling password widget
   define void InitPassword (string id) {
     UI::ChangeWidget (`id (id), `Value, users["crowbar","password"]:"");
     UI::ChangeWidget (`id (id), `Enabled, !FileUtils::Exists (Crowbar::installed_file));
@@ -93,6 +100,50 @@ symbol WriteDialog() {
     if (event["ID"]:nil == `next) StorePassword (key, event);
     return nil;
   }
+
+  // functions for handling network mode widget
+  define void InitMode (string id) {
+    list items	=  [
+	`item (`id ("single"), "single", "single" == mode),
+	`item (`id ("dual"), "dual", "dual" == mode),
+	`item (`id ("team"), "team", "team" == mode),
+    ];
+    UI::ChangeWidget (`id (id), `Items, items);
+  }
+
+  define void StoreMode (string key, map event) {
+    mode        = (string) UI::QueryWidget (`id(key), `Value);
+  }
+
+  define symbol HandleMode (string key, map event) {
+    StoreMode (key, event);
+    UI::ChangeWidget (`id ("teaming"), `Enabled, mode == "team");
+    return nil;
+  }
+
+  // functions for handling network teaming widget
+  define void InitTeaming (string id) {
+    integer value       = teaming["mode"]:0;
+    list items          = [];
+    integer i           = 1;
+    while (i < 7)
+    {
+      items     = add (items, `item (`id (i), tostring (i), i == value));
+      i         = i + 1;
+    }
+    UI::ChangeWidget (`id (id), `Items, items);
+    UI::ChangeWidget (`id (id), `Enabled, mode == "team");
+  }
+
+  define void StoreTeaming (string key, map event) {
+    teaming["mode"]     = (integer) UI::QueryWidget (`id(key), `Value);
+  }
+
+  define symbol HandleTeaming (string key, map event) {
+    if (event["ID"]:nil == `next) StoreTeaming (key, event);
+    return nil;
+  }
+
 
   /**
    * Validation function for widgets with time values
@@ -483,6 +534,25 @@ map<string, map> widget_description	= $[
 	"label"		: _("Repeat the Password"),
 	"init"		: InitPassword,
     ],
+    "mode" : $[
+	"widget"	: `combobox,
+	"opt"		: [ `hstretch, `notify ],
+	// textentry label
+	"label"		: _("Mode"),
+        "no_help"       : true,
+	"init"		: InitMode,
+	"store"		: StoreMode,
+	"handle"	: HandleMode,
+    ],
+    "teaming" : $[
+	"widget"	: `combobox,
+	// textentry label
+	"label"		: _("Bonding Policy"),
+        "no_help"       : true,
+	"init"		: InitTeaming,
+	"store"		: StoreTeaming,
+	"handle"	: HandleTeaming,
+    ],
     // ---------------- widgets for Network tab
 
     "network_help"      : $[
@@ -607,6 +677,21 @@ map get_tabs_descr () {
             "password", "repeat_password"
 	],
     ],
+    "network_mode"      : $[
+	// tab header
+	"header"	: _("Network Mode"),
+	"contents"	: `HBox (`HSpacing(2), `VBox (
+	    `VSpacing (),
+            `HBox (
+              "mode",
+              "teaming"
+            ),
+	    `VStretch ()
+	), `HSpacing(2)),
+	"widget_names" : [
+            "mode", "teaming"
+	],
+    ],
     "networks"	: $[
 	// tab header
 	"header"	: _("Networks"),
@@ -644,10 +729,12 @@ map get_tabs_descr () {
 symbol OverviewDialog() {
 
     networks    = Crowbar::networks;
+    mode        = Crowbar::mode;
+    teaming     = Crowbar::teaming;
     users       = Crowbar::users;
 
     widget_description["tab"] = CWMTab::CreateWidget($[
-	"tab_order"	: [ "admin", "networks" ],
+	"tab_order"	: [ "admin", "networks", "network_mode" ],
 	"tabs"		: get_tabs_descr (),
 	"widget_descr"	: widget_description,
 	"initial_tab"	: FileUtils::Exists (Crowbar::installed_file) ? "networks" : "admin",
@@ -672,6 +759,8 @@ symbol OverviewDialog() {
     {
       Crowbar::networks = networks;
       Crowbar::users    = users;
+      Crowbar::teaming  = teaming;
+      Crowbar::mode     = mode;
     }
     return ret;
 }
