@@ -89,7 +89,6 @@ symbol WriteDialog() {
   // functions for handling password widget
   define void InitPassword (string id) {
     UI::ChangeWidget (`id (id), `Value, users["crowbar","password"]:"");
-    UI::ChangeWidget (`id (id), `Enabled, !FileUtils::Exists (Crowbar::installed_file));
   }
 
   define void StorePassword (string key, map event) {
@@ -737,7 +736,7 @@ symbol OverviewDialog() {
 	"tab_order"	: [ "admin", "networks", "network_mode" ],
 	"tabs"		: get_tabs_descr (),
 	"widget_descr"	: widget_description,
-	"initial_tab"	: FileUtils::Exists (Crowbar::installed_file) ? "networks" : "admin",
+	"initial_tab"	: "admin",
     ]);
 
     Wizard::SetContentsButtons("", `VBox (), "",

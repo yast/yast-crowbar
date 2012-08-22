@@ -1,14 +1,20 @@
 -------------------------------------------------------------------
+Wed Aug 22 10:57:08 CEST 2012 - jsuchome@suse.cz
+
+- do not allow any changes when crowbar is installed (bnc#776837)
+- 2.17.24 
+
+-------------------------------------------------------------------
 Tue Aug 21 10:42:16 CEST 2012 - jsuchome@suse.cz
 
-- added options to edit network mode
+- added options to edit network mode (bnc#776693)
 - 2.17.23 
 
 -------------------------------------------------------------------
 Tue Aug 21 09:16:50 CEST 2012 - jsuchome@suse.cz
 
 - do not allow password editing and saving when crowbar was already
-  installed 
+  installed (bnc#776692)
 - 2.17.22
 
 -------------------------------------------------------------------

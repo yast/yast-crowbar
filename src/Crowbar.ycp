@@ -37,6 +37,7 @@ module "Crowbar";
 textdomain "crowbar";
 
 import "FileUtils";
+import "Hostname";
 import "Json";
 import "Progress";
 import "Report";
@@ -152,6 +153,16 @@ global boolean Read() {
 	""
     );
 
+    if (FileUtils::Exists (installed_file))
+    {
+        // popup message %1 is FQDN
+        Report::Message (sformat (_("The SUSE Cloud Admin Server has been deployed. Changing the network is
+currently not supported.
+
+You can visit the Crowbar web UI on http://%1:3000/"), Hostname::CurrentFQ ()));
+        return false;
+    }
+
     if (!FileUtils::Exists (network_file))
     {
         Report::Error (Message::CannotOpenFile (network_file));
@@ -213,14 +224,10 @@ global boolean Write() {
       Report::Error (Message::ErrorWritingFile (network_file));
     }
 
-    // do not allow password editing/saving when crowbar was already installed
-    if (!FileUtils::Exists (installed_file))
+    template_crowbar["attributes","crowbar","users"]    = users;
+    if (Json::Write (adapt_map (template_crowbar), crowbar_file) == nil)
     {
-      template_crowbar["attributes","crowbar","users"]    = users;
-      if (Json::Write (adapt_map (template_crowbar), crowbar_file) == nil)
-      {
-        Report::Error (Message::ErrorWritingFile (crowbar_file));
-      }
+      Report::Error (Message::ErrorWritingFile (crowbar_file));
     }
 
     Progress::NextStage();
