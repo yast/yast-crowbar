@@ -37,6 +37,7 @@ import "Crowbar";
 import "CWM";
 import "CWMTab";
 import "FileUtils";
+import "Hostname";
 import "Label";
 import "Popup";
 import "Stage";
@@ -89,6 +90,7 @@ symbol WriteDialog() {
   // functions for handling password widget
   define void InitPassword (string id) {
     UI::ChangeWidget (`id (id), `Value, users["crowbar","password"]:"");
+    UI::ChangeWidget (`id (id), `Enabled, !Crowbar::installed);
   }
 
   define void StorePassword (string key, map event) {
@@ -108,6 +110,7 @@ symbol WriteDialog() {
 	`item (`id ("team"), "team", "team" == mode),
     ];
     UI::ChangeWidget (`id (id), `Items, items);
+    UI::ChangeWidget (`id (id), `Enabled, !Crowbar::installed);
   }
 
   define void StoreMode (string key, map event) {
@@ -132,6 +135,7 @@ symbol WriteDialog() {
     }
     UI::ChangeWidget (`id (id), `Items, items);
     UI::ChangeWidget (`id (id), `Enabled, mode == "team");
+    UI::ChangeWidget (`id (id), `Enabled, !Crowbar::installed);
   }
 
   define void StoreTeaming (string key, map event) {
@@ -205,6 +209,7 @@ Try again."));
    * universal widget: initialize the string value of widget @param
    */
   define void InitNetwork (string id) {
+    UI::ChangeWidget (`id (id), `Enabled, !Crowbar::installed);
     if( id == "broadcast")
     {
         UI::ChangeWidget (`id (id), `Value, GetBroadcast());
@@ -224,6 +229,7 @@ Try again."));
     {
         UI::ChangeWidget (`id (id), `Enabled, networks[current_network,"use_vlan"]:false == true);
     }
+    UI::ChangeWidget (`id (id), `Enabled, !Crowbar::installed);
   }
 
   /**
@@ -232,6 +238,7 @@ Try again."));
   define void InitNetworkSelect (string id) {
     UI::ChangeWidget (`id ( id), `Items, CreateItemList());
     UI::ChangeWidget (`id(id), `CurrentItem, current_network);
+    UI::ChangeWidget (`id (id), `Enabled, !Crowbar::installed);
   }
 
   /**
@@ -349,6 +356,7 @@ Adapt them using 'Edit ranges' button."), current_network));
    */
   define void InitCheckBox (string id) {
     UI::ChangeWidget (`id (id), `Value, networks[current_network,id]:false);
+    UI::ChangeWidget (`id (id), `Enabled, !Crowbar::installed);
   }
 
   /**
@@ -423,7 +431,11 @@ Adapt them using 'Edit ranges' button."), current_network));
     foreach (string name, map range, ranges, {
       UI::ChangeWidget (`id (name + "_start"),`ValidChars, IP::ValidChars4 + IP::ValidChars6);
       UI::ChangeWidget (`id (name + "_end"),`ValidChars, IP::ValidChars4 + IP::ValidChars6);
+      UI::ChangeWidget (`id (name + "_start"), `Enabled, !Crowbar::installed);
+      UI::ChangeWidget (`id (name + "_end"), `Enabled, !Crowbar::installed);
     });
+
+    UI::ChangeWidget (`id (`ok), `Enabled, !Crowbar::installed);
 
     symbol ret = `not_next;
     while (true)
@@ -742,6 +754,16 @@ symbol OverviewDialog() {
     Wizard::SetContentsButtons("", `VBox (), "",
         Label::BackButton(), Label::FinishButton());
 
+    if (Crowbar::installed)
+    {
+        // popup message %1 is FQDN
+        Popup::Message (sformat (_("The SUSE Cloud Admin Server has been deployed. Changing the network is
+currently not supported.
+
+You can visit the Crowbar web UI on http://%1:3000/"), Hostname::CurrentFQ ()));
+    }
+
+
     symbol ret = CWM::ShowAndRun ($[
 	"widget_names"		: [
 	    "tab"
@@ -754,6 +776,11 @@ symbol OverviewDialog() {
 	"next_button"		: Stage::cont () ? Label::NextButton () : Label::OKButton (),
 	"back_button"		: Stage::cont () ? Label::BackButton () : Label::CancelButton (),
     ]);
+    if (Crowbar::installed)
+    {
+      // not saving
+      return `back;
+    }
     if (ret == `next)
     {
       Crowbar::networks = networks;
