@@ -127,7 +127,7 @@ symbol WriteDialog() {
   define void InitTeaming (string id) {
     integer value       = teaming["mode"]:0;
     list items          = [];
-    integer i           = 1;
+    integer i           = 0;
     while (i < 7)
     {
       items     = add (items, `item (`id (i), tostring (i), i == value));

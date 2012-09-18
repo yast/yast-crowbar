@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Sep 17 14:47:56 CEST 2012 - jsuchome@suse.cz
+
+- added 0 as available Bonding Policy (bnc#780412)
+- 2.17.26 
+
+-------------------------------------------------------------------
 Wed Aug 22 14:05:16 CEST 2012 - jsuchome@suse.cz
 
 - show existing configuration if changes are not allowed
