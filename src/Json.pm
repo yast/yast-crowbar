@@ -100,9 +100,14 @@ sub Read {
     my $file_content = <FILE>;
     close FILE;
 
-    my $result = decode_json ($file_content);
-
-    return adapt_hash4ycp ($result);
+    if ($file_content) {
+      my $result = decode_json ($file_content);
+      
+      return adapt_hash4ycp ($result);
+    }
+    else {
+      return {};
+    }
 }
 
 # write the file contents;  1st argument data hash, 2nd is file path

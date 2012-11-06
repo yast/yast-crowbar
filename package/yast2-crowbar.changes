@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Nov  6 11:08:55 CET 2012 - jsuchome@suse.cz
+
+- enable viewing table items even when changes are not allowd
+  (bnc#787533)
+- check for broken JSON file
+- 2.17.27 
+
+-------------------------------------------------------------------
 Mon Sep 17 14:47:56 CEST 2012 - jsuchome@suse.cz
 
 - added 0 as available Bonding Policy (bnc#780412)

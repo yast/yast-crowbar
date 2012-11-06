@@ -238,13 +238,16 @@ Try again."));
   define void InitNetworkSelect (string id) {
     UI::ChangeWidget (`id ( id), `Items, CreateItemList());
     UI::ChangeWidget (`id(id), `CurrentItem, current_network);
-    UI::ChangeWidget (`id (id), `Enabled, !Crowbar::installed);
   }
 
   /**
    * store the string value of given widget
    */
   define void StoreNetwork (string key, map event) {
+    if (size (networks) == 0)
+    {
+        return;
+    }
     if (key == "router" && UI::QueryWidget (`id(key), `Value) == "")
     {
         if (haskey (networks[current_network]:$[], key))
@@ -268,6 +271,11 @@ Try again."));
   define boolean ValidateNetwork( string key, map event)
   {
       boolean ret = true;
+
+      if (event["WidgetID"]:`none == `back || size (networks) == 0)
+      {
+        return true;
+      }
       string subnet = GetSubnet();
       string netmask = GetNetmask();
       string router = (string) UI::QueryWidget (`id ("router"), `Value);
