@@ -326,7 +326,7 @@ Try again."));
           if (!ranges_fine)
           {
             // popup message
-            Popup::Warning (sformat (_("Some range addresses are not part of network '%1'.
+            Popup::Warning (sformat (_("Some address ranges are not part of network '%1'.
 Adapt them using 'Edit ranges' button."), current_network));
             return false;
           }
