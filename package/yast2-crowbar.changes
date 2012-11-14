@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Nov 14 10:21:30 CET 2012 - jsuchome@suse.cz
+
+- fixed a typo in popup text (bnc#788945)
+- 2.17.28 
+
+-------------------------------------------------------------------
 Tue Nov  6 11:08:55 CET 2012 - jsuchome@suse.cz
 
 - enable viewing table items even when changes are not allowd
