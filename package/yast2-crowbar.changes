@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Jun 21 15:31:53 CEST 2013 - jsuchome@suse.cz
+
+- for admin password, edit /etc/crowbar/crowbar.json, not
+  bc-template-crowbar.json (bnc#788161)
+- 2.27.29
+
+-------------------------------------------------------------------
 Wed Nov 14 10:21:30 CET 2012 - jsuchome@suse.cz
 
 - fixed a typo in popup text (bnc#788945)
