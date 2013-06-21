@@ -46,7 +46,7 @@ import "Message";
  * Path to the files with JSON data
  */
 global string network_file = "/opt/dell/chef/data_bags/crowbar/bc-template-network.json";
-global string crowbar_file = "/opt/dell/chef/data_bags/crowbar/bc-template-crowbar.json";
+global string crowbar_file = "/etc/crowbar/crowbar.json";
 global string installed_file    = "/opt/dell/crowbar_framework/.crowbar-installed-ok";
 
 /**
