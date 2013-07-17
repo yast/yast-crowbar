@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Jul 17 11:48:46 CEST 2013 - jsuchome@suse.cz
+
+- Use /etc/crowbar/network.json as path for network configuration
+- 2.27.30 
+
+-------------------------------------------------------------------
 Fri Jun 21 15:31:53 CEST 2013 - jsuchome@suse.cz
 
 - for admin password, edit /etc/crowbar/crowbar.json, not
