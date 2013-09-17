@@ -87,20 +87,137 @@ symbol WriteDialog() {
 
   string current_network      = "admin";
 
-  // functions for handling password widget
-  define void InitPassword (string id) {
-    UI::ChangeWidget (`id (id), `Value, users["crowbar","password"]:"");
-    UI::ChangeWidget (`id (id), `Enabled, !Crowbar::installed);
+  string current_user   = "";
+
+  /**
+   * initialize the value of table
+   */
+  define void InitUsersTable (string id) {
+
+    UI::ChangeWidget (`id ( id), `Items, maplist (string name, map u, users, {
+      return `item (`id (name), name);
+    }));
+    if (current_user != "" && haskey (users, current_user))
+      UI::ChangeWidget (`id(id), `CurrentItem, current_user);
   }
 
-  define void StorePassword (string key, map event) {
-    users["crowbar","password"] = UI::QueryWidget (`id(key), `Value);
-  }
+  /**
+   * handler for adding user button
+   */
+  symbol HandleAddEditUserButton (string key, map event) {
+    any ID	= event["ID"]:nil;
+    if (ID != key)
+      return nil;
 
-  define symbol HandlePassword (string key, map event) {
-    if (event["ID"]:nil == `next) StorePassword (key, event);
+    UI::OpenDialog (`opt (`decorated), `HBox (`HSpacing (1), `VBox(
+      `VSpacing (0.5),
+      `HSpacing (65),
+      // text entry label
+      `InputField (`id (`username), `opt (`hstretch), _("User Name")),
+      // text entry label
+      `Password (`id (`pw1), `opt (`hstretch), _("Password")),
+      // text entry label
+      `Password (`id (`pw2), `opt (`hstretch), _("Repeat the Password")),
+      `VSpacing (0.5),
+      `ButtonBox (
+        `PushButton (`id(`ok), Label::OKButton()),
+        `PushButton (`id(`cancel), Label::CancelButton())
+      ),
+      `VSpacing (0.5)), `HSpacing (1))
+    );
+
+    if (key == "edit_user")
+    {
+      UI::ChangeWidget (`id (`username), `Value, current_user);
+      UI::ChangeWidget (`id (`pw1), `Value, users[current_user,"password"]:"");
+      UI::ChangeWidget (`id (`pw2), `Value, users[current_user,"password"]:"");
+    }
+
+    symbol ret = `not_next;
+    string name = "";
+
+    while (true)
+    {
+      ret     = (symbol) UI::UserInput ();
+      if (ret == `cancel)
+        break;
+      if (ret == `ok)
+      {
+        name = (string) UI::QueryWidget (`id (`username), `Value);
+        string pass = (string) UI::QueryWidget (`id (`pw1), `Value);
+
+        if (pass != UI::QueryWidget (`id (`pw2), `Value))
+        {
+          // error popup
+          Popup::Error(_("The passwords do not match.
+Try again."));
+          UI::SetFocus (`id(`pw1));
+          continue;
+        }
+        if (haskey (users, name) &&
+           (key == "add_user" || name != current_user))
+        {
+          // error popup
+          Popup::Error (sformat (_("User '%1' already exists.
+Choose a different name."), name));
+          UI::SetFocus (`id(`username));
+          continue;
+        }
+        if (key == "edit_user")
+        {
+          users         = remove (users, current_user);
+        }
+        users[name]     = $[ "password" : pass ];
+        break;
+      }
+    }
+    UI::CloseDialog ();
+
+    if (ret == `ok)
+    {
+      current_user      = name;
+      InitUsersTable ("users_table");
+    }
     return nil;
   }
+
+  /**
+   * handler for user selection table
+   */
+  define symbol HandleUsersTable (string key, map event) {
+
+    string selected = (string) UI::QueryWidget (`id(key), `Value);
+    if (selected != nil && selected != current_user)
+    {
+      current_user      = selected == nil ? "" : selected;
+    }
+    if (key == event["ID"]:nil && event["EventReason"]:"" == "Activated")
+    {
+      HandleAddEditUserButton ("edit_user", $["ID" : "edit_user"]);
+    }
+    return nil;
+  }
+
+
+  /**
+   * handler for user button
+   */
+  symbol HandleDeleteUserButton (string key, map event) {
+    any ID	= event["ID"]:nil;
+    if (ID != key)
+      return nil;
+    // yes/no popup question
+    if (true) // Popup::YesNo (sformat (_("Really delete user '%1'?"), current_user)))
+    {
+      users             = remove (users, current_user);
+      InitUsersTable ("users_table");
+      current_user      = size (users) == 0 ? "" : (string) UI::QueryWidget (`id("users_table"), `Value);
+      UI::ChangeWidget (`id (key), `Enabled, size (users) > 0);
+      UI::ChangeWidget (`id ("edit_user"), `Enabled, size (users) > 0);
+    }
+    return nil;
+  }
+
 
   // functions for handling network mode widget
   define void InitMode (string id) {
@@ -145,23 +262,6 @@ symbol WriteDialog() {
   define symbol HandleTeaming (string key, map event) {
     if (event["ID"]:nil == `next) StoreTeaming (key, event);
     return nil;
-  }
-
-
-  /**
-   * Validation function for widgets with time values
-   */
-  define boolean ValidatePassword (string key, map event) {
-    if (UI::QueryWidget (`id("password"), `Value) !=
-        UI::QueryWidget (`id("repeat_password"), `Value))
-    {
-      // error popup
-      Popup::Error(_("The passwords do not match.
-Try again."));
-      UI::SetFocus (`id(key));
-      return false;
-    }
-    return true;
   }
 
   /*
@@ -272,7 +372,7 @@ Try again."));
   {
       boolean ret = true;
 
-      if (event["WidgetID"]:`none == `back || size (networks) == 0)
+      if (event["WidgetID"]:nil == `back || size (networks) == 0)
       {
         return true;
       }
@@ -533,31 +633,44 @@ Adapt them using 'Edit ranges' button."), current_network));
   }
 
 map<string, map> widget_description	= $[
-    "password" : $[
-	"widget"	: `password,
-	"opt"		: [ `hstretch ],
-	// textentry label
-	"label"		: _("Password for Crowbar Administrator"),
-	// help text
-	"help"		: _("<p>Enter the password for Crowbar administrator.</p>"),
-	"init"		: InitPassword,
-	"store"		: StorePassword,
-	"handle"	: HandlePassword,
-	"validate_type"	: `function,
-	"validate_function"	: ValidatePassword,
+    "users_table" : $[
+        "widget"        : `custom,
+        "custom_widget" :
+          `VBox (
+              `VWeight (2, `Table (`id( "users_table"),
+                  `opt (`notify, `immediate, `hstretch),
+                  // table header
+                  `header (_("Administrator Name"))
+              ))
+          ),
+        "init"          : InitUsersTable,
+        "handle"        : HandleUsersTable,
+        // help text
+        "help"          : _("<p>Manage user names and passwords for Crowbar administrators.</p>")
     ],
-    "repeat_password" : $[
-	"widget"	: `password,
-	"opt"		: [ `hstretch ],
-	// textentry label
-	"label"		: _("Repeat the Password"),
-	"init"		: InitPassword,
+    "add_user"	: $[
+	"widget"	: `push_button,
+	"label"		: Label::AddButton(),
+        "no_help"       : true,
+	"handle"	: HandleAddEditUserButton
+    ],
+    "edit_user"	: $[
+	"widget"	: `push_button,
+	"label"		: Label::EditButton(),
+        "no_help"       : true,
+	"handle"	: HandleAddEditUserButton
+    ],
+    "delete_user"	: $[
+	"widget"	: `push_button,
+	"label"		: Label::DeleteButton(),
+        "no_help"       : true,
+	"handle"	: HandleDeleteUserButton
     ],
     "mode" : $[
 	"widget"	: `combobox,
 	"opt"		: [ `hstretch, `notify ],
 	// textentry label
-	"label"		: _("Mode"),
+	"label"		: _("&Mode"),
         "no_help"       : true,
 	"init"		: InitMode,
 	"store"		: StoreMode,
@@ -566,7 +679,7 @@ map<string, map> widget_description	= $[
     "teaming" : $[
 	"widget"	: `combobox,
 	// textentry label
-	"label"		: _("Bonding Policy"),
+	"label"		: _("Bonding &Policy"),
         "no_help"       : true,
 	"init"		: InitTeaming,
 	"store"		: StoreTeaming,
@@ -591,11 +704,12 @@ map<string, map> widget_description	= $[
           ),
         "init"          : InitNetworkSelect,
         "handle"        : HandleNetworkSelect,
+        "no_help"       : true,
     ],
     "use_vlan" : $[
 	"widget"	: `checkbox,
 	// checkbox label
-	"label"		: _("Use VLAN"),
+	"label"		: _("Use &VLAN"),
         "no_help"       : true,
 	"init"		: InitCheckBox,
 	"store"		: StoreNetwork,
@@ -605,7 +719,7 @@ map<string, map> widget_description	= $[
     "vlan" : $[
 	"widget"	: `intfield,
 	// textentry label
-	"label"		: _("VLAN ID"),
+	"label"		: _("VLAN &ID"),
         "no_help"       : true,
 	"init"		: InitInteger,
 	"store"		: StoreNetwork,
@@ -615,7 +729,7 @@ map<string, map> widget_description	= $[
     "router" : $[
 	"widget"	: `textentry,
 	// textentry label
-	"label"		: _("Router"),
+	"label"		: _("Rou&ter"),
         "validate_type" : `function,
         "validate_function": ValidateNetwork,
         "valid_chars"   : IP::ValidChars4 + IP::ValidChars6,
@@ -628,7 +742,7 @@ map<string, map> widget_description	= $[
     "subnet" : $[
 	"widget"	: `textentry,
 	// textentry label
-	"label"		: _("Subnet"),
+	"label"		: _("&Subnet"),
         "handle_events" : [ "ValueChanged" ],
         "validate_type" : `function,
         "validate_function": ValidateNetwork,
@@ -642,7 +756,7 @@ map<string, map> widget_description	= $[
     "netmask" : $[
 	"widget"	: `textentry,
 	// textentry label
-	"label"		: _("Netmask"),
+	"label"		: _("Net&mask"),
         "handle_events" : [ "ValueChanged" ],
         "validate_type" : `function,
         "validate_function": ValidateNetwork,
@@ -655,7 +769,7 @@ map<string, map> widget_description	= $[
     ],
     "broadcast" : $[
 	"widget"	: `textentry,
-	"label"		: _("Broadcast"),
+	"label"		: _("Broa&dcast"),
         "valid_chars"   : IP::ValidChars4 + IP::ValidChars6,
         "no_help"       : true,
 	"init"		: InitNetwork,
@@ -665,7 +779,7 @@ map<string, map> widget_description	= $[
     "add_bridge" : $[
 	"widget"	: `checkbox,
 	// checkbox label
-	"label"		: _("Add Bridge"),
+	"label"		: _("&Add Bridge"),
         "no_help"       : true,
 	"init"		: InitCheckBox,
 	"store"		: StoreNetwork,
@@ -673,8 +787,8 @@ map<string, map> widget_description	= $[
     ],
     "ranges_button"	: $[
 	"widget"	: `push_button,
-	// push button label
-	"label"		: _("&Edit Ranges..."),
+	// push button label&
+	"label"		: _("Edit Ran&ges..."),
         "no_help"       : true,
 	"handle"	: HandleRangesButton
     ],
@@ -683,22 +797,26 @@ map<string, map> widget_description	= $[
 // description of tab layouts
 map get_tabs_descr () {
     return $[
-    "admin" : $[
+    "users" : $[
 	// tab header
-	"header"	: _("Administration Settings"),
+	"header"	: _("&User Settings"),
 	"contents"	: `HBox (`HSpacing(2), `VBox (
 	    `VSpacing (),
-            "password",
-            "repeat_password",
+            "users_table",
+	    `VSpacing (0.4),
+            `HBox (
+              "add_user", "edit_user", "delete_user", `HStretch ()
+            ),
+            `VSpacing (2),
 	    `VStretch ()
 	), `HSpacing(2)),
 	"widget_names" : [
-            "password", "repeat_password"
+            "add_user", "delete_user", "edit_user", "users_table",
 	],
     ],
     "network_mode"      : $[
 	// tab header
-	"header"	: _("Network Mode"),
+	"header"	: _("N&etwork Mode"),
 	"contents"	: `HBox (`HSpacing(2), `VBox (
 	    `VSpacing (),
             `HBox (
@@ -713,7 +831,7 @@ map get_tabs_descr () {
     ],
     "networks"	: $[
 	// tab header
-	"header"	: _("Networks"),
+	"header"	: _("Net&works"),
 	"contents"	: `HBox (`HSpacing(2), `VBox (
             "network_help",
 	    `VSpacing (),
@@ -753,10 +871,10 @@ symbol OverviewDialog() {
     users       = Crowbar::users;
 
     widget_description["tab"] = CWMTab::CreateWidget($[
-	"tab_order"	: [ "admin", "networks", "network_mode" ],
+	"tab_order"	: [ "users", "networks", "network_mode" ],
 	"tabs"		: get_tabs_descr (),
 	"widget_descr"	: widget_description,
-	"initial_tab"	: "admin",
+	"initial_tab"	: "users",
     ]);
 
     Wizard::SetContentsButtons("", `VBox (), "",

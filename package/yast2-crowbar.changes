@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Sep 17 13:34:28 CEST 2013 - jsuchome@suse.cz
+
+- enable editing users 
+
+-------------------------------------------------------------------
 Wed Jul 17 11:48:46 CEST 2013 - jsuchome@suse.cz
 
 - Use /etc/crowbar/network.json as path for network configuration
