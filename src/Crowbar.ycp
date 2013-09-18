@@ -84,12 +84,18 @@ map<string,any> provisioner     = $[];
 global map<string,map> repos    = $[];
 
 /**
- * networks subset of global configuration map
+ * networks subset of global network configuration map
  */
 global map<string,map> networks = $[];
 
 /**
- * network teaming subset of global configuration map
+ * conduit_map subset of global network configuration map
+ */
+global list<map> conduit_map    = [];
+
+
+/**
+ * network teaming subset of global network configuration map
  */
 global map<string,integer> teaming      = $[];
 
@@ -200,6 +206,7 @@ global boolean Read() {
     networks            = template_network["attributes","network","networks"]:$[];
     teaming             = template_network["attributes","network","teaming"]:$[];
     mode                = template_network["attributes","network","mode"]:"";
+    conduit_map         = template_network["attributes","network","conduit_map"]:[];
 
     template_crowbar    = Json::Read (crowbar_file);
     users               = template_crowbar["attributes","crowbar","users"]:$[];
@@ -262,6 +269,7 @@ global boolean Write() {
     );
 
 
+    template_network["attributes","network","conduit_map"]      = conduit_map;
     template_network["attributes","network","networks"] = networks;
     template_network["attributes","network","teaming"]  = teaming;
     template_network["attributes","network","mode"]     = mode;
@@ -283,7 +291,7 @@ global boolean Write() {
     });
     // remove url if it is empty and non-default ask_on_error stays
     foreach (string name, map repo, repos, {
-      if (repo["url"]:"" == "")
+      if (repo["url"]:nil == "")
         repos[name]     = remove (repo, "url");
     });
 
