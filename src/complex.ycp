@@ -930,6 +930,7 @@ map get_tabs_descr () {
               "add_user", "edit_user", "delete_user", `HStretch ()
             ),
             `VSpacing (2),
+            // FIXME label about no user present: crowbar/crowbar
 	    `VStretch ()
 	), `HSpacing(2)),
 	"widget_names" : [

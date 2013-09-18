@@ -46,14 +46,14 @@ import "Message";
  * Path to the files with JSON data
  */
 global string network_file = "/etc/crowbar/network.json";
-global string crowbar_file = "/etc/crowbar/crowbar.json";
-global string provisioner_file  = "/etc/crowbar/provisioner.json";
-global string installed_file    = "/opt/dell/crowbar_framework/.crowbar-installed-ok";
+string crowbar_file = "/etc/crowbar/crowbar.json";
+string provisioner_file  = "/etc/crowbar/provisioner.json";
+string installed_file    = "/opt/dell/crowbar_framework/.crowbar-installed-ok";
 
 /**
  * Names of default repositories available for current product
  */
-global list<string> default_repos       = [
+list<string> default_repos       = [
   "SLE-Cloud",
   "SLE-Cloud-PTF",
   "SUSE-Cloud-2.0-Pool",
@@ -113,7 +113,7 @@ global boolean installed        = false;
  */
 boolean modified = false;
 
-global map<string,any> adapt_map (map<string,any> input_map);
+map<string,any> adapt_map (map<string,any> input_map);
 
 /**
  * Adapt boolean values so they can be recognized by Perl
@@ -139,7 +139,7 @@ any adapt_value (any value) {
   return value;
 }
 
-global map<string,any> adapt_map (map<string,any> input_map) {
+map<string,any> adapt_map (map<string,any> input_map) {
 
   foreach (string key, any val, input_map, {
     input_map[key]        = adapt_value (val);
@@ -221,6 +221,7 @@ global boolean Read() {
             ]
           ]
         ];
+        // FIXME fill all the names if not present
         repos           = listmap (string repo, default_repos, {
             return $[ repo : $[ "url" : "" ]];
         });
@@ -275,6 +276,7 @@ global boolean Write() {
 
     // remove empty repo definitions
     repos       = filter (string name, map repo, repos, {
+      // TODO remove just url
       return repo["url"]:"" != "";
     });
 
