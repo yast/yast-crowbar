@@ -1139,7 +1139,6 @@ map get_tabs_descr () {
 string adapt_conduit_map (string conduit) {
 
   string conduit_name   = conduit;
-  integer i             = 0;
   boolean name_found    = false;
 
   conduit_map   = maplist (map c_map, conduit_map, {
@@ -1152,12 +1151,13 @@ string adapt_conduit_map (string conduit) {
 
     if (!name_found)
     {
+      integer i         = 0;
       // generate unique conduit_name
       // FIXME is it really problem that there's existing one? shouldn't we update existing?
       while (haskey (c_map["conduit_list"]:$[], conduit_name))
       {
-        conduit_name      = sformat("%1%2", conduit, i);
-        i                 = i + 1;
+        conduit_name    = sformat("%1%2", conduit, i);
+        i               = i + 1;
       }
       name_found        = true;
     }
