@@ -82,6 +82,9 @@ symbol WriteDialog() {
   // local copy of teaming options
   map<string,integer> teaming      = $[];
 
+  // local copy of repositories
+ map<string,map> repos      = $[];
+
   // local copy of mode
   string mode      = "single";
 
@@ -89,8 +92,82 @@ symbol WriteDialog() {
 
   string current_user   = "";
 
+  string current_repo   = "";
+
+
+  define void InitAskOnError (string id) {
+    UI::ChangeWidget (`id (id), `Value, repos[current_repo,"ask_on_error"]:false == true);
+  }
+
+  define void InitRepoURL (string id) {
+    UI::ChangeWidget (`id (id), `Value, repos[current_repo,"url"]:"");
+  }
+
   /**
-   * initialize the value of table
+   * initialize the value of repo table
+   */
+  define void InitReposTable (string id) {
+
+    UI::ChangeWidget (`id ( id), `Items, maplist (string name, map r, repos, {
+      return `item (`id (name), name, r["url"]:"", r["ask_on_error"]:false ? UI::Glyph (`CheckMark) : " ");
+    }));
+    if (current_repo != "")
+      UI::ChangeWidget (`id(id), `CurrentItem, current_repo);
+  }
+
+  /**
+   * handler for repo selection table
+   */
+  define symbol HandleReposTable (string key, map event) {
+
+    string selected = (string) UI::QueryWidget (`id(key), `Value);
+    if (selected != nil && selected != current_repo)
+    {
+      current_repo      = selected;
+      InitRepoURL ("repo_url");
+      InitAskOnError ("ask_on_error");
+    }
+    return nil;
+  }
+
+  define symbol StoreRepoURL (string key, map event) {
+    repos[current_repo,"url"]   = UI::QueryWidget (`id (key), `Value);
+    return nil;
+  }
+
+  define symbol HandleRepoURL (string key, map event) {
+
+    // store the value on exiting
+    if (event["ID"]:nil == `next ||
+        event["EventReason"]:"" == "ValueChanged")
+    {
+        StoreRepoURL (key, event);
+        InitReposTable ("repos_table");
+    }
+    return nil;
+  }
+
+  define symbol StoreAskOnError (string key, map event) {
+    repos[current_repo,"ask_on_error"]   = UI::QueryWidget (`id (key), `Value) == true;
+    return nil;
+  }
+
+  define symbol HandleAskOnError (string key, map event) {
+
+    // store the value on exiting
+    if (event["ID"]:nil == `next ||
+        event["EventReason"]:"" == "ValueChanged")
+    {
+        StoreAskOnError (key, event);
+        InitReposTable ("repos_table");
+    }
+    return nil;
+  }
+
+
+
+  /**
+   * initialize the value of users table
    */
   define void InitUsersTable (string id) {
 
@@ -177,6 +254,8 @@ Choose a different name."), name));
     {
       current_user      = name;
       InitUsersTable ("users_table");
+      UI::ChangeWidget (`id ("delete_user"), `Enabled, size (users) > 0);
+      UI::ChangeWidget (`id ("edit_user"), `Enabled, size (users) > 0);
     }
     return nil;
   }
@@ -633,6 +712,47 @@ Adapt them using 'Edit ranges' button."), current_network));
   }
 
 map<string, map> widget_description	= $[
+    // ---------------- widgets for Repositories tab
+    "repos_table" : $[
+        "widget"        : `custom,
+        "custom_widget" :
+          `VBox (
+              `VWeight (2, `Table (`id( "repos_table"),
+                  `opt (`notify, `immediate, `hstretch),
+                  // table header
+                  `header (_("Repository Name"), _("URL"), _("Ask On Error"))
+              ))
+          ),
+        "init"          : InitReposTable,
+        "handle"        : HandleReposTable,
+        // help text
+        "help"          : _("<p>Here you can edit the location of your update repositores.</p>")
+    ],
+    "repo_url" : $[
+	"widget"	: `textentry,
+	// textentry label
+	"label"		: _("Repository &URL"),
+        /* FIXME
+        "validate_type" : `function,
+        "validate_function": ValidateURL,
+        */
+        "no_help"       : true,
+	"init"		: InitRepoURL,
+	"store"		: StoreRepoURL,
+	"handle"	: HandleRepoURL,
+        "opt"           : [ `notify ],
+    ],
+    "ask_on_error"      : $[
+	"widget"	: `checkbox,
+	// textentry label
+	"label"		: _("&Ask On Error"),
+        "no_help"       : true,
+	"init"		: InitAskOnError,
+	"store"		: StoreAskOnError,
+	"handle"	: HandleAskOnError,
+        "opt"           : [ `notify ],
+    ],
+    // ---------------- widgets for Users tab
     "users_table" : $[
         "widget"        : `custom,
         "custom_widget" :
@@ -796,7 +916,7 @@ map<string, map> widget_description	= $[
 
 // description of tab layouts
 map get_tabs_descr () {
-    return $[
+  return $[
     "users" : $[
 	// tab header
 	"header"	: _("&User Settings"),
@@ -808,6 +928,8 @@ map get_tabs_descr () {
               "add_user", "edit_user", "delete_user", `HStretch ()
             ),
             `VSpacing (2),
+            // label (hint for user)
+            `Left (`Label (_("If no user is present, user 'crowbar' with default password will be used."))),
 	    `VStretch ()
 	), `HSpacing(2)),
 	"widget_names" : [
@@ -860,7 +982,25 @@ map get_tabs_descr () {
             "ranges_button", "use_vlan", "network_help",
 	],
     ],
-    ];
+    "repositories" : $[
+	// tab header
+	"header"	: _("Re&positories"),
+	"contents"	: `HBox (`HSpacing(2), `VBox (
+	    `VSpacing (),
+            "repos_table",
+	    `VSpacing (0.4),
+            `Left ("ask_on_error"),
+            `VSpacing (),
+            "repo_url",
+            // label (hint for user)
+            `Left (`Label (_("Empty URL means that default value will be used."))),
+	    `VStretch ()
+	), `HSpacing(2)),
+	"widget_names" : [
+            "repos_table", "repo_url", "ask_on_error"
+	],
+    ],
+  ];
 }
 
 symbol OverviewDialog() {
@@ -869,9 +1009,10 @@ symbol OverviewDialog() {
     mode        = Crowbar::mode;
     teaming     = Crowbar::teaming;
     users       = Crowbar::users;
+    repos       = Crowbar::repos;
 
     widget_description["tab"] = CWMTab::CreateWidget($[
-	"tab_order"	: [ "users", "networks", "network_mode" ],
+	"tab_order"	: [ "users", "networks", "network_mode", "repositories" ],
 	"tabs"		: get_tabs_descr (),
 	"widget_descr"	: widget_description,
 	"initial_tab"	: "users",
@@ -913,6 +1054,7 @@ You can visit the Crowbar web UI on http://%1:3000/"), Hostname::CurrentFQ ()));
       Crowbar::users    = users;
       Crowbar::teaming  = teaming;
       Crowbar::mode     = mode;
+      Crowbar::repos    = repos;
     }
     return ret;
 }

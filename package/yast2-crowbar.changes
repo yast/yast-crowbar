@@ -1,7 +1,8 @@
 -------------------------------------------------------------------
-Tue Sep 17 13:34:28 CEST 2013 - jsuchome@suse.cz
+Wed Sep 18 09:10:42 CEST 2013 - jsuchome@suse.cz
 
 - enable editing users 
+- enable editing update repositories (provisioner.json)
 
 -------------------------------------------------------------------
 Wed Jul 17 11:48:46 CEST 2013 - jsuchome@suse.cz
