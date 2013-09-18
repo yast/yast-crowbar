@@ -109,8 +109,6 @@ symbol WriteDialog() {
   define void InitReposTable (string id) {
 
     UI::ChangeWidget (`id ( id), `Items, maplist (string name, map r, repos, {
-// FIXME is ask_on_error string or boolean? how does the json look like?
-// https://raw.github.com/crowbar/barclamp-provisioner/release/pebbles/master/chef/data_bags/crowbar/bc-template-provisioner.schema says 'str'
       return `item (`id (name), name, r["url"]:"", r["ask_on_error"]:false ? UI::Glyph (`CheckMark) : " ");
     }));
     if (current_repo != "")
