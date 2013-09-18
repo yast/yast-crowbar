@@ -46,8 +46,22 @@ import "Message";
  * Path to the files with JSON data
  */
 global string network_file = "/etc/crowbar/network.json";
-global string crowbar_file = "/etc/crowbar/crowbar.json";
-global string installed_file    = "/opt/dell/crowbar_framework/.crowbar-installed-ok";
+string crowbar_file = "/etc/crowbar/crowbar.json";
+string provisioner_file  = "/etc/crowbar/provisioner.json";
+string installed_file    = "/opt/dell/crowbar_framework/.crowbar-installed-ok";
+
+/**
+ * Names of default repositories available for current product
+ */
+list<string> default_repos       = [
+  "SLE-Cloud",
+  "SLE-Cloud-PTF",
+  "SUSE-Cloud-2.0-Pool",
+  "SUSE-Cloud-2.0-Updates",
+  "SLES11-SP3-Pool",
+  "SLES11-SP3-Updates"
+];
+
 
 /**
  * map of network template configuration data
@@ -58,6 +72,16 @@ map<string,any> template_network = $[];
  * map of crowbar template configuration data
  */
 map<string,any> template_crowbar = $[];
+
+/**
+ * map of provisioner configuration data
+ */
+map<string,any> provisioner     = $[];
+
+/**
+ * repos subset of global provisioner configuration map
+ */
+global map<string,map> repos    = $[];
 
 /**
  * networks subset of global configuration map
@@ -89,7 +113,7 @@ global boolean installed        = false;
  */
 boolean modified = false;
 
-global map<string,any> adapt_map (map<string,any> input_map);
+map<string,any> adapt_map (map<string,any> input_map);
 
 /**
  * Adapt boolean values so they can be recognized by Perl
@@ -115,7 +139,7 @@ any adapt_value (any value) {
   return value;
 }
 
-global map<string,any> adapt_map (map<string,any> input_map) {
+map<string,any> adapt_map (map<string,any> input_map) {
 
   foreach (string key, any val, input_map, {
     input_map[key]        = adapt_value (val);
@@ -180,6 +204,33 @@ global boolean Read() {
     template_crowbar    = Json::Read (crowbar_file);
     users               = template_crowbar["attributes","crowbar","users"]:$[];
 
+    if (FileUtils::Exists (provisioner_file))
+    {
+        provisioner     = Json::Read (provisioner_file);
+        repos           = provisioner["attributes","provisioner","suse","autoyast","repos"]:$[];
+    }
+    else
+    {
+        provisioner     = $[
+          "attributes"  : $[
+            "provisioner"       : $[
+              "suse"            : $[
+                "autoyast"      : $[
+                ]
+              ]
+            ]
+          ]
+        ];
+    }
+
+    // fill in all the repo names for the UI
+    foreach (string repo, default_repos, {
+      if (!haskey (repos, repo))
+      {
+        repos[repo]     = $[ "url" : "" ];
+      }
+    });
+
     Progress::NextStage();
 
     modified = false;
@@ -224,6 +275,22 @@ global boolean Write() {
     if (Json::Write (adapt_map (template_crowbar), crowbar_file) == nil)
     {
       Report::Error (Message::ErrorWritingFile (crowbar_file));
+    }
+
+    // remove empty repo definitions
+    repos       = filter (string name, map repo, repos, {
+      return repo["url"]:"" != "" || repo["ask_on_error"]:false;
+    });
+    // remove url if it is empty and non-default ask_on_error stays
+    foreach (string name, map repo, repos, {
+      if (repo["url"]:"" == "")
+        repos[name]     = remove (repo, "url");
+    });
+
+    provisioner["attributes","provisioner","suse","autoyast","repos"]   = repos;
+    if (Json::Write (adapt_map (provisioner), provisioner_file) == nil)
+    {
+      Report::Error (Message::ErrorWritingFile (provisioner_file));
     }
 
     Progress::NextStage();
