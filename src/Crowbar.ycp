@@ -221,12 +221,15 @@ global boolean Read() {
             ]
           ]
         ];
-        // FIXME fill all the names if not present
-        repos           = listmap (string repo, default_repos, {
-            return $[ repo : $[ "url" : "" ]];
-        });
     }
 
+    // fill in all the repo names for the UI
+    foreach (string repo, default_repos, {
+      if (!haskey (repos, repo))
+      {
+        repos[repo]     = $[ "url" : "" ];
+      }
+    });
 
     Progress::NextStage();
 
@@ -276,8 +279,12 @@ global boolean Write() {
 
     // remove empty repo definitions
     repos       = filter (string name, map repo, repos, {
-      // TODO remove just url
-      return repo["url"]:"" != "";
+      return repo["url"]:"" != "" || repo["ask_on_error"]:false;
+    });
+    // remove url if it is empty and non-default ask_on_error stays
+    foreach (string name, map repo, repos, {
+      if (repo["url"]:"" == "")
+        repos[name]     = remove (repo, "url");
     });
 
     provisioner["attributes","provisioner","suse","autoyast","repos"]   = repos;
