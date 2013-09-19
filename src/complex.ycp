@@ -491,6 +491,11 @@ Choose a different name."), name));
       string subnet = GetSubnet();
       string netmask = GetNetmask();
       string router = (string) UI::QueryWidget (`id ("router"), `Value);
+      string ip = "";
+      if (UI::WidgetExists (`id ("ip")))
+      {
+        ip      = (string) UI::QueryWidget (`id ("ip"), `Value);
+      }
 
       ret = (key != "netmask") || Netmask::Check(netmask);
       if (!ret)
@@ -519,6 +524,21 @@ Choose a different name."), name));
           {
             // error popup
             Popup::Error (sformat (_("The router address '%1' is not part of network '%2'."), router, current_network));
+            return false;
+          }
+      }
+      if (key == "ip" && ip != "")
+      {
+          if (!IP::Check (ip))
+          {
+            // error popup
+            Popup::Error (sformat (_("The IP address '%1' is invalid.\n%2"), ip, IP::Valid4 ()));
+            return false;
+          }
+          if (IP::ComputeNetwork (subnet,netmask) != IP::ComputeNetwork (ip, netmask))
+          {
+            // error popup
+            Popup::Error (sformat (_("The IP address '%1' is not part of network '%2'."), ip, current_network));
             return false;
           }
       }
@@ -849,7 +869,9 @@ map<string, map> widget_description	= $[
 	"opt"		: [ `hstretch, `notify ],
 	// textentry label
 	"label"		: _("&Mode"),
-        "no_help"       : true,
+        // help text for the Network mode tab (do not translate bastion)
+        "help"          : _("<p>Here, define a <b>Network Mode</b> with relevant <b>Bonding Policy</b>.</p>
+<p>You can also specify interface names for the bastion network conduits as space-separated list.</p>"),
 	"init"		: InitMode,
 	"store"		: StoreMode,
 	"handle"	: HandleMode,
@@ -866,7 +888,7 @@ map<string, map> widget_description	= $[
     "conduit_if_list" : $[
 	"widget"	: `textentry,
 	// textentry label
-	"label"		: _("conduit_if_list"),
+	"label"		: _("Logical interfaces for bastion network conduits"),
         /* FIXME
         "validate_type" : `function,
         "validate_function": ValidateConduitList,
