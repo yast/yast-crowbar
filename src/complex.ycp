@@ -1173,15 +1173,27 @@ string adapt_conduit_map (string conduit) {
 
     if (!name_found)
     {
-      integer i         = 0;
-      // generate unique conduit_name
-      // FIXME is it really problem that there's existing one? shouldn't we update existing?
-      while (haskey (c_map["conduit_list"]:$[], conduit_name))
+      // if non-empty conduit was provided && it exist for the right pattern, use it
+      if (haskey (c_map["conduit_list"]:$[], conduit))
       {
-        conduit_name    = sformat("%1%2", conduit, i);
-        i               = i + 1;
+        name_found      = true;
       }
-      name_found        = true;
+      // otherwise, generate unique conduit_name
+      else
+      {
+        if (conduit == "")
+        {
+          conduit       = "bastion";
+          conduit_name  = "bastion";
+        }
+        integer i         = 0;
+        while (haskey (c_map["conduit_list"]:$[], conduit_name))
+        {
+          conduit_name  = sformat("%1%2", conduit, i);
+          i             = i + 1;
+        }
+        name_found        = true;
+      }
     }
     c_map["conduit_list",conduit_name]  = $[
       "if_list" :  conduit_if_list
@@ -1227,7 +1239,6 @@ symbol OverviewDialog() {
     {
       networks["bastion","ip"]  = networks["bastion","ranges","admin","start"]:"0";
       conduit_if_list   = get_conduit_if_list (networks["bastion"]:$[]);
-      // FIXME bastion's conduit if present in 'wrong' modes, should it be deleted?
     }
 
     widget_description["tab"] = CWMTab::CreateWidget($[
@@ -1283,7 +1294,7 @@ You can visit the Crowbar web UI on http://%1:3000/"), Hostname::CurrentFQ ()));
         ];
         bastion = remove (bastion, "ip");
         // add conduit to bastion network submap
-        bastion["conduit"]      = adapt_conduit_map (bastion["conduit"]:"bastion");
+        bastion["conduit"]      = adapt_conduit_map (bastion["conduit"]:"");
         bastion["add_bridge"]   = false;
         networks["bastion"]     = bastion;
       }
