@@ -83,10 +83,19 @@ symbol WriteDialog() {
   map<string,integer> teaming      = $[];
 
   // local copy of repositories
- map<string,map> repos      = $[];
+  map<string,map> repos      = $[];
+
+  // local copy of conduit_map
+  list<map> conduit_map         = [];
+
+  // if bastion network should be added
+  boolean enable_bastion        = false;
 
   // local copy of mode
   string mode      = "single";
+
+  // bastion network interfaces (present in conduit_map)
+  list<string> conduit_if_list        = [];
 
   string current_network      = "admin";
 
@@ -319,6 +328,15 @@ Choose a different name."), name));
     return nil;
   }
 
+  void InitConduitList (string id) {
+    UI::ChangeWidget (`id (id), `Value, mergestring (conduit_if_list, " "));
+  }
+
+  void StoreConduitList (string key, map event) {
+    conduit_if_list     = splitstring ((string) UI::QueryWidget (`id(key), `Value), " ");
+  }
+
+
   // functions for handling network teaming widget
   define void InitTeaming (string id) {
     integer value       = teaming["mode"]:0;
@@ -380,9 +398,12 @@ Choose a different name."), name));
 
   define list<term> CreateItemList()
   {
-      return maplist (string name, map n, networks, {
-          return CreateItem( name);
+      list<term> items  = [];
+      foreach (string name, map n, networks, {
+          if (name != "bastion")
+            items       = add (items, CreateItem (name));
       });
+      return items;
   }
   /**
    * universal widget: initialize the string value of widget @param
@@ -415,15 +436,22 @@ Choose a different name."), name));
    * initialize the value of table
    */
   define void InitNetworkSelect (string id) {
-    UI::ChangeWidget (`id ( id), `Items, CreateItemList());
-    UI::ChangeWidget (`id(id), `CurrentItem, current_network);
+    if (CWMTab::CurrentTab () == "networks")
+    {
+      if (current_network == "bastion")
+        current_network = "admin";
+
+      UI::ChangeWidget (`id ( id), `Items, CreateItemList());
+      UI::ChangeWidget (`id(id), `CurrentItem, current_network);
+    }
   }
 
   /**
    * store the string value of given widget
    */
   define void StoreNetwork (string key, map event) {
-    if (size (networks) == 0)
+    if (size (networks) == 0 ||
+       (CWMTab::CurrentTab () == "bastion" && !enable_bastion))
     {
         return;
     }
@@ -455,9 +483,19 @@ Choose a different name."), name));
       {
         return true;
       }
+      if (CWMTab::CurrentTab () == "bastion" && !enable_bastion)
+      {
+        return true;
+      }
+
       string subnet = GetSubnet();
       string netmask = GetNetmask();
       string router = (string) UI::QueryWidget (`id ("router"), `Value);
+      string ip = "";
+      if (UI::WidgetExists (`id ("ip")))
+      {
+        ip      = (string) UI::QueryWidget (`id ("ip"), `Value);
+      }
 
       ret = (key != "netmask") || Netmask::Check(netmask);
       if (!ret)
@@ -486,6 +524,21 @@ Choose a different name."), name));
           {
             // error popup
             Popup::Error (sformat (_("The router address '%1' is not part of network '%2'."), router, current_network));
+            return false;
+          }
+      }
+      if (key == "ip" && ip != "")
+      {
+          if (!IP::Check (ip))
+          {
+            // error popup
+            Popup::Error (sformat (_("The IP address '%1' is invalid.\n%2"), ip, IP::Valid4 ()));
+            return false;
+          }
+          if (IP::ComputeNetwork (subnet,netmask) != IP::ComputeNetwork (ip, netmask))
+          {
+            // error popup
+            Popup::Error (sformat (_("The IP address '%1' is not part of network '%2'."), ip, current_network));
             return false;
           }
       }
@@ -711,6 +764,30 @@ Adapt them using 'Edit ranges' button."), current_network));
     return nil;
   }
 
+  void enable_disable_bastion () {
+    foreach (string w, [ "ip", "router", "subnet", "netmask", "broadcast", "use_vlan"], {
+      UI::ChangeWidget (`id (w), `Enabled, enable_bastion);
+    });
+    UI::ChangeWidget (`id ("vlan"), `Enabled, enable_bastion && networks[current_network,"use_vlan"]:false == true);
+  }
+
+  /**
+   * initialize the value of Enable Bastion checkbox
+   */
+  define void InitBastionCheckbox (string id) {
+    current_network   = "bastion";
+
+    UI::ChangeWidget (`id (id), `Enabled, !Crowbar::installed);
+    UI::ChangeWidget (`id (id), `Value, enable_bastion);
+    enable_disable_bastion ();
+  }
+
+  define symbol HandleBastionCheckbox (string key, map event) {
+    enable_bastion      = UI::QueryWidget (`id(key), `Value) == true;
+    enable_disable_bastion ();
+    return nil;
+  }
+
 map<string, map> widget_description	= $[
     // ---------------- widgets for Repositories tab
     "repos_table" : $[
@@ -786,12 +863,15 @@ map<string, map> widget_description	= $[
         "no_help"       : true,
 	"handle"	: HandleDeleteUserButton
     ],
+    // ---------------- widgets for Network Mode tab
     "mode" : $[
 	"widget"	: `combobox,
 	"opt"		: [ `hstretch, `notify ],
 	// textentry label
 	"label"		: _("&Mode"),
-        "no_help"       : true,
+        // help text for the Network mode tab (do not translate bastion)
+        "help"          : _("<p>Here, define a <b>Network Mode</b> with relevant <b>Bonding Policy</b>.</p>
+<p>You can also specify interface names for the bastion network conduits as space-separated list.</p>"),
 	"init"		: InitMode,
 	"store"		: StoreMode,
 	"handle"	: HandleMode,
@@ -804,6 +884,18 @@ map<string, map> widget_description	= $[
 	"init"		: InitTeaming,
 	"store"		: StoreTeaming,
 	"handle"	: HandleTeaming,
+    ],
+    "conduit_if_list" : $[
+	"widget"	: `textentry,
+	// textentry label
+	"label"		: _("Logical interfaces for bastion network conduits"),
+        /* FIXME
+        "validate_type" : `function,
+        "validate_function": ValidateConduitList,
+        */
+        "no_help"       : true,
+	"init"		: InitConduitList,
+	"store"		: StoreConduitList,
     ],
     // ---------------- widgets for Network tab
 
@@ -912,6 +1004,31 @@ map<string, map> widget_description	= $[
         "no_help"       : true,
 	"handle"	: HandleRangesButton
     ],
+    // ---------------- widgets for Bastion
+    "enable_bastion"      : $[
+        "widget"        : `checkbox,
+	// checkbox label
+	"label"		: _("Add Bastion Network"),
+        "help"          : HELPS["bastion"]:"",
+        "init"          : InitBastionCheckbox,
+//	"store"		: StoreBastionCheckbox,
+	"handle"	: HandleBastionCheckbox,
+        "opt"           : [ `notify ],
+    ],
+    "ip" : $[
+	"widget"	: `textentry,
+	// textentry label
+	"label"		: _("&IP Address"),
+        "handle_events" : [ "ValueChanged" ],
+        "validate_type" : `function,
+        "validate_function": ValidateNetwork,
+        "valid_chars"   : IP::ValidChars4 + IP::ValidChars6,
+        "no_help"       : true,
+	"init"		: InitNetwork,
+	"store"		: StoreNetwork,
+	"handle"	: HandleNetwork,
+        "opt"           : [ `notify ],
+    ],
 ];
 
 // description of tab layouts
@@ -945,10 +1062,12 @@ map get_tabs_descr () {
               "mode",
               "teaming"
             ),
+            `VSpacing (2),
+            "conduit_if_list",
 	    `VStretch ()
 	), `HSpacing(2)),
 	"widget_names" : [
-            "mode", "teaming"
+            "mode", "teaming", "conduit_if_list"
 	],
     ],
     "networks"	: $[
@@ -1000,7 +1119,107 @@ map get_tabs_descr () {
             "repos_table", "repo_url", "ask_on_error"
 	],
     ],
+    "bastion"	: $[
+	// tab header
+	"header"	: _("Bastion Network"),
+	"contents"	: `HBox (`HSpacing(2), `VBox (
+	    `VSpacing (),
+            `Left ("enable_bastion"),
+	    `VSpacing (),
+            "ip",
+            `HBox (
+              `VBox (
+                "use_vlan",
+                `Label ("")
+              ),
+              `HSpacing (2),
+              "vlan"
+            ),
+            "router",
+            `HBox (
+	      "subnet",
+	      "netmask",
+	      "broadcast"
+            ),
+	    `VStretch ()
+	), `HSpacing (2)),
+	"widget_names" : [
+            "enable_bastion",
+            "ip", "vlan", "router", "subnet", "netmask", "broadcast", "use_vlan",
+	],
+    ],
   ];
+}
+
+/**
+ * Adapts global conduit_map:
+ *      - add new subsection for bastion network with conduit_if_list value (entered by user)
+ *      - if conduit value for bastion is not defined, generate new (unique) one
+ *      - find place for bastion in conduit list by checking mode pattern
+ * @return: new conduit name (
+ */
+string adapt_conduit_map (string conduit) {
+
+  string conduit_name   = conduit;
+  boolean name_found    = false;
+
+  conduit_map   = maplist (map c_map, conduit_map, {
+
+    // ignore not matching patterns
+    if (substring (c_map["pattern"]:"", 0, size (mode)) != mode)
+    {
+      return c_map;
+    }
+
+    if (!name_found)
+    {
+      // if non-empty conduit was provided && it exist for the right pattern, use it
+      if (haskey (c_map["conduit_list"]:$[], conduit))
+      {
+        name_found      = true;
+      }
+      // otherwise, generate unique conduit_name
+      else
+      {
+        if (conduit == "")
+        {
+          conduit       = "bastion";
+          conduit_name  = "bastion";
+        }
+        integer i         = 0;
+        while (haskey (c_map["conduit_list"]:$[], conduit_name))
+        {
+          conduit_name  = sformat("%1%2", conduit, i);
+          i             = i + 1;
+        }
+        name_found        = true;
+      }
+    }
+    c_map["conduit_list",conduit_name]  = $[
+      "if_list" :  conduit_if_list
+    ];
+    return c_map;
+  });
+  return conduit_name;
+}
+
+/**
+ * Find if_list relevant for given bastion network
+ */
+list<string> get_conduit_if_list (map bastion) {
+
+  string conduit_name   = bastion["conduit"]:"";
+  foreach (map c_map, conduit_map, {
+    if (substring (c_map["pattern"]:"", 0, size (mode)) == mode)
+    {
+      if (haskey (c_map["conduit_list"]:$[], conduit_name))
+      {
+        conduit_if_list = c_map["conduit_list",conduit_name,"if_list"]:[];
+      }
+    }
+  });
+
+  return conduit_if_list;
 }
 
 symbol OverviewDialog() {
@@ -1010,9 +1229,20 @@ symbol OverviewDialog() {
     teaming     = Crowbar::teaming;
     users       = Crowbar::users;
     repos       = Crowbar::repos;
+    conduit_map = Crowbar::conduit_map;
+    enable_bastion      = haskey (networks, "bastion");
+    if (!enable_bastion)
+    {
+      networks["bastion"]       = $[];
+    }
+    else
+    {
+      networks["bastion","ip"]  = networks["bastion","ranges","admin","start"]:"0";
+      conduit_if_list   = get_conduit_if_list (networks["bastion"]:$[]);
+    }
 
     widget_description["tab"] = CWMTab::CreateWidget($[
-	"tab_order"	: [ "users", "networks", "network_mode", "repositories" ],
+	"tab_order"	: [ "users", "networks", "network_mode", "repositories", "bastion" ],
 	"tabs"		: get_tabs_descr (),
 	"widget_descr"	: widget_description,
 	"initial_tab"	: "users",
@@ -1050,7 +1280,30 @@ You can visit the Crowbar web UI on http://%1:3000/"), Hostname::CurrentFQ ()));
     }
     if (ret == `next)
     {
+      if (enable_bastion)
+      {
+        // remove internal "ip" key and transform it to ranges (ip-ip)
+        map bastion     = networks["bastion"]:$[];
+        if (!haskey (bastion, "ranges"))
+        {
+          bastion["ranges"]     = $[];
+        }
+        bastion["ranges","admin"]       = $[
+          "start"       : bastion["ip"]:"0",
+          "end"         : bastion["ip"]:"0",
+        ];
+        bastion = remove (bastion, "ip");
+        // add conduit to bastion network submap
+        bastion["conduit"]      = adapt_conduit_map (bastion["conduit"]:"");
+        bastion["add_bridge"]   = false;
+        networks["bastion"]     = bastion;
+      }
+      else if (haskey (networks, "bastion"))
+      {
+        networks        = remove (networks, "bastion");
+      }
       Crowbar::networks = networks;
+      Crowbar::conduit_map      = conduit_map; // was adapted by adapt_conduit_map
       Crowbar::users    = users;
       Crowbar::teaming  = teaming;
       Crowbar::mode     = mode;
