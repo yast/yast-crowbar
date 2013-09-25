@@ -360,7 +360,7 @@ Choose a different name."), name));
     if (invalid_if != "")
     {
       // error popup
-      Popup::Error (sformat (_("The format for logical interface '%1' is not valid"), invalid_if));
+      Popup::Error (sformat (_("The interface format '%1' is not valid"), invalid_if));
       return false;
     }
     return true;
