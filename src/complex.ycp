@@ -342,22 +342,20 @@ Choose a different name."), name));
   define boolean ValidateConduitList (string key, map event)
   {
 
-    string invalid_if = "";
-
     // [Quantifier][Speed][Order]
     // Quantifier is optional; for speed there are only 4 options; order starts with 1
     string reg  = "^[-+?]*(10m|100m|1g|10g)[1-9]+[0-9]*$";
 
-    foreach (string iface, splitstring ((string) UI::QueryWidget (`id(key), `Value), " "), {
+    string invalid_if = (string) find (string iface, splitstring ((string) UI::QueryWidget (`id(key), `Value), " "), {
       if (!regexpmatch (iface, reg))
       {
-        invalid_if      = iface;
         y2warning ("iface %1 has incorrect format", iface);
+        return true;
       }
     });
 
 
-    if (invalid_if != "")
+    if (invalid_if != nil)
     {
       // error popup
       Popup::Error (sformat (_("The interface format '%1' is not valid"), invalid_if));
