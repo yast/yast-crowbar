@@ -1086,46 +1086,39 @@ map get_tabs_descr () {
 	// tab header
 	"header"	: _("N&etwork Mode"),
 	"contents"	: `HBox (`HSpacing(2), `VBox (
-	    `VSpacing (),
+            `VSpacing (),
             `HBox (
               "mode",
               "teaming"
             ),
             `VSpacing (),
-
-
             `Frame (_("Bastion Network"), `HBox (`HSpacing(0.5), `VBox (
-	      `VSpacing (0.4),
+              `VSpacing (0.4),
               `Left ("enable_bastion"),
-	      `VSpacing (0.4),
+              `VSpacing (0.4),
               "ip",
               `HBox (
-                `VBox (
-                  "use_vlan",
-                  `Label ("")
-                ),
+                `VBox ("use_vlan", `Label ("")),
                 `HWeight (1, "vlan"),
                 `HWeight (8, `Empty ())
               ),
               "router",
               `HBox (
-	        "subnet",
-	        "netmask",
-	        "broadcast"
+                "subnet",
+                "netmask",
+                "broadcast"
               ),
-	      `VSpacing (0.4),
+              `VSpacing (0.4),
               "conduit_if_list",
-	      `VSpacing (0.4)
-	    ), `HSpacing (0.5))),
-
-//            "conduit_if_list",
-	    `VStretch ()
-	), `HSpacing(2)),
-	"widget_names" : [
+              `VSpacing (0.4)
+            ), `HSpacing (0.5))),
+            `VStretch ()
+        ), `HSpacing(2)),
+        "widget_names" : [
             "mode", "teaming", "conduit_if_list",
             "enable_bastion",
             "ip", "vlan", "router", "subnet", "netmask", "broadcast", "use_vlan",
-	],
+        ],
     ],
     "networks"	: $[
 	// tab header
