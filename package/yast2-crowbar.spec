@@ -27,7 +27,7 @@ Source0:        %{name}-%{version}.tar.bz2
 
 Requires:	yast2 yast2-perl-bindings perl-JSON
 BuildRequires:	perl-XML-Writer update-desktop-files yast2 yast2-testsuite yast2-perl-bindings perl-JSON
-BuildRequires:  yast2-devtools >= 3.0.6
+BuildRequires:  yast2-devtools >= 3.1.10
 
 BuildArchitectures:	noarch
 
