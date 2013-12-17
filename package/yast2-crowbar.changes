@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Dec 17 13:54:13 CET 2013 - jsuchome@suse.cz
+
+- allow editing Router preference for bastion network
+- 2.27.32
+
+-------------------------------------------------------------------
 Wed Sep 25 12:27:34 CEST 2013 - jsuchome@suse.cz
 
 - move bastion network config to Network Mode tab
