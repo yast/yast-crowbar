@@ -392,6 +392,10 @@ Choose a different name."), name));
     return nil;
   }
 
+  string GetRouter () {
+    return (string) UI::QueryWidget (`id("router"), `Value);
+  }
+
   /*
    * Returns current subnet as filled in dialog
    */
@@ -494,7 +498,7 @@ Choose a different name."), name));
     {
         return;
     }
-    if ((key == "router" || key == "router_pref") && UI::QueryWidget (`id("router"), `Value) == "")
+    if ((key == "router" || key == "router_pref") && GetRouter () == "")
     {
         if (haskey (networks[current_network]:$[], key))
         {
@@ -617,7 +621,7 @@ Adapt them using 'Edit ranges' button."), current_network));
     }
     if (key == "router_pref" && event["ID"]:nil == "router")
     {
-        UI::ChangeWidget (`id ("router_pref"), `Enabled, UI::QueryWidget (`id("router"), `Value) != "");
+        UI::ChangeWidget (`id ("router_pref"), `Enabled, GetRouter () != "");
     }
     // store the value on exiting
     if (event["EventReason"]:"" == "ValueChanged")
