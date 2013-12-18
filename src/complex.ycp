@@ -97,6 +97,9 @@ symbol WriteDialog() {
   // bastion network interfaces (present in conduit_map)
   list<string> conduit_if_list        = [];
 
+  // initial router_pref value for bastion network
+  integer initial_router_pref           = 10;
+
   string current_network      = "admin";
 
   string current_user   = "";
@@ -352,6 +355,7 @@ Choose a different name."), name));
         y2warning ("iface %1 has incorrect format", iface);
         return true;
       }
+      return false;
     });
 
 
@@ -388,6 +392,10 @@ Choose a different name."), name));
     return nil;
   }
 
+  string GetRouter () {
+    return (string) UI::QueryWidget (`id("router"), `Value);
+  }
+
   /*
    * Returns current subnet as filled in dialog
    */
@@ -409,7 +417,11 @@ Choose a different name."), name));
    */
   define string GetBroadcast()
   {
-      return IP::ComputeBroadcast( GetSubnet(), GetNetmask());
+      string subnet     = GetSubnet();
+      string netmask    = GetNetmask();
+      if (subnet == "" || netmask == "")
+        return "";
+      return IP::ComputeBroadcast (subnet, netmask);
   }
 
   define term CreateItem( string name)
@@ -456,6 +468,10 @@ Choose a different name."), name));
     {
         UI::ChangeWidget (`id (id), `Enabled, networks[current_network,"use_vlan"]:false == true);
     }
+    if (id == "router_pref")
+    {
+        UI::ChangeWidget (`id (id), `Enabled, networks[current_network,"router"]:"" != "");
+    }
     UI::ChangeWidget (`id (id), `Enabled, !Crowbar::installed);
   }
 
@@ -482,11 +498,12 @@ Choose a different name."), name));
     {
         return;
     }
-    if (key == "router" && UI::QueryWidget (`id(key), `Value) == "")
+    if ((key == "router" || key == "router_pref") && GetRouter () == "")
     {
         if (haskey (networks[current_network]:$[], key))
         {
           // do not save empty router values to json
+          // do not save router_pref if router is not defined
           networks[current_network]       = remove (networks[current_network]:$[], key);
         }
         return;
@@ -601,6 +618,10 @@ Adapt them using 'Edit ranges' button."), current_network));
     if (key == "use_vlan" && event["ID"]:nil == "use_vlan")
     {
         UI::ChangeWidget (`id ("vlan"), `Enabled, UI::QueryWidget (`id(key), `Value) == true);
+    }
+    if (key == "router_pref" && event["ID"]:nil == "router")
+    {
+        UI::ChangeWidget (`id ("router_pref"), `Enabled, GetRouter () != "");
     }
     // store the value on exiting
     if (event["EventReason"]:"" == "ValueChanged")
@@ -796,6 +817,7 @@ Adapt them using 'Edit ranges' button."), current_network));
       UI::ChangeWidget (`id (w), `Enabled, enable_bastion);
     });
     UI::ChangeWidget (`id ("vlan"), `Enabled, enable_bastion && networks[current_network,"use_vlan"]:false == true);
+    UI::ChangeWidget (`id ("router_pref"), `Enabled, enable_bastion && networks[current_network,"router"]:"" != "");
   }
 
   /**
@@ -979,6 +1001,16 @@ Valid examples are <tt>+1g2</tt>, <tt>10g1</tt> or <tt>?1g2</tt>.</p>"),
 	"handle"	: HandleNetwork,
         "opt"           : [ `notify ],
     ],
+    "router_pref" : $[
+	"widget"	: `intfield,
+	// textentry label
+	"label"		: _("Router pre&ference"),
+        "no_help"       : true,
+	"init"		: InitInteger,
+	"store"		: StoreNetwork,
+	"handle"	: HandleNetwork,
+	"opt"		: [ `notify, `hstretch ],
+    ],
     "subnet" : $[
 	"widget"	: `textentry,
 	// textentry label
@@ -1100,7 +1132,7 @@ map get_tabs_descr () {
                 `HWeight (1, "vlan"),
                 `HWeight (8, `Empty ())
               ),
-              "router",
+              `HBox ("router", "router_pref"),
               `HBox (
                 "subnet",
                 "netmask",
@@ -1115,7 +1147,7 @@ map get_tabs_descr () {
         "widget_names" : [
             "mode", "teaming", "conduit_if_list",
             "enable_bastion",
-            "ip", "vlan", "router", "subnet", "netmask", "broadcast", "use_vlan",
+            "ip", "vlan", "router", "subnet", "netmask", "broadcast", "use_vlan", "router_pref"
         ],
     ],
     "networks"	: $[
@@ -1258,6 +1290,15 @@ symbol OverviewDialog() {
     {
       networks["bastion","ip"]  = networks["bastion","ranges","admin","start"]:"0";
       conduit_if_list   = get_conduit_if_list (networks["bastion"]:$[]);
+    }
+    // find out initial router_pref value for bastion network and set it lower than in admin network
+    initial_router_pref = networks["admin","router_pref"]:initial_router_pref;
+    if (initial_router_pref > 0)
+      initial_router_pref       = initial_router_pref - 1;
+
+    if (!haskey (networks["bastion"]:$[], "router_pref"))
+    {
+      networks["bastion","router_pref"] = initial_router_pref;
     }
 
     widget_description["tab"] = CWMTab::CreateWidget($[
