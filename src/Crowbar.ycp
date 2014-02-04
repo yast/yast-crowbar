@@ -56,8 +56,8 @@ string installed_file    = "/opt/dell/crowbar_framework/.crowbar-installed-ok";
 list<string> default_repos       = [
   "SLE-Cloud",
   "SLE-Cloud-PTF",
-  "SUSE-Cloud-2.0-Pool",
-  "SUSE-Cloud-2.0-Updates",
+  "SUSE-Cloud-3-Pool",
+  "SUSE-Cloud-3-Updates",
   "SLES11-SP3-Pool",
   "SLES11-SP3-Updates"
 ];
