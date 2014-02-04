@@ -852,7 +852,16 @@ map<string, map> widget_description	= $[
         "init"          : InitReposTable,
         "handle"        : HandleReposTable,
         // help text
-        "help"          : _("<p>Here you can edit the location of your update repositores.</p>")
+        "help"          : _("<p>Here you can edit the location of your <b>Update Repositories</b>.</p>
+<p>
+Some examples of how the URL could look like:
+</p><p>
+<ul>
+<li><i>http://smt.example.com/repo/\$RCE/SLES11-SP3-Pool/sle-11-x86_64/</i> for SMT server
+<li><i>http://manager.example.com/ks/dist/child/suse-cloud-3.0-pool-x86_64/sles11-sp3-x86_64/</i> for SUSE Manager Server.
+</p><p>
+For detailed description, check the Deployment Guide.
+</p>")
     ],
     "repo_url" : $[
 	"widget"	: `textentry,
