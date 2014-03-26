@@ -59,7 +59,9 @@ list<string> default_repos       = [
   "SUSE-Cloud-3-Pool",
   "SUSE-Cloud-3-Updates",
   "SLES11-SP3-Pool",
-  "SLES11-SP3-Updates"
+  "SLES11-SP3-Updates",
+  "SLE11-HAE-SP3-Pool",
+  "SLE11-HAE-SP3-Updates"
 ];
 
 
