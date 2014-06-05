@@ -493,7 +493,7 @@ Choose a different name."), name));
    * store the string value of given widget
    */
   define void StoreNetwork (string key, map event) {
-    if (size (networks) == 0 ||
+    if (size (networks) == 0 || key == "mode" ||
        (CWMTab::CurrentTab () == "network_mode" && !enable_bastion))
     {
         return;
