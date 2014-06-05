@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jun  5 13:20:53 CEST 2014 - jsuchome@suse.cz
+
+- do not write mode value into the bastion network map (bnc#881380)
+- 2.17.37
+
+-------------------------------------------------------------------
 Thu Apr 17 11:14:48 CEST 2014 - jsuchome@suse.cz
 
 - updated repositories labels to Cloud-4
