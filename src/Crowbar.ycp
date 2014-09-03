@@ -63,12 +63,12 @@ list<string> default_repos       = [
   "SLES11-SP3-Updates",
   "SLE11-HAE-SP3-Pool",
   "SLE11-HAE-SP3-Updates",
-  "SLE12-Cloud",
-  "SLE12-Cloud-PTF",
   "SUSE-Cloud-5-SLE12-Pool",
   "SUSE-Cloud-5-SLE12-Updates",
   "SLES12-Pool",
-  "SLES12-Updates"
+  "SLES12-Updates",
+  "SLE12-Cloud-Compute",
+  "SLE12-Cloud-Compute-PTF"
 ];
 
 
