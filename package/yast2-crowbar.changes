@@ -1,4 +1,19 @@
 -------------------------------------------------------------------
+Mon Sep 22 13:17:03 CEST 2014 - jsuchome@suse.cz
+
+- Cloud4 and Cloud5 changes ported to master:
+  Use /etc/crowbar/network.json as path for network configuration
+  enable editing users
+  enable editing update repositories (provisioner.json)
+  move bastion network config to Network Mode tab
+  allow editing Router preference for bastion network
+  help text for Update Repositories (bnc#861985)
+  added HA repositories  (bnc#870175)
+  do not write mode value into the bastion network map (bnc#881380)
+  updated repositories labels for Cloud5; offer also SLE12 repos
+- 3.1.1
+
+-------------------------------------------------------------------
 Wed Sep 18 14:53:26 UTC 2013 - lslezak@suse.cz
 
 - do not use *.spec.in template, use *.spec file with RPM macros
