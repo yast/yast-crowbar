@@ -45,7 +45,28 @@ module Yast
       # Path to the files with JSON data
       @network_file = "/etc/crowbar/network.json"
       @crowbar_file = "/etc/crowbar/crowbar.json"
+      @provisioner_file = "/etc/crowbar/provisioner.json"
       @installed_file = "/opt/dell/crowbar_framework/.crowbar-installed-ok"
+
+      # Names of default repositories available for current product
+      # For Cloud5, we support mixed SLE11/SLE12 environments
+      @default_repos = [
+        "SLE-Cloud",
+        "SLE-Cloud-PTF",
+        "SUSE-Cloud-5-Pool",
+        "SUSE-Cloud-5-Updates",
+        "SLES11-SP3-Pool",
+        "SLES11-SP3-Updates",
+        "SLE11-HAE-SP3-Pool",
+        "SLE11-HAE-SP3-Updates",
+        "SLES12-Pool",
+        "SLES12-Updates",
+        "SLE12-Cloud-Compute",
+        "SLE12-Cloud-Compute-PTF",
+        "SLE12-Cloud-5-Compute-Pool",
+        "SLE12-Cloud-5-Compute-Updates"
+      ]
+
 
       # map of network template configuration data
       @template_network = {}
@@ -53,10 +74,20 @@ module Yast
       # map of crowbar template configuration data
       @template_crowbar = {}
 
-      # networks subset of global configuration map
+      # map of provisioner configuration data
+      @provisioner = {}
+
+      # repos subset of global provisioner configuration map
+      @repos = {}
+
+      # networks subset of global network configuration map
       @networks = {}
 
-      # network teaming subset of global configuration map
+      # conduit_map subset of global network configuration map
+      @conduit_map = []
+
+
+      # network teaming subset of global network configuration map
       @teaming = {}
 
       # network mode; valid values are: single | dual | team
@@ -90,7 +121,6 @@ module Yast
       return value == true ? "true" : "false" if Ops.is_boolean?(value)
       deep_copy(value)
     end
-
     def adapt_map(input_map)
       input_map = deep_copy(input_map)
       Builtins.foreach(input_map) do |key, val|
@@ -162,6 +192,11 @@ module Yast
         ["attributes", "network", "mode"],
         ""
       )
+      @conduit_map = Ops.get_list(
+        @template_network,
+        ["attributes", "network", "conduit_map"],
+        []
+      )
 
       @template_crowbar = Json.Read(@crowbar_file)
       @users = Ops.get_map(
@@ -169,6 +204,26 @@ module Yast
         ["attributes", "crowbar", "users"],
         {}
       )
+
+      if FileUtils.Exists(@provisioner_file)
+        @provisioner = Json.Read(@provisioner_file)
+        @repos = Ops.get_map(
+          @provisioner,
+          ["attributes", "provisioner", "suse", "autoyast", "repos"],
+          {}
+        )
+      else
+        @provisioner = {
+          "attributes" => {
+            "provisioner" => { "suse" => { "autoyast" => {} } }
+          }
+        }
+      end
+
+      # fill in all the repo names for the UI
+      Builtins.foreach(@default_repos) do |repo|
+        Ops.set(@repos, repo, { "url" => "" }) if !Builtins.haskey(@repos, repo)
+      end
 
       Progress.NextStage
 
@@ -205,6 +260,11 @@ module Yast
 
       Ops.set(
         @template_network,
+        ["attributes", "network", "conduit_map"],
+        @conduit_map
+      )
+      Ops.set(
+        @template_network,
         ["attributes", "network", "networks"],
         @networks
       )
@@ -220,20 +280,40 @@ module Yast
         Report.Error(Message.ErrorWritingFile(@crowbar_file))
       end
 
+      # remove empty repo definitions
+      @repos = Builtins.filter(@repos) do |name, repo|
+        Ops.get_string(repo, "url", "") != "" ||
+          Ops.get_boolean(repo, "ask_on_error", false)
+      end
+      # remove url if it is empty and non-default ask_on_error stays
+      Builtins.foreach(@repos) do |name, repo|
+        if Ops.get(repo, "url") == ""
+          Ops.set(@repos, name, Builtins.remove(repo, "url"))
+        end
+      end
+
+      Ops.set(
+        @provisioner,
+        ["attributes", "provisioner", "suse", "autoyast", "repos"],
+        @repos
+      )
+      if Json.Write(adapt_map(@provisioner), @provisioner_file) == nil
+        Report.Error(Message.ErrorWritingFile(@provisioner_file))
+      end
+
       Progress.NextStage
 
       true
     end
 
     publish :variable => :network_file, :type => "string"
-    publish :variable => :crowbar_file, :type => "string"
-    publish :variable => :installed_file, :type => "string"
+    publish :variable => :repos, :type => "map <string, map>"
     publish :variable => :networks, :type => "map <string, map>"
+    publish :variable => :conduit_map, :type => "list <map>"
     publish :variable => :teaming, :type => "map <string, integer>"
     publish :variable => :mode, :type => "string"
     publish :variable => :users, :type => "map <string, map>"
     publish :variable => :installed, :type => "boolean"
-    publish :function => :adapt_map, :type => "map <string, any> (map <string, any>)"
     publish :function => :Modified, :type => "boolean ()"
     publish :function => :Read, :type => "boolean ()"
     publish :function => :Write, :type => "boolean ()"
