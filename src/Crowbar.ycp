@@ -223,7 +223,6 @@ global boolean Read() {
     if (FileUtils::Exists (provisioner_file))
     {
         provisioner     = Json::Read (provisioner_file);
-        repos           = provisioner["attributes","provisioner","suse","autoyast","repos"]:$[];
     }
     else
     {
@@ -232,18 +231,31 @@ global boolean Read() {
             "provisioner"       : $[
               "suse"            : $[
                 "autoyast"      : $[
+                  "repos"       : $[
+                    "common"      : $[],
+                    "suse-11.3"   : $[],
+                    "suse-12.0"   : $[]
+                  ]
                 ]
               ]
             ]
           ]
         ];
     }
+    repos       = provisioner["attributes","provisioner","suse","autoyast","repos"]:$[];
+
+    if (!haskey (repos, "common"))
+    {
+      repos["common"]   = $[];
+    }
 
     // fill in all the repo names for the UI
     foreach (string repo, default_repos, {
-      if (!haskey (repos, repo))
+      if (!haskey (repos["common"]:$[], repo) &&
+          !haskey (repos["suse-11.3"]:$[], repo) &&
+          !haskey (repos["suse-12.0"]:$[], repo))
       {
-        repos[repo]     = $[ "url" : "" ];
+        repos["common",repo]     = $[ "url" : "" ];
       }
     });
 
@@ -294,14 +306,15 @@ global boolean Write() {
       Report::Error (Message::ErrorWritingFile (crowbar_file));
     }
 
-    // remove empty repo definitions
-    repos       = filter (string name, map repo, repos, {
-      return repo["url"]:"" != "" || repo["ask_on_error"]:false;
-    });
-    // remove url if it is empty and non-default ask_on_error stays
-    foreach (string name, map repo, repos, {
-      if (repo["url"]:nil == "")
-        repos[name]     = remove (repo, "url");
+    foreach (string platform_name, map platform, repos, {
+      foreach (string name, map repo, (map<string,map>) platform, {
+        // remove empty repo definitions
+        if (repo["url"]:"" == "" && !(repo["ask_on_error"]:false))
+          repos[platform_name]          = remove (repos[platform_name]:$[], name);
+        // remove just url if it is empty and non-default ask_on_error stays
+        else if (repo["url"]:"" == "")
+          repos[platform_name,name]     = remove (repo, "url");
+      });
     });
 
     provisioner["attributes","provisioner","suse","autoyast","repos"]   = repos;

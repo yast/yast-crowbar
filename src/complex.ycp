@@ -104,15 +104,31 @@ symbol WriteDialog() {
 
   string current_user   = "";
 
+  // currently selected repository
   string current_repo   = "";
 
+  // platform value for currently selected repository
+  string current_repo_platform   = "common";
+
+  map<string,string> platform2label   = $[
+    // radio button item: target repository is common for all available platform
+    "common"    : _("Common for All"),
+    // target platform name
+    "suse-11.3" : _("SLES 11 SP3"),
+    // target platform name
+    "suse-12.0" : _("SLES 12")
+  ];
 
   define void InitAskOnError (string id) {
-    UI::ChangeWidget (`id (id), `Value, repos[current_repo,"ask_on_error"]:false == true);
+    UI::ChangeWidget (`id (id), `Value, repos[current_repo_platform,current_repo,"ask_on_error"]:false == true);
   }
 
   define void InitRepoURL (string id) {
-    UI::ChangeWidget (`id (id), `Value, repos[current_repo,"url"]:"");
+    UI::ChangeWidget (`id (id), `Value, repos[current_repo_platform,current_repo,"url"]:"");
+  }
+
+  define void InitTargetPlatform (string id) {
+    UI::ChangeWidget (`id (id), `Value, current_repo_platform);
   }
 
   /**
@@ -120,9 +136,18 @@ symbol WriteDialog() {
    */
   define void InitReposTable (string id) {
 
-    UI::ChangeWidget (`id ( id), `Items, maplist (string name, map r, repos, {
-      return `item (`id (name), name, r["url"]:"", r["ask_on_error"]:false ? UI::Glyph (`CheckMark) : " ");
-    }));
+    list<term> repo_items = [];
+    foreach (string prod_name, map platform, repos, {
+      foreach (string name, map r, (map<string,map>) platform, {
+        repo_items = add (repo_items,
+          `item (`id (name), name,
+            r["url"]:"",
+            r["ask_on_error"]:false ? UI::Glyph (`CheckMark) : " ",
+            prod_name)
+        );
+      });
+    });
+    UI::ChangeWidget (`id ( id), `Items, repo_items);
     if (current_repo != "")
       UI::ChangeWidget (`id(id), `CurrentItem, current_repo);
   }
@@ -136,14 +161,108 @@ symbol WriteDialog() {
     if (selected != nil && selected != current_repo)
     {
       current_repo      = selected;
+      current_repo_platform      = (string) UI::QueryWidget (`id(key), `Cell(selected,3));
       InitRepoURL ("repo_url");
       InitAskOnError ("ask_on_error");
+      InitTargetPlatform ("target_platform");
     }
     return nil;
   }
 
+  /**
+   * handler for adding new repository button
+   */
+  symbol HandleAddRepositoryButton (string key, map event) {
+    any ID	= event["ID"]:nil;
+    if (ID != key)
+      return nil;
+
+    UI::OpenDialog (`opt (`decorated), `HBox (`HSpacing (1), `VBox(
+      `VSpacing (0.5),
+      `HSpacing (65),
+      // text entry label
+      `InputField (`id (`name), `opt (`hstretch), _("Name")),
+      // text entry label
+      `InputField (`id (`url), `opt (`hstretch), _("URL")),
+      `HBox (
+        `HSpacing (0.5),
+        // text entry label
+        `CheckBox (`id (`ask_on_error), `opt (`hstretch), _("Ask On Error"))
+      ),
+      `RadioButtonGroup (`id(`platform), `Frame(_("Target Platform"), `HBox(
+        `HSpacing (),
+        `VBox (
+          // radiobutton label
+          `Left (`RadioButton (`id ("common"), platform2label["common"]:"", true)),
+          `Left (`RadioButton (`id ("suse-11.3"), platform2label["suse-11.3"]:"")),
+          `Left (`RadioButton (`id ("suse-12.0"), platform2label["suse-12.0"]:""))
+        )
+      ))),
+      `VSpacing (0.5),
+      `ButtonBox (
+        `PushButton (`id(`ok), Label::OKButton()),
+        `PushButton (`id(`cancel), Label::CancelButton())
+      ),
+      `VSpacing (0.5)), `HSpacing (1))
+    );
+
+    symbol ret          = `not_next;
+    string name         = "";
+    string platform     = "common";
+
+    while (true)
+    {
+      ret     = (symbol) UI::UserInput ();
+      if (ret == `cancel)
+        break;
+      if (ret == `ok)
+      {
+        name            = (string) UI::QueryWidget (`id (`name), `Value);
+        platform        = (string) UI::QueryWidget (`id (`platform), `Value);
+
+        if (name == "")
+        {
+          ret = `cancel;
+          break;
+        }
+
+        foreach (string platform_name, map platform_m, repos, {
+          if (haskey (platform_m, name))
+          {
+            // error popup
+            Popup::Error (sformat (_("Repository '%1' already exists.
+Choose a different name."), name));
+            UI::SetFocus (`id(`name));
+            ret = `not_next;
+          }
+        });
+        if (ret == `ok) break;
+      }
+    }
+
+    if (ret == `ok)
+    {
+      current_repo              = name;
+      current_repo_platform     = platform;
+      repos[current_repo_platform,current_repo] = $[
+        "url"           : UI::QueryWidget (`id (`url), `Value),
+        "ask_on_error"  : UI::QueryWidget (`id (`ask_on_error), `Value)
+      ];
+    }
+    UI::CloseDialog ();
+    if (ret == `ok)
+    {
+      InitReposTable ("repos_table");
+      InitRepoURL ("repo_url");
+      InitAskOnError ("ask_on_error");
+      InitTargetPlatform ("target_platform");
+    }
+    return nil;
+  }
+
+
   define symbol StoreRepoURL (string key, map event) {
-    repos[current_repo,"url"]   = UI::QueryWidget (`id (key), `Value);
+    repos[current_repo_platform,current_repo,"url"]   = UI::QueryWidget (`id (key), `Value);
     return nil;
   }
 
@@ -160,7 +279,7 @@ symbol WriteDialog() {
   }
 
   define symbol StoreAskOnError (string key, map event) {
-    repos[current_repo,"ask_on_error"]   = UI::QueryWidget (`id (key), `Value) == true;
+    repos[current_repo_platform,current_repo,"ask_on_error"]   = UI::QueryWidget (`id (key), `Value) == true;
     return nil;
   }
 
@@ -176,6 +295,21 @@ symbol WriteDialog() {
     return nil;
   }
 
+  define symbol StoreTargetPlatform (string key, map event) {
+    return nil;
+  }
+
+  define symbol HandleTargetPlatform (string key, map event) {
+    string orig_repo_platform  = current_repo_platform;
+    current_repo_platform = (string) UI::QueryWidget (`id (key), `Value);
+    // move the repo to the new submap
+    if (current_repo_platform != orig_repo_platform)
+    {
+      repos[current_repo_platform,current_repo] = repos[orig_repo_platform,current_repo]:$[];
+      repos[orig_repo_platform] = remove (repos[orig_repo_platform]:$[], current_repo);
+    }
+    return nil;
+  }
 
 
   /**
@@ -843,11 +977,11 @@ map<string, map> widget_description	= $[
         "widget"        : `custom,
         "custom_widget" :
           `VBox (
-              `VWeight (2, `Table (`id( "repos_table"),
+              `Table (`id( "repos_table"),
                   `opt (`notify, `immediate, `hstretch),
                   // table header
-                  `header (_("Repository Name"), _("URL"), _("Ask On Error"))
-              ))
+                  `header (_("Repository Name"), _("URL"), _("Ask On Error"), _("Target Platform"))
+              )
           ),
         "init"          : InitReposTable,
         "handle"        : HandleReposTable,
@@ -886,6 +1020,32 @@ For detailed description, check the Deployment Guide.
 	"store"		: StoreAskOnError,
 	"handle"	: HandleAskOnError,
         "opt"           : [ `notify ],
+    ],
+    "target_platform" : $[
+	"widget"	: `custom,
+        "custom_widget" :
+            // radiobutton group label
+            `RadioButtonGroup (`id("target_platform"), `Frame(_("Target Platform"), `HBox(
+              `HSpacing (),
+              `VBox(
+                // radiobutton label
+                `Left (`RadioButton (`id ("common"), `opt(`notify), platform2label["common"]:"")),
+                `Left (`RadioButton (`id ("suse-11.3"), `opt(`notify), platform2label["suse-11.3"]:"")),
+                `Left (`RadioButton (`id ("suse-12.0"), `opt(`notify), platform2label["suse-12.0"]:""))
+              )
+            ))),
+        "no_help"       : true,
+	"init"		: InitTargetPlatform,
+	"store"		: StoreTargetPlatform,
+	"handle"	: HandleTargetPlatform,
+        "opt"           : [ `notify ],
+    ],
+    "add_repository"	: $[
+	"widget"	: `push_button,
+        // push button label
+	"label"		: _("A&dd Repository"),
+        "no_help"       : true,
+	"handle"	: HandleAddRepositoryButton
     ],
     // ---------------- widgets for Users tab
     "users_table" : $[
@@ -1202,10 +1362,13 @@ map get_tabs_descr () {
             "repo_url",
             // label (hint for user)
             `Left (`Label (_("Empty URL means that default value will be used."))),
-	    `VStretch ()
+	    `VSpacing (0.4),
+            `Left ("target_platform"),
+	    `VSpacing (),
+            `Left ("add_repository")
 	), `HSpacing(2)),
 	"widget_names" : [
-            "repos_table", "repo_url", "ask_on_error"
+            "target_platform", "repos_table", "repo_url", "ask_on_error", "add_repository"
 	],
     ],
   ];
