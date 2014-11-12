@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov 12 10:58:40 CET 2014 - jsuchome@suse.cz
+
+- enabled adding new repositories
+- added option to specify repository target platform (bnc#895086)
+- 2.17.40 
+
+-------------------------------------------------------------------
 Fri Sep  5 18:37:39 CEST 2014 - jsuchome@suse.cz
 
 - updated repository names
