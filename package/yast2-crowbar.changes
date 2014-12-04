@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Dec  4 09:49:54 UTC 2014 - jreidinger@suse.com
+
+- remove X-KDE-Library from desktop file (bnc#899104)
+
+-------------------------------------------------------------------
 Mon Sep 22 13:17:03 CEST 2014 - jsuchome@suse.cz
 
 - Cloud4 and Cloud5 changes ported to master:
