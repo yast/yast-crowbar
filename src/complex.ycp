@@ -261,9 +261,8 @@ Choose a different name."), name));
   }
 
 
-  define symbol StoreRepoURL (string key, map event) {
+  define void StoreRepoURL (string key, map event) {
     repos[current_repo_platform,current_repo,"url"]   = UI::QueryWidget (`id (key), `Value);
-    return nil;
   }
 
   define symbol HandleRepoURL (string key, map event) {
@@ -278,9 +277,8 @@ Choose a different name."), name));
     return nil;
   }
 
-  define symbol StoreAskOnError (string key, map event) {
+  define void StoreAskOnError (string key, map event) {
     repos[current_repo_platform,current_repo,"ask_on_error"]   = UI::QueryWidget (`id (key), `Value) == true;
-    return nil;
   }
 
   define symbol HandleAskOnError (string key, map event) {
@@ -295,16 +293,16 @@ Choose a different name."), name));
     return nil;
   }
 
-  define symbol StoreTargetPlatform (string key, map event) {
-    return nil;
-  }
-
   define symbol HandleTargetPlatform (string key, map event) {
     string orig_repo_platform  = current_repo_platform;
     current_repo_platform = (string) UI::QueryWidget (`id (key), `Value);
     // move the repo to the new submap
     if (current_repo_platform != orig_repo_platform)
     {
+      if (!haskey (repos, current_repo_platform))
+      {
+          repos[current_repo_platform]    = $[];
+      }
       repos[current_repo_platform,current_repo] = repos[orig_repo_platform,current_repo]:$[];
       repos[orig_repo_platform] = remove (repos[orig_repo_platform]:$[], current_repo);
     }
@@ -1001,10 +999,6 @@ For detailed description, check the Deployment Guide.
 	"widget"	: `textentry,
 	// textentry label
 	"label"		: _("Repository &URL"),
-        /* FIXME
-        "validate_type" : `function,
-        "validate_function": ValidateURL,
-        */
         "no_help"       : true,
 	"init"		: InitRepoURL,
 	"store"		: StoreRepoURL,
@@ -1036,7 +1030,6 @@ For detailed description, check the Deployment Guide.
             ))),
         "no_help"       : true,
 	"init"		: InitTargetPlatform,
-	"store"		: StoreTargetPlatform,
 	"handle"	: HandleTargetPlatform,
         "opt"           : [ `notify ],
     ],
