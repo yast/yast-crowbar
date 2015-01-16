@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jan 15 13:33:52 CET 2015 - jsuchome@suse.cz
+
+- target platform for repository is not saved when such platform
+  submap doesn't exist yet (bnc#913223)
+- 2.17.41
+
+-------------------------------------------------------------------
 Wed Nov 12 10:58:40 CET 2014 - jsuchome@suse.cz
 
 - enabled adding new repositories
