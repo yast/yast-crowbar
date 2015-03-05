@@ -57,10 +57,10 @@ string installed_file    = "/opt/dell/crowbar_framework/.crowbar-installed-ok";
  * The values are target node platform for those repositories
  */
 map<string,string> default_repos       = $[
-  "SUSE-Cloud-5-Pool"                   : "common",
-  "SUSE-Cloud-5-Updates"                : "common",
   "SLE-Cloud"                           : "suse-11.3",
   "SLE-Cloud-PTF"                       : "suse-11.3",
+  "SUSE-Cloud-5-Pool"                   : "suse-11.3",
+  "SUSE-Cloud-5-Updates"                : "suse-11.3",
   "SLES11-SP3-Pool"                     : "suse-11.3",
   "SLES11-SP3-Updates"                  : "suse-11.3",
   "SLE11-HAE-SP3-Pool"                  : "suse-11.3",
@@ -71,7 +71,8 @@ map<string,string> default_repos       = $[
   "SLE12-Cloud-Compute-PTF"             : "suse-12.0",
   "SLE12-Cloud-5-Compute-Pool"          : "suse-12.0",
   "SLE12-Cloud-5-Compute-Updates"       : "suse-12.0",
-  "SUSE Enterprise Storage"             : "suse-12.0"
+  "SUSE-Enterprise-Storage-1.0-Pool"    : "suse-12.0",
+  "SUSE-Enterprise-Storage-1.0-Updates" : "suse-12.0"
 ];
 
 /**
