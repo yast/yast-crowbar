@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Mar  5 10:53:36 CET 2015 - jsuchome@suse.cz
+
+- offer SUSE Enterprise Storage repositories by default(bnc#920384)
+- offer correct target platform for default repositories
+- 2.17.42
+
+-------------------------------------------------------------------
 Thu Jan 15 13:33:52 CET 2015 - jsuchome@suse.cz
 
 - target platform for repository is not saved when such platform
