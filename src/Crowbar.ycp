@@ -69,8 +69,8 @@ map<string,string> default_repos       = $[
   "SLES12-Updates"                      : "suse-12.0",
   "SLE12-Cloud-Compute"                 : "suse-12.0",
   "SLE12-Cloud-Compute-PTF"             : "suse-12.0",
-  "SLE12-Cloud-5-Compute-Pool"          : "suse-12.0",
-  "SLE12-Cloud-5-Compute-Updates"       : "suse-12.0",
+  "SLE-12-Cloud-Compute5-Pool"          : "suse-12.0",
+  "SLE-12-Cloud-Compute5-Updates"       : "suse-12.0",
   "SUSE-Enterprise-Storage-1.0-Pool"    : "suse-12.0",
   "SUSE-Enterprise-Storage-1.0-Updates" : "suse-12.0"
 ];
