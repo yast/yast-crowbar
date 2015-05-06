@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu May  7 06:59:04 UTC 2015 - vuntz@suse.com
+
+- Update names of repos for Cloud 6
+- 2.17.44
+
+-------------------------------------------------------------------
 Thu Mar  5 10:53:36 CET 2015 - jsuchome@suse.cz
 
 - offer SUSE Enterprise Storage repositories by default(bnc#920384)
