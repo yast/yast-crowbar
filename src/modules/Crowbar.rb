@@ -49,22 +49,20 @@ module Yast
       @installed_file = "/opt/dell/crowbar_framework/.crowbar-installed-ok"
 
       # Names of default repositories available for current product
-      # For Cloud5, we support mixed SLE11/SLE12 environments
+      # For Cloud6, we support mixed SLE11/SLE12 environments
       @default_repos = [
         "SLE-Cloud",
         "SLE-Cloud-PTF",
-        "SUSE-Cloud-5-Pool",
-        "SUSE-Cloud-5-Updates",
+        "SUSE-OpenStack-Cloud-SLE11-6-Pool",
+        "SUSE-OpenStack-Cloud-SLE11-6-Updates",
         "SLES11-SP3-Pool",
         "SLES11-SP3-Updates",
         "SLE11-HAE-SP3-Pool",
         "SLE11-HAE-SP3-Updates",
         "SLES12-Pool",
         "SLES12-Updates",
-        "SLE12-Cloud-Compute",
-        "SLE12-Cloud-Compute-PTF",
-        "SLE12-Cloud-5-Compute-Pool",
-        "SLE12-Cloud-5-Compute-Updates"
+        "SUSr-OpenStack-Cloud-6-Pool",
+        "SUSE-OpenStack-Cloud-6-Updates"
       ]
 
 
