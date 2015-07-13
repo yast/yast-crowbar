@@ -53,22 +53,23 @@ module Yast
       #
       # The values are target node platform for those repositories
       @default_repos = {
-        "SLE-Cloud"                           => "suse-11.3",
-        "SLE-Cloud-PTF"                       => "suse-11.3",
-        "SUSE-Cloud-5-Pool"                   => "suse-11.3",
-        "SUSE-Cloud-5-Updates"                => "suse-11.3",
-        "SLES11-SP3-Pool"                     => "suse-11.3",
-        "SLES11-SP3-Updates"                  => "suse-11.3",
-        "SLE11-HAE-SP3-Pool"                  => "suse-11.3",
-        "SLE11-HAE-SP3-Updates"               => "suse-11.3",
-        "SLES12-Pool"                         => "suse-12.0",
-        "SLES12-Updates"                      => "suse-12.0",
-        "SLE12-Cloud-Compute"                 => "suse-12.0",
-        "SLE12-Cloud-Compute-PTF"             => "suse-12.0",
-        "SLE-12-Cloud-Compute5-Pool"          => "suse-12.0",
-        "SLE-12-Cloud-Compute5-Updates"       => "suse-12.0",
-        "SUSE-Enterprise-Storage-1.0-Pool"    => "suse-12.0",
-        "SUSE-Enterprise-Storage-1.0-Updates" => "suse-12.0"
+        "SLE-Cloud"                             => "suse-11.3",
+        "SLE-Cloud-PTF"                         => "suse-11.3",
+        "SUSE-OpenStack-Cloud-SLE11-6-Pool"     => "suse-11.3",
+        "SUSE-OpenStack-Cloud-SLE11-6-Updates"  => "suse-11.3",
+        "SLES11-SP3-Pool"                       => "suse-11.3",
+        "SLES11-SP3-Updates"                    => "suse-11.3",
+        "SLE11-HAE-SP3-Pool"                    => "suse-11.3",
+        "SLE11-HAE-SP3-Updates"                 => "suse-11.3",
+        # sle12 based repos:
+        "SLES12-Pool"                           => "suse-12.0",
+        "SLES12-Updates"                        => "suse-12.0",
+        "SLE-Cloud"                             => "suse-12.0",
+        "SLE-Cloud-PTF"                         => "suse-12.0",
+        "SUSE-OpenStack-Cloud-6-Pool"           => "suse-12.0",
+        "SUSE-OpenStack-Cloud-6-Updates"        => "suse-12.0",
+        "SUSE-Enterprise-Storage-1.0-Pool"      => "suse-12.0",
+        "SUSE-Enterprise-Storage-1.0-Updates"   => "suse-12.0"
       }
 
       # map of network template configuration data
