@@ -48,25 +48,28 @@ module Yast
       @provisioner_file = "/etc/crowbar/provisioner.json"
       @installed_file = "/opt/dell/crowbar_framework/.crowbar-installed-ok"
 
-      # Names of default repositories available for current product
+      # The keys are the names of default repositories available for current product
       # For Cloud5, we support mixed SLE11/SLE12 environments
-      @default_repos = [
-        "SLE-Cloud",
-        "SLE-Cloud-PTF",
-        "SUSE-Cloud-5-Pool",
-        "SUSE-Cloud-5-Updates",
-        "SLES11-SP3-Pool",
-        "SLES11-SP3-Updates",
-        "SLE11-HAE-SP3-Pool",
-        "SLE11-HAE-SP3-Updates",
-        "SLES12-Pool",
-        "SLES12-Updates",
-        "SLE12-Cloud-Compute",
-        "SLE12-Cloud-Compute-PTF",
-        "SLE12-Cloud-5-Compute-Pool",
-        "SLE12-Cloud-5-Compute-Updates"
-      ]
-
+      #
+      # The values are target node platform for those repositories
+      @default_repos = {
+        "SLE-Cloud"                           => "suse-11.3",
+        "SLE-Cloud-PTF"                       => "suse-11.3",
+        "SUSE-Cloud-5-Pool"                   => "suse-11.3",
+        "SUSE-Cloud-5-Updates"                => "suse-11.3",
+        "SLES11-SP3-Pool"                     => "suse-11.3",
+        "SLES11-SP3-Updates"                  => "suse-11.3",
+        "SLE11-HAE-SP3-Pool"                  => "suse-11.3",
+        "SLE11-HAE-SP3-Updates"               => "suse-11.3",
+        "SLES12-Pool"                         => "suse-12.0",
+        "SLES12-Updates"                      => "suse-12.0",
+        "SLE12-Cloud-Compute"                 => "suse-12.0",
+        "SLE12-Cloud-Compute-PTF"             => "suse-12.0",
+        "SLE-12-Cloud-Compute5-Pool"          => "suse-12.0",
+        "SLE-12-Cloud-Compute5-Updates"       => "suse-12.0",
+        "SUSE-Enterprise-Storage-1.0-Pool"    => "suse-12.0",
+        "SUSE-Enterprise-Storage-1.0-Updates" => "suse-12.0"
+      }
 
       # map of network template configuration data
       @template_network = {}
@@ -207,22 +210,38 @@ module Yast
 
       if FileUtils.Exists(@provisioner_file)
         @provisioner = Json.Read(@provisioner_file)
-        @repos = Ops.get_map(
-          @provisioner,
-          ["attributes", "provisioner", "suse", "autoyast", "repos"],
-          {}
-        )
       else
         @provisioner = {
           "attributes" => {
-            "provisioner" => { "suse" => { "autoyast" => {} } }
+            "provisioner" => {
+              "suse" => {
+                "autoyast" => {
+                  "repos" => {
+                    "common"    => {},
+                    "suse-11.3" => {},
+                    "suse-12.0" => {}
+                  }
+                }
+              }
+            }
           }
         }
       end
+      @repos = Ops.get_map(
+        @provisioner,
+        ["attributes", "provisioner", "suse", "autoyast", "repos"],
+        {}
+      )
+
+      Ops.set(@repos, "common", {}) if !Builtins.haskey(@repos, "common")
 
       # fill in all the repo names for the UI
-      Builtins.foreach(@default_repos) do |repo|
-        Ops.set(@repos, repo, { "url" => "" }) if !Builtins.haskey(@repos, repo)
+      Builtins.foreach(@default_repos) do |repo, target_product|
+        if !Builtins.haskey(Ops.get(@repos, "common", {}), repo) &&
+            !Builtins.haskey(Ops.get(@repos, "suse-11.3", {}), repo) &&
+            !Builtins.haskey(Ops.get(@repos, "suse-12.0", {}), repo)
+          Ops.set(@repos, [target_product, repo], { "url" => "" })
+        end
       end
 
       Progress.NextStage
@@ -280,15 +299,22 @@ module Yast
         Report.Error(Message.ErrorWritingFile(@crowbar_file))
       end
 
-      # remove empty repo definitions
-      @repos = Builtins.filter(@repos) do |name, repo|
-        Ops.get_string(repo, "url", "") != "" ||
-          Ops.get_boolean(repo, "ask_on_error", false)
-      end
-      # remove url if it is empty and non-default ask_on_error stays
-      Builtins.foreach(@repos) do |name, repo|
-        if Ops.get(repo, "url") == ""
-          Ops.set(@repos, name, Builtins.remove(repo, "url"))
+      Builtins.foreach(@repos) do |platform_name, platform|
+        Builtins.foreach(
+          Convert.convert(platform, :from => "map", :to => "map <string, map>")
+        ) do |name, repo|
+          # remove empty repo definitions
+          if Ops.get_string(repo, "url", "") == "" &&
+              !Ops.get_boolean(repo, "ask_on_error", false)
+            Ops.set(
+              @repos,
+              platform_name,
+              Builtins.remove(Ops.get(@repos, platform_name, {}), name)
+            )
+          # remove just url if it is empty and non-default ask_on_error stays
+          elsif Ops.get_string(repo, "url", "") == ""
+            Ops.set(@repos, [platform_name, name], Builtins.remove(repo, "url"))
+          end
         end
       end
 
