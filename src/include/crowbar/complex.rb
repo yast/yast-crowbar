@@ -80,20 +80,37 @@ module Yast
 
       @current_user = ""
 
+      # currently selected repository
       @current_repo = ""
+
+      # platform value for currently selected repository
+      @current_repo_platform = "common"
+
+      @platform2label = {
+        # radio button item: target repository is common for all available platform
+        "common"    => _(
+          "Common for All"
+        ),
+        # target platform name
+        "suse-11.3" => _("SLES 11 SP3"),
+        # target platform name
+        "suse-12.0" => _("SLES 12")
+      }
 
       @widget_description = {
         # ---------------- widgets for Repositories tab
         "repos_table"     => {
           "widget"        => :custom,
           "custom_widget" => VBox(
-            VWeight(
-              2,
-              Table(
-                Id("repos_table"),
-                Opt(:notify, :immediate, :hstretch),
-                # table header
-                Header(_("Repository Name"), _("URL"), _("Ask On Error"))
+            Table(
+              Id("repos_table"),
+              Opt(:notify, :immediate, :hstretch),
+              # table header
+              Header(
+                _("Repository Name"),
+                _("URL"),
+                _("Ask On Error"),
+                _("Target Platform")
               )
             )
           ),
@@ -120,12 +137,9 @@ module Yast
           "widget"  => :textentry,
           # textentry label
           "label"   => _("Repository &URL"),
-          # FIXME
-          # "validate_type" : `function,
-          # "validate_function": ValidateURL,
           "no_help" => true,
           "init"    => fun_ref(method(:InitRepoURL), "void (string)"),
-          "store"   => fun_ref(method(:StoreRepoURL), "symbol (string, map)"),
+          "store"   => fun_ref(method(:StoreRepoURL), "void (string, map)"),
           "handle"  => fun_ref(method(:HandleRepoURL), "symbol (string, map)"),
           "opt"     => [:notify]
         },
@@ -135,12 +149,70 @@ module Yast
           "label"   => _("&Ask On Error"),
           "no_help" => true,
           "init"    => fun_ref(method(:InitAskOnError), "void (string)"),
-          "store"   => fun_ref(method(:StoreAskOnError), "symbol (string, map)"),
+          "store"   => fun_ref(method(:StoreAskOnError), "void (string, map)"),
           "handle"  => fun_ref(
             method(:HandleAskOnError),
             "symbol (string, map)"
           ),
           "opt"     => [:notify]
+        },
+        "target_platform" => {
+          "widget"        => :custom,
+          "custom_widget" =>
+            # radiobutton group label
+            RadioButtonGroup(
+              Id("target_platform"),
+              Frame(
+                _("Target Platform"),
+                HBox(
+                  HSpacing(),
+                  VBox(
+                    # radiobutton label
+                    Left(
+                      RadioButton(
+                        Id("common"),
+                        Opt(:notify),
+                        Ops.get(@platform2label, "common", "")
+                      )
+                    ),
+                    Left(
+                      RadioButton(
+                        Id("suse-11.3"),
+                        Opt(:notify),
+                        Ops.get(@platform2label, "suse-11.3", "")
+                      )
+                    ),
+                    Left(
+                      RadioButton(
+                        Id("suse-12.0"),
+                        Opt(:notify),
+                        Ops.get(@platform2label, "suse-12.0", "")
+                      )
+                    )
+                  )
+                )
+              )
+            ),
+          "no_help"       => true,
+          "init"          => fun_ref(
+            method(:InitTargetPlatform),
+            "void (string)"
+          ),
+          "handle"        => fun_ref(
+            method(:HandleTargetPlatform),
+            "symbol (string, map)"
+          ),
+          "opt"           => [:notify]
+        },
+        "add_repository"  => {
+          "widget"  => :push_button,
+          # push button label
+          "label"   => _("A&dd Repository"),
+          "no_help" => true,
+          "handle"  => fun_ref(
+            method(:HandleAddRepositoryButton),
+            "symbol (string, map)"
+          )
         },
         # ---------------- widgets for Users tab
         "users_table"     => {
@@ -466,12 +538,15 @@ module Yast
       ret ? :next : :abort
     end
 
-
     def InitAskOnError(id)
       UI.ChangeWidget(
         Id(id),
         :Value,
-        Ops.get_boolean(@repos, [@current_repo, "ask_on_error"], false) == true
+        Ops.get_boolean(
+          @repos,
+          [@current_repo_platform, @current_repo, "ask_on_error"],
+          false
+        ) == true
       )
 
       nil
@@ -481,22 +556,44 @@ module Yast
       UI.ChangeWidget(
         Id(id),
         :Value,
-        Ops.get_string(@repos, [@current_repo, "url"], "")
+        Ops.get_string(
+          @repos,
+          [@current_repo_platform, @current_repo, "url"],
+          ""
+        )
       )
+
+      nil
+    end
+
+    def InitTargetPlatform(id)
+      UI.ChangeWidget(Id(id), :Value, @current_repo_platform)
 
       nil
     end
 
     # initialize the value of repo table
     def InitReposTable(id)
-      UI.ChangeWidget(Id(id), :Items, Builtins.maplist(@repos) do |name, r|
-        Item(
-          Id(name),
-          name,
-          Ops.get_string(r, "url", ""),
-          Ops.get_boolean(r, "ask_on_error", false) ? UI.Glyph(:CheckMark) : " "
-        )
-      end)
+      repo_items = []
+      Builtins.foreach(@repos) do |prod_name, platform|
+        Builtins.foreach(
+          Convert.convert(platform, :from => "map", :to => "map <string, map>")
+        ) do |name, r|
+          repo_items = Builtins.add(
+            repo_items,
+            Item(
+              Id(name),
+              name,
+              Ops.get_string(r, "url", ""),
+              Ops.get_boolean(r, "ask_on_error", false) ?
+                UI.Glyph(:CheckMark) :
+                " ",
+              prod_name
+            )
+          )
+        end
+      end
+      UI.ChangeWidget(Id(id), :Items, repo_items)
       if @current_repo != ""
         UI.ChangeWidget(Id(id), :CurrentItem, @current_repo)
       end
@@ -510,15 +607,144 @@ module Yast
       selected = Convert.to_string(UI.QueryWidget(Id(key), :Value))
       if selected != nil && selected != @current_repo
         @current_repo = selected
+        @current_repo_platform = Convert.to_string(
+          UI.QueryWidget(Id(key), Cell(selected, 3))
+        )
         InitRepoURL("repo_url")
         InitAskOnError("ask_on_error")
+        InitTargetPlatform("target_platform")
       end
       nil
     end
 
+    # handler for adding new repository button
+    def HandleAddRepositoryButton(key, event)
+      event = deep_copy(event)
+      _ID = Ops.get(event, "ID")
+      return nil if _ID != key
+
+      UI.OpenDialog(
+        Opt(:decorated),
+        HBox(
+          HSpacing(1),
+          VBox(
+            VSpacing(0.5),
+            HSpacing(65),
+            # text entry label
+            InputField(Id(:name), Opt(:hstretch), _("Name")),
+            # text entry label
+            InputField(Id(:url), Opt(:hstretch), _("URL")),
+            HBox(
+              HSpacing(0.5),
+              # text entry label
+              CheckBox(Id(:ask_on_error), Opt(:hstretch), _("Ask On Error"))
+            ),
+            RadioButtonGroup(
+              Id(:platform),
+              Frame(
+                _("Target Platform"),
+                HBox(
+                  HSpacing(),
+                  VBox(
+                    # radiobutton label
+                    Left(
+                      RadioButton(
+                        Id("common"),
+                        Ops.get(@platform2label, "common", ""),
+                        true
+                      )
+                    ),
+                    Left(
+                      RadioButton(
+                        Id("suse-11.3"),
+                        Ops.get(@platform2label, "suse-11.3", "")
+                      )
+                    ),
+                    Left(
+                      RadioButton(
+                        Id("suse-12.0"),
+                        Ops.get(@platform2label, "suse-12.0", "")
+                      )
+                    )
+                  )
+                )
+              )
+            ),
+            VSpacing(0.5),
+            ButtonBox(
+              PushButton(Id(:ok), Label.OKButton),
+              PushButton(Id(:cancel), Label.CancelButton)
+            ),
+            VSpacing(0.5)
+          ),
+          HSpacing(1)
+        )
+      )
+
+      ret = :not_next
+      name = ""
+      platform = "common"
+
+      while true
+        ret = Convert.to_symbol(UI.UserInput)
+        break if ret == :cancel
+        if ret == :ok
+          name = Convert.to_string(UI.QueryWidget(Id(:name), :Value))
+          platform = Convert.to_string(UI.QueryWidget(Id(:platform), :Value))
+
+          if name == ""
+            ret = :cancel
+            break
+          end
+
+          Builtins.foreach(@repos) do |platform_name, platform_m|
+            if Builtins.haskey(platform_m, name)
+              # error popup
+              Popup.Error(
+                Builtins.sformat(
+                  _("Repository '%1' already exists.\nChoose a different name."),
+                  name
+                )
+              )
+              UI.SetFocus(Id(:name))
+              ret = :not_next
+            end
+          end
+          break if ret == :ok
+        end
+      end
+
+      if ret == :ok
+        @current_repo = name
+        @current_repo_platform = platform
+        Ops.set(
+          @repos,
+          [@current_repo_platform, @current_repo],
+          {
+            "url"          => UI.QueryWidget(Id(:url), :Value),
+            "ask_on_error" => UI.QueryWidget(Id(:ask_on_error), :Value)
+          }
+        )
+      end
+      UI.CloseDialog
+      if ret == :ok
+        InitReposTable("repos_table")
+        InitRepoURL("repo_url")
+        InitAskOnError("ask_on_error")
+        InitTargetPlatform("target_platform")
+      end
+      nil
+    end
+
+
     def StoreRepoURL(key, event)
       event = deep_copy(event)
-      Ops.set(@repos, [@current_repo, "url"], UI.QueryWidget(Id(key), :Value))
+      Ops.set(
+        @repos,
+        [@current_repo_platform, @current_repo, "url"],
+        UI.QueryWidget(Id(key), :Value)
+      )
+
       nil
     end
 
@@ -537,9 +763,10 @@ module Yast
       event = deep_copy(event)
       Ops.set(
         @repos,
-        [@current_repo, "ask_on_error"],
+        [@current_repo_platform, @current_repo, "ask_on_error"],
         UI.QueryWidget(Id(key), :Value) == true
       )
+
       nil
     end
 
@@ -554,6 +781,33 @@ module Yast
       nil
     end
 
+    def HandleTargetPlatform(key, event)
+      event = deep_copy(event)
+      orig_repo_platform = @current_repo_platform
+      @current_repo_platform = Convert.to_string(
+        UI.QueryWidget(Id(key), :Value)
+      )
+      # move the repo to the new submap
+      if @current_repo_platform != orig_repo_platform
+        if !Builtins.haskey(@repos, @current_repo_platform)
+          Ops.set(@repos, @current_repo_platform, {})
+        end
+        Ops.set(
+          @repos,
+          [@current_repo_platform, @current_repo],
+          Ops.get_map(@repos, [orig_repo_platform, @current_repo], {})
+        )
+        Ops.set(
+          @repos,
+          orig_repo_platform,
+          Builtins.remove(
+            Ops.get(@repos, orig_repo_platform, {}),
+            @current_repo
+          )
+        )
+      end
+      nil
+    end
 
 
     # initialize the value of users table
@@ -1499,11 +1753,20 @@ module Yast
               "repo_url",
               # label (hint for user)
               Left(Label(_("Empty URL means that default value will be used."))),
-              VStretch()
+              VSpacing(0.4),
+              Left("target_platform"),
+              VSpacing(),
+              Left("add_repository")
             ),
             HSpacing(2)
           ),
-          "widget_names" => ["repos_table", "repo_url", "ask_on_error"]
+          "widget_names" => [
+            "target_platform",
+            "repos_table",
+            "repo_url",
+            "ask_on_error",
+            "add_repository"
+          ]
         }
       }
     end
