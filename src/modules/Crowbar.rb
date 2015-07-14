@@ -26,6 +26,7 @@
 #              Michal Filka <mfilka@suse.cz>
 #
 require "yast"
+require 'json'
 
 module Yast
   class CrowbarClass < Module
@@ -33,7 +34,6 @@ module Yast
       textdomain "crowbar"
 
       Yast.import "FileUtils"
-      Yast.import "Json"
       Yast.import "Progress"
       Yast.import "Report"
       Yast.import "Message"
@@ -103,34 +103,6 @@ module Yast
       @modified = false
     end
 
-    # FIXME this should not be needed when we remove Perl-json handling
-    # Adapt boolean values so they can be recognized by Perl
-    # BEWARE: this will break any real true/false string values
-    def adapt_value(value)
-      value = deep_copy(value)
-      if Ops.is_map?(value)
-        return adapt_map(
-          Convert.convert(value, :from => "any", :to => "map <string, any>")
-        )
-      end
-      if Ops.is_list?(value)
-        value = Builtins.maplist(Convert.to_list(value)) do |item|
-          adapt_value(item)
-        end
-        return deep_copy(value)
-      end
-      return value == true ? "true" : "false" if Ops.is_boolean?(value)
-      deep_copy(value)
-    end
-    # FIXME with the perl removal
-    def adapt_map(input_map)
-      input_map = deep_copy(input_map)
-      Builtins.foreach(input_map) do |key, val|
-        Ops.set(input_map, key, adapt_value(val))
-      end
-      deep_copy(input_map)
-    end
-
     # Data was modified?
     # @return true if modified
     def Modified
@@ -138,6 +110,30 @@ module Yast
       @modified
     end
 
+    # read given json file and return the content as a map
+    def json2hash(file_name)
+      ret = JSON.parse(File.read(file_name))
+      ret = {} unless ret.is_a? Hash
+      ret
+    end
+
+    # write whole json map into new file
+    def hash2json(data,file_name)
+      if data.is_a? Hash
+        begin
+          File.open(file_name, 'w') do |f|
+            f.puts JSON.pretty_generate data
+          end
+        rescue Errno::EACCES => e
+          Builtins.y2error("exception while trying to write to %1: %2", file_name, e)
+          return false
+        end
+      else
+        Builtins.y2error("wrong data format passed as json hash!")
+        return false
+      end
+      return true
+    end
 
     # Read all crowbar settings
     # @return true on success
@@ -178,7 +174,7 @@ module Yast
       end
 
 
-      @template_network = Json.Read(@network_file)
+      @template_network = json2hash(@network_file)
 
       network = @template_network["attributes"]["network"] rescue {}
       @networks = network["networks"] || {}
@@ -186,11 +182,11 @@ module Yast
       @mode = network["mode"] || ""
       @conduit_map = network["conduit_map"] || []
 
-      @template_crowbar = Json.Read(@crowbar_file)
+      @template_crowbar = json2hash(@crowbar_file)
       @users = @template_crowbar["attributes"]["crowbar"]["users"] rescue {}
 
       if FileUtils.Exists(@provisioner_file)
-        @provisioner = Json.Read(@provisioner_file)
+        @provisioner = json2hash(@provisioner_file)
       else
         @provisioner = {
           "attributes" => {
@@ -258,12 +254,12 @@ module Yast
       @template_network["attributes"]["network"]["teaming"]     = @teaming
       @template_network["attributes"]["network"]["mode"]        = @mode
 
-      if Json.Write(adapt_map(@template_network), @network_file) == nil
+      unless hash2json(@template_network, @network_file)
         Report.Error(Message.ErrorWritingFile(@network_file))
       end
 
       @template_crowbar["attributes"]["crowbar"]["users"]       = @users
-      if Json.Write(adapt_map(@template_crowbar), @crowbar_file) == nil
+      unless hash2json(@template_crowbar, @crowbar_file)
         Report.Error(Message.ErrorWritingFile(@crowbar_file))
       end
 
@@ -281,7 +277,7 @@ module Yast
 
       @provisioner["attributes"]["provisioner"]["suse"]["autoyast"]["repos"] = @repos
 
-      if Json.Write(adapt_map(@provisioner), @provisioner_file) == nil
+      unless hash2json(@provisioner, @provisioner_file)
         Report.Error(Message.ErrorWritingFile(@provisioner_file))
       end
 

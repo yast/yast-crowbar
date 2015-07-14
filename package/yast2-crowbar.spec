@@ -17,7 +17,7 @@
 
 
 Name:           yast2-crowbar
-Version:        3.1.4
+Version:        3.1.5
 Release:        0
 License:	GPL-2.0
 Group:		System/YaST
@@ -25,8 +25,8 @@ Group:		System/YaST
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Source0:        %{name}-%{version}.tar.bz2
 
-Requires:	yast2 yast2-perl-bindings perl-JSON
-BuildRequires:	perl-XML-Writer update-desktop-files yast2 yast2-testsuite yast2-perl-bindings perl-JSON
+Requires:	yast2
+BuildRequires:	update-desktop-files yast2 yast2-testsuite
 BuildRequires:  yast2-devtools >= 3.1.10
 
 BuildArchitectures:	noarch
@@ -54,9 +54,6 @@ Summary:	Configuration of crowbar
 %{yast_yncludedir}/crowbar/*
 %{yast_clientdir}/crowbar.rb
 %{yast_clientdir}/inst_crowbar.rb
-%{yast_moduledir}/JSON.rb
-%{yast_moduledir}/Json.pm
-%{yast_moduledir}/Crowbar.*
+%{yast_moduledir}/Crowbar.rb
 %{yast_desktopdir}/crowbar.desktop
 %doc %{yast_docdir}
-

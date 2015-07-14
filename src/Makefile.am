@@ -1,9 +1,7 @@
 # Sources for crowbar
 
 module_DATA = \
-  modules/Crowbar.rb \
-  modules/JSON.rb \
-  modules/Json.pm
+  modules/Crowbar.rb
 
 client_DATA = \
   clients/inst_crowbar.rb \
