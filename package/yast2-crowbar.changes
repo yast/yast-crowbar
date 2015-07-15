@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Jul 22 15:59:34 CEST 2015 - jsuchome@suse.com
+
+- enable entering just SMT/Manager URL and compute the URL
+- 3.1.6
+
+-------------------------------------------------------------------
 Tue Jul 14 17:07:04 CEST 2015 - jsuchome@suse.com
 
 - remove perl dependency

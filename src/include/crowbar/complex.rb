@@ -87,42 +87,32 @@ module Yast
 
       @platform2label = {
         # radio button item: target repository is common for all available platform
-        "common"    => _(
-          "Common for All"
-        ),
+        "common"    => _("Common for All"),
         # target platform name
         "suse-11.3" => _("SLES 11 SP3"),
         # target platform name
         "suse-12.0" => _("SLES 12")
       }
 
+      @repos_location         = ""
+      @remote_server_url      = ""
+
       @widget_description = {
         # ---------------- widgets for Repositories tab
-        "repos_table"     => {
-          "widget"        => :custom,
-          "custom_widget" => VBox(
-            Table(
-              Id("repos_table"),
-              Opt(:notify, :immediate, :hstretch),
-              # table header
-              Header(
-                _("Repository Name"),
-                _("URL"),
-                _("Ask On Error"),
-                _("Target Platform")
-              )
-            )
-          ),
-          "init"          => fun_ref(method(:InitReposTable), "void (string)"),
-          "handle"        => fun_ref(
-            method(:HandleReposTable),
-            "symbol (string, map)"
-          ),
-          # help text
-          "help"          => _(
+        "repos_combo"     => {
+          "widget" => :combobox,
+          "opt"    => [:hstretch, :notify],
+          # combobox label
+          "label"  => _("&Location of Repositories"),
+          "init"   => fun_ref(method(:InitReposCombo), "void (string)"),
+          "handle" => fun_ref(method(:HandleReposCombo), "void (string, map)"),
+          "help"   => _(
             "<p>Here you can edit the location of your <b>Update Repositories</b>.</p>\n" +
               "<p>\n" +
-              "Some examples of how the URL could look like:\n" +
+              "If repositories are stored at SMT server or SUSE Manager server, it's enought to enter server's URL and the paths
+              to repositories will be filled automatically." +
+              "</p>" +
+              "It is also possible to use custom paths. Some examples of how the URL could look like:\n" +
               "</p><p>\n" +
               "<ul>\n" +
               "<li><i>http://smt.example.com/repo/$RCE/SLES11-SP3-Pool/sle-11-x86_64/</i> for SMT server\n" +
@@ -132,85 +122,17 @@ module Yast
               "</p>"
           )
         },
-        "repo_url"        => {
-          "widget"  => :textentry,
-          # textentry label
-          "label"   => _("Repository &URL"),
-          "no_help" => true,
-          "init"    => fun_ref(method(:InitRepoURL), "void (string)"),
-          "store"   => fun_ref(method(:StoreRepoURL), "void (string, map)"),
-          "handle"  => fun_ref(method(:HandleRepoURL), "symbol (string, map)"),
-          "opt"     => [:notify]
-        },
-        "ask_on_error"    => {
-          "widget"  => :checkbox,
-          # textentry label
-          "label"   => _("&Ask On Error"),
-          "no_help" => true,
-          "init"    => fun_ref(method(:InitAskOnError), "void (string)"),
-          "store"   => fun_ref(method(:StoreAskOnError), "void (string, map)"),
-          "handle"  => fun_ref(
-            method(:HandleAskOnError),
-            "symbol (string, map)"
-          ),
-          "opt"     => [:notify]
-        },
-        "target_platform" => {
+        "repos_rp"        => {
           "widget"        => :custom,
-          "custom_widget" =>
-            # radiobutton group label
-            RadioButtonGroup(
-              Id("target_platform"),
-              Frame(
-                _("Target Platform"),
-                HBox(
-                  HSpacing(),
-                  VBox(
-                    # radiobutton label
-                    Left(
-                      RadioButton(
-                        Id("common"),
-                        Opt(:notify),
-                        @platform2label["common"] || ""
-                      )
-                    ),
-                    Left(
-                      RadioButton(
-                        Id("suse-11.3"),
-                        Opt(:notify),
-                        @platform2label["suse-11.3"] || ""
-                      )
-                    ),
-                    Left(
-                      RadioButton(
-                        Id("suse-12.0"),
-                        Opt(:notify),
-                        @platform2label["suse-12.0"] || ""
-                      )
-                    )
-                  )
-                )
-              )
-            ),
           "no_help"       => true,
-          "init"          => fun_ref(
-            method(:InitTargetPlatform),
-            "void (string)"
+          "custom_widget" => ReplacePoint(
+            Id("repos_rp"),
+            VBox(VStretch())
           ),
+          "init"          => fun_ref(method(:InitRPRepos), "void (string)"),
           "handle"        => fun_ref(
-            method(:HandleTargetPlatform),
-            "symbol (string, map)"
-          ),
-          "opt"           => [:notify]
-        },
-        "add_repository"  => {
-          "widget"  => :push_button,
-          # push button label
-          "label"   => _("A&dd Repository"),
-          "no_help" => true,
-          "handle"  => fun_ref(
-            method(:HandleAddRepositoryButton),
-            "symbol (string, map)"
+            method(:HandleRPRepos),
+            "void (string, map)"
           )
         },
         # ---------------- widgets for Users tab
@@ -566,16 +488,14 @@ module Yast
         end
       end
       UI.ChangeWidget(Id(id), :Items, repo_items)
-      unless @current_repo.empty?
-        UI.ChangeWidget(Id(id), :CurrentItem, @current_repo)
-      end
+      UI.ChangeWidget(Id(id), :CurrentItem, @current_repo) unless @current_repo.empty?
       nil
     end
 
     # handler for repo selection table
     def HandleReposTable(key, event)
       selected = UI.QueryWidget(Id(key), :Value)
-      if selected != nil && selected != @current_repo
+      if !selected.nil? && (selected != @current_repo || event["force"])
         @current_repo = selected
         @current_repo_platform = UI.QueryWidget(Id(key), Cell(selected, 3))
         InitRepoURL("repo_url")
@@ -614,13 +534,13 @@ module Yast
                   VBox(
                     # radiobutton label
                     Left(
-                      RadioButton(Id("common"), @platform2label["common"] || "", true)
+                      RadioButton(Id("common"), @platform2label["common"], true)
                     ),
                     Left(
-                      RadioButton(Id("suse-11.3"), @platform2label["suse-11.3"] || "")
+                      RadioButton(Id("suse-11.3"), @platform2label["suse-11.3"])
                     ),
                     Left(
-                      RadioButton(Id("suse-12.0"), @platform2label["suse-12.0"] ||  "")
+                      RadioButton(Id("suse-12.0"), @platform2label["suse-12.0"])
                     )
                   )
                 )
@@ -695,11 +615,203 @@ module Yast
     def HandleRepoURL(key, event)
       # store the value on exiting
       if event["ID"] == :next || event["EventReason"] == "ValueChanged"
+        @current_repo = UI.QueryWidget(Id("repos_table"), :Value) || ""
         StoreRepoURL(key, event)
         InitReposTable("repos_table")
       end
       nil
     end
+
+    def InitLocationURL(id)
+      UI.ChangeWidget(Id(id), :Value, @remote_server_url)
+      nil
+    end
+
+    def StoreLocationURL(key, event)
+      @remote_server_url = UI.QueryWidget(Id(key), :Value)
+      nil
+    end
+
+    def HandleLocationURL(key, event)
+
+      StoreLocationURL(key, event)
+
+      return nil if @remote_server_url.empty? || @repos_location == "custom"
+
+      @repos.each do |prod_name, platform|
+        distro = prod_name == "suse-11.3" ? "sles11-sp3-x86_64" : "sles12-x86_64"
+        platform.each do |repo_name, r|
+          url = "#{@remote_server_url}/repo/$RCE/#{repo_name}/x86_64/"
+          if @repos_location == "sm"
+            if ["SLE-Cloud","SLE-Cloud-PTF"].include? repo_name
+              # some repos cannot be at SM server
+              url = ""
+            else
+              url = "#{@remote_server_url}/ks/dist/child/#{repo_name.downcase}-x86_64/#{distro}"
+            end
+          end
+          @repos[prod_name][repo_name] ||= {}
+          @repos[prod_name][repo_name]["url"] = url
+        end
+      end
+
+      # for SUSE Manager, 
+      # see http://docserv.nue.suse.com/documents/Cloud5/suse-openstack-cloud-deployment/single-html/#sec.depl.adm_conf.repos.scc.remote_susemgr
+      # not ready for cloud6?
+      # http://manager.example.com/ks/dist/child/sle-12-cloud-compute5-pool-x86_64/sles12-x86_64/
+      # http://manager.example.com/ks/dist/child/sle-12-cloud-compute5-updates-x86_64/sles12-x86_64/
+      nil
+    end
+
+    # in the repository tab, show only the location with remote URL
+    def show_remote_server_widget
+        UI.ReplaceWidget(
+          Id("repos_rp"),
+          VBox(
+            VSpacing(0.4),
+            InputField(
+              Id("repos_location_url"),
+              Opt(:hstretch, :notify),
+              # text entry label
+              _("Server &URL")
+            ),
+            VStretch()
+          )
+        )
+    end
+
+    # in the repository tab, show the full table with repo URL's
+    def show_custom_repos_widget
+        UI.ReplaceWidget(
+          Id("repos_rp"),
+          VBox(
+            VSpacing(0.4),
+            Table(
+              Id("repos_table"),
+              Opt(:notify, :immediate, :hstretch),
+              Header(
+                # table header
+                _("Repository Name"),
+                _("URL"),
+                _("Ask On Error"),
+                _("Target Platform")
+              )
+            ),
+            # checkbox label
+            Left(CheckBox(Id("ask_on_error"), Opt(:notify), _("&Ask On Error"))),
+            VSpacing(),
+            InputField(
+              Id("repo_url"),
+              Opt(:notify, :hstretch),
+              # text entry label
+              _("Repository &URL")
+            ),
+            # label (hint for user)
+            Left(Label(_("Empty URL means that default value will be used."))),
+            VSpacing(0.4),
+            Left(RadioButtonGroup(
+              Id("target_platform"),
+              # frame label
+              Frame(_("Target Platform"), HBox(
+                HSpacing(),
+                VBox(
+                  Left(RadioButton(Id("common"), Opt(:notify), @platform2label["common"])),
+                  Left(RadioButton(Id("suse-11.3"), Opt(:notify), @platform2label["suse-11.3"])),
+                  Left(RadioButton(Id("suse-12.0"), Opt(:notify), @platform2label["suse-12.0"]))
+                )
+              ))
+            )),
+            VSpacing(),
+            # push button label
+            Left(PushButton(Id("add_repository"), _("A&dd Repository")))
+          )
+        )
+    end
+
+    # initialize the replacepoint are for repository management:
+    # selection of repository source and possibly the list of repositories
+    def InitRPRepos(id)
+      # find the initial location now
+      if @repos_location.empty?
+        @repos_location = "custom"
+        @repos.each do |prod_name, platform|
+          platform.each do |repo_name, r|
+            url = r["url"] || ""
+            if url.include? "/repo/$RCE/"
+              @repos_location = "smt"
+              @remote_server_url = url.gsub(/(^.*)\/repo\/\$RCE\/.*/,"\\1")
+              break
+            elsif url.include? "ks/dist/child"
+              @repos_location = "sm"
+              @remote_server_url = url.gsub(/(^.*)\/ks\/dist\/child\/.*/,"\\1")
+            end
+          end
+        end
+      end
+
+      if @repos_location != "custom"
+        show_remote_server_widget
+      else
+        show_custom_repos_widget
+      end
+
+      # initialization of ReplacePoint content
+      if @repos_location == "custom"
+        InitReposTable("repos_table")
+        HandleReposTable("repos_table", { "force" => true })
+      elsif @repos_location != ""
+        InitLocationURL("repos_location_url")
+      end 
+      nil
+    end
+
+    def HandleRPRepos(key, event)
+      subkey = event["ID"]
+
+      case subkey
+      when "repos_table"
+        HandleReposTable(subkey, event)
+      when "repo_url"
+        HandleRepoURL(subkey, event)
+      when "ask_on_error"
+        HandleAskOnError(subkey, event)
+      when "repos_location_url"
+        HandleLocationURL(subkey, event)
+      when "add_repository"
+        HandleAddRepositoryButton(subkey, event)
+      end
+
+      if @platform2label.keys.include? subkey
+        HandleTargetPlatform("target_platform", event)
+      end
+      nil
+    end
+
+    def InitReposCombo(id)
+      items = [
+        # combobox item
+        Item(Id("smt"), _("Remote SMT Server"), "smt" == @repos_location),
+        # combobox item
+        Item(Id("sm"), _("SUSE Manager Server"), "sm" == @repos_location),
+        # combobox item
+        Item(Id("custom"), _("Custom"),
+          "custom" == @repos_location || @repos_location.empty?
+        )
+      ]
+      UI.ChangeWidget(Id(id), :Items, items)
+      nil
+    end
+
+    def HandleReposCombo(key, event)
+      old_repos_location = @repos_location
+      @repos_location = UI.QueryWidget(Id(key), :Value)
+
+      return if old_repos_location == @repos_location
+
+      InitRPRepos("repos_rp")
+      nil
+    end
+
 
     def StoreAskOnError(key, event)
       @repos[@current_repo_platform][@current_repo]["ask_on_error"] =
@@ -724,6 +836,7 @@ module Yast
         @repos[@current_repo_platform] ||= {}
         @repos[@current_repo_platform][@current_repo] = @repos[orig_repo_platform].fetch(@current_repo, {})
         @repos[orig_repo_platform].delete (@current_repo)
+        InitReposTable("repos_table")
       end
       nil
     end
@@ -1392,12 +1505,10 @@ module Yast
               VSpacing(0.4),
               HBox("add_user", "edit_user", "delete_user", HStretch()),
               VSpacing(2),
-              # label (hint for user)
               Left(
                 Label(
-                  _(
-                    "If no user is present, user 'crowbar' with default password will be used."
-                  )
+                  # label (hint for user)
+                  _("If no user is present, user 'crowbar' with default password will be used.")
                 )
               ),
               VStretch()
@@ -1504,27 +1615,17 @@ module Yast
           "contents"     => HBox(
             HSpacing(2),
             VBox(
-              VSpacing(),
-              "repos_table",
               VSpacing(0.4),
-              Left("ask_on_error"),
-              VSpacing(),
-              "repo_url",
-              # label (hint for user)
-              Left(Label(_("Empty URL means that default value will be used."))),
-              VSpacing(0.4),
-              Left("target_platform"),
-              VSpacing(),
-              Left("add_repository")
+              "repos_combo",
+              "repos_rp"
             ),
             HSpacing(2)
           ),
           "widget_names" => [
-            "target_platform",
-            "repos_table",
+            "repos_rp",
+            "repos_combo",
             "repo_url",
             "ask_on_error",
-            "add_repository"
           ]
         }
       }
