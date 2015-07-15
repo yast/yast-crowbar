@@ -19,17 +19,14 @@
 # current contact information at www.novell.com.
 # ------------------------------------------------------------------------------
 
-# File:	modules/Crowbar.ycp
+# File:	modules/Crowbar.rb
 # Package:	Configuration of crowbar
 # Summary:	Crowbar settings, input and output functions
 # Authors:     Jiri Suchomel <jsuchome@suse.cz>
 #              Michal Filka <mfilka@suse.cz>
 #
-# $Id: Crowbar.ycp 41350 2007-10-10 16:59:00Z dfiser $
-#
-# Representation of the configuration of crowbar.
-# Input and output routines.
 require "yast"
+require 'json'
 
 module Yast
   class CrowbarClass < Module
@@ -37,7 +34,6 @@ module Yast
       textdomain "crowbar"
 
       Yast.import "FileUtils"
-      Yast.import "Json"
       Yast.import "Progress"
       Yast.import "Report"
       Yast.import "Message"
@@ -107,32 +103,6 @@ module Yast
       @modified = false
     end
 
-    # Adapt boolean values so they can be recognized by Perl
-    # BEWARE: this will break any real true/false string values
-    def adapt_value(value)
-      value = deep_copy(value)
-      if Ops.is_map?(value)
-        return adapt_map(
-          Convert.convert(value, :from => "any", :to => "map <string, any>")
-        )
-      end
-      if Ops.is_list?(value)
-        value = Builtins.maplist(Convert.to_list(value)) do |item|
-          adapt_value(item)
-        end
-        return deep_copy(value)
-      end
-      return value == true ? "true" : "false" if Ops.is_boolean?(value)
-      deep_copy(value)
-    end
-    def adapt_map(input_map)
-      input_map = deep_copy(input_map)
-      Builtins.foreach(input_map) do |key, val|
-        Ops.set(input_map, key, adapt_value(val))
-      end
-      deep_copy(input_map)
-    end
-
     # Data was modified?
     # @return true if modified
     def Modified
@@ -140,6 +110,30 @@ module Yast
       @modified
     end
 
+    # read given json file and return the content as a map
+    def json2hash(file_name)
+      ret = JSON.parse(File.read(file_name))
+      ret = {} unless ret.is_a? Hash
+      ret
+    end
+
+    # write whole json map into new file
+    def hash2json(data,file_name)
+      if data.is_a? Hash
+        begin
+          File.open(file_name, 'w') do |f|
+            f.puts JSON.pretty_generate data
+          end
+        rescue Errno::EACCES => e
+          Builtins.y2error("exception while trying to write to %1: %2", file_name, e)
+          return false
+        end
+      else
+        Builtins.y2error("wrong data format passed as json hash!")
+        return false
+      end
+      return true
+    end
 
     # Read all crowbar settings
     # @return true on success
@@ -169,48 +163,30 @@ module Yast
 
       @installed = FileUtils.Exists(@installed_file)
 
-      if !FileUtils.Exists(@network_file)
+      unless FileUtils.Exists(@network_file)
         Report.Error(Message.CannotOpenFile(@network_file))
         return false
       end
 
-      if !FileUtils.Exists(@crowbar_file)
+      unless FileUtils.Exists(@crowbar_file)
         Report.Error(Message.CannotOpenFile(@crowbar_file))
         return false
       end
 
 
-      @template_network = Json.Read(@network_file)
-      @networks = Ops.get_map(
-        @template_network,
-        ["attributes", "network", "networks"],
-        {}
-      )
-      @teaming = Ops.get_map(
-        @template_network,
-        ["attributes", "network", "teaming"],
-        {}
-      )
-      @mode = Ops.get_string(
-        @template_network,
-        ["attributes", "network", "mode"],
-        ""
-      )
-      @conduit_map = Ops.get_list(
-        @template_network,
-        ["attributes", "network", "conduit_map"],
-        []
-      )
+      @template_network = json2hash(@network_file)
 
-      @template_crowbar = Json.Read(@crowbar_file)
-      @users = Ops.get_map(
-        @template_crowbar,
-        ["attributes", "crowbar", "users"],
-        {}
-      )
+      network = @template_network["attributes"]["network"] rescue {}
+      @networks = network["networks"] || {}
+      @teaming = network["teaming"] || {}
+      @mode = network["mode"] || ""
+      @conduit_map = network["conduit_map"] || []
+
+      @template_crowbar = json2hash(@crowbar_file)
+      @users = @template_crowbar["attributes"]["crowbar"]["users"] rescue {}
 
       if FileUtils.Exists(@provisioner_file)
-        @provisioner = Json.Read(@provisioner_file)
+        @provisioner = json2hash(@provisioner_file)
       else
         @provisioner = {
           "attributes" => {
@@ -228,20 +204,16 @@ module Yast
           }
         }
       end
-      @repos = Ops.get_map(
-        @provisioner,
-        ["attributes", "provisioner", "suse", "autoyast", "repos"],
-        {}
-      )
+      @repos = @provisioner["attributes"]["provisioner"]["suse"]["autoyast"]["repos"] rescue {}
 
-      Ops.set(@repos, "common", {}) if !Builtins.haskey(@repos, "common")
+      @repos["common"] = {} unless @repos.key? ("common")
 
       # fill in all the repo names for the UI
-      Builtins.foreach(@default_repos) do |repo, target_product|
-        if !Builtins.haskey(Ops.get(@repos, "common", {}), repo) &&
-            !Builtins.haskey(Ops.get(@repos, "suse-11.3", {}), repo) &&
-            !Builtins.haskey(Ops.get(@repos, "suse-12.0", {}), repo)
-          Ops.set(@repos, [target_product, repo], { "url" => "" })
+      @default_repos.each do |repo, target_product|
+        unless (@repos["common"].key?(repo) ||
+                @repos["suse-11.3"].key?(repo) ||
+                @repos["suse-12.0"].key?(repo))
+          @repos[target_product][repo]  = { "url" => "" }
         end
       end
 
@@ -278,53 +250,34 @@ module Yast
       )
 
 
-      Ops.set(
-        @template_network,
-        ["attributes", "network", "conduit_map"],
-        @conduit_map
-      )
-      Ops.set(
-        @template_network,
-        ["attributes", "network", "networks"],
-        @networks
-      )
-      Ops.set(@template_network, ["attributes", "network", "teaming"], @teaming)
-      Ops.set(@template_network, ["attributes", "network", "mode"], @mode)
+      @template_network["attributes"]["network"]["conduit_map"] = @conduit_map
+      @template_network["attributes"]["network"]["teaming"]     = @teaming
+      @template_network["attributes"]["network"]["mode"]        = @mode
 
-      if Json.Write(adapt_map(@template_network), @network_file) == nil
+      unless hash2json(@template_network, @network_file)
         Report.Error(Message.ErrorWritingFile(@network_file))
       end
 
-      Ops.set(@template_crowbar, ["attributes", "crowbar", "users"], @users)
-      if Json.Write(adapt_map(@template_crowbar), @crowbar_file) == nil
+      @template_crowbar["attributes"]["crowbar"]["users"]       = @users
+      unless hash2json(@template_crowbar, @crowbar_file)
         Report.Error(Message.ErrorWritingFile(@crowbar_file))
       end
 
-      Builtins.foreach(@repos) do |platform_name, platform|
-        Builtins.foreach(
-          Convert.convert(platform, :from => "map", :to => "map <string, map>")
-        ) do |name, repo|
+      @repos.each do |product_name, product|
+        product.each do |repo_name, repo|
           # remove empty repo definitions
-          if Ops.get_string(repo, "url", "") == "" &&
-              !Ops.get_boolean(repo, "ask_on_error", false)
-            Ops.set(
-              @repos,
-              platform_name,
-              Builtins.remove(Ops.get(@repos, platform_name, {}), name)
-            )
+          if repo["url"].empty? && !(repo["ask_on_error"] || false)
+            @repos[product_name].delete(repo_name)
           # remove just url if it is empty and non-default ask_on_error stays
-          elsif Ops.get_string(repo, "url", "") == ""
-            Ops.set(@repos, [platform_name, name], Builtins.remove(repo, "url"))
+          elsif repo["url"].empty?
+            @repos[product_name][repo_name].delete("url")
           end
         end
       end
 
-      Ops.set(
-        @provisioner,
-        ["attributes", "provisioner", "suse", "autoyast", "repos"],
-        @repos
-      )
-      if Json.Write(adapt_map(@provisioner), @provisioner_file) == nil
+      @provisioner["attributes"]["provisioner"]["suse"]["autoyast"]["repos"] = @repos
+
+      unless hash2json(@provisioner, @provisioner_file)
         Report.Error(Message.ErrorWritingFile(@provisioner_file))
       end
 

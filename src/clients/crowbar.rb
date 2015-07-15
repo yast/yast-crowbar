@@ -31,23 +31,18 @@
 module Yast
   class CrowbarClient < Client
     def main
-      Yast.import "UI"
-
-      #**
-      # <h3>Configuration of crowbar</h3>
 
       textdomain "crowbar"
 
-      # The main ()
       Builtins.y2milestone("----------------------------------------")
       Builtins.y2milestone("Crowbar module started")
 
+      Yast.import "CommandLine"
       Yast.import "Crowbar"
       Yast.import "Progress"
       Yast.import "Report"
       Yast.import "Summary"
 
-      Yast.import "CommandLine"
       Yast.include self, "crowbar/wizards.rb"
 
       @cmdline_description = {
@@ -61,32 +56,27 @@ module Yast
 
       # is path to data file given?
       @custom_path = false
-      @args = WFM.Args
-      if Ops.greater_than(Builtins.size(@args), 0)
-        if Ops.is_string?(WFM.Args(0))
-          @arg = Convert.to_string(WFM.Args(0))
-          Builtins.y2milestone(
-            "taking path to config file from command line: %1",
-            @arg
-          )
-          Crowbar.network_file = @arg
+
+      args = WFM.Args || []
+      if args.size > 0
+        arg = args[0]
+        if arg.is_a? ::String
+          Builtins.y2milestone("taking path to network config file from command line: %1", arg)
+          Crowbar.network_file = arg
           @custom_path = true
         end
       end
 
-      @ret = @custom_path ?
+      ret = @custom_path ?
         CrowbarSequence() :
         CommandLine.Run(@cmdline_description)
 
       Builtins.y2debug("ret=%1", @ret)
 
-      # Finish
       Builtins.y2milestone("Crowbar module finished")
       Builtins.y2milestone("----------------------------------------")
 
-      deep_copy(@ret) 
-
-      # EOF
+      ret
     end
   end
 end

@@ -49,9 +49,7 @@ module Yast
         "overview" => { :abort => :abort, :next => :next }
       }
 
-      ret = Sequencer.Run(aliases, sequence)
-
-      deep_copy(ret)
+      Sequencer.Run(aliases, sequence)
     end
 
     # Whole configuration of crowbar
@@ -78,7 +76,7 @@ module Yast
       ret = Sequencer.Run(aliases, sequence)
 
       UI.CloseDialog
-      deep_copy(ret)
+      ret
     end
 
     # Whole configuration of crowbar but without reading and writing.
@@ -100,9 +98,8 @@ module Yast
       )
 
       ret = MainSequence()
-
       UI.CloseDialog
-      deep_copy(ret)
+      ret
     end
   end
 end

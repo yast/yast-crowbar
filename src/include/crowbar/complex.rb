@@ -19,13 +19,12 @@
 # current contact information at www.novell.com.
 # ------------------------------------------------------------------------------
 
-# File:	include/crowbar/complex.ycp
+# File:	include/crowbar/complex.rb
 # Package:	Configuration of crowbar
 # Summary:	Dialogs definitions
 # Authors:     Jiri Suchomel <jsuchome@suse.cz>,
 #              Michal Filka <mfilka@suse.cz>
 #
-# $Id: complex.ycp 65771 2011-09-19 07:37:30Z visnov $
 module Yast
   module CrowbarComplexInclude
     def initialize_crowbar_complex(include_target)
@@ -172,21 +171,21 @@ module Yast
                       RadioButton(
                         Id("common"),
                         Opt(:notify),
-                        Ops.get(@platform2label, "common", "")
+                        @platform2label["common"] || ""
                       )
                     ),
                     Left(
                       RadioButton(
                         Id("suse-11.3"),
                         Opt(:notify),
-                        Ops.get(@platform2label, "suse-11.3", "")
+                        @platform2label["suse-11.3"] || ""
                       )
                     ),
                     Left(
                       RadioButton(
                         Id("suse-12.0"),
                         Opt(:notify),
-                        Ops.get(@platform2label, "suse-12.0", "")
+                        @platform2label["suse-12.0"] || ""
                       )
                     )
                   )
@@ -318,11 +317,7 @@ module Yast
         "network_help"    => {
           "widget" => :empty,
           # generic help for Network tab
-          "help"   => Ops.get_string(
-            @HELPS,
-            "overview",
-            ""
-          )
+          "help"   => @HELPS["overview"] || ""
         },
         "network_select"  => {
           "widget"        => :custom,
@@ -381,7 +376,7 @@ module Yast
             method(:ValidateNetwork),
             "boolean (string, map)"
           ),
-          "valid_chars"       => Ops.add(IP.ValidChars4, IP.ValidChars6),
+          "valid_chars"       => IP.ValidChars4 + IP.ValidChars6,
           "no_help"           => true,
           "init"              => fun_ref(method(:InitNetwork), "void (string)"),
           "store"             => fun_ref(
@@ -414,7 +409,7 @@ module Yast
             method(:ValidateNetwork),
             "boolean (string, map)"
           ),
-          "valid_chars"       => Ops.add(IP.ValidChars4, IP.ValidChars6),
+          "valid_chars"       => IP.ValidChars4 + IP.ValidChars6,
           "no_help"           => true,
           "init"              => fun_ref(method(:InitNetwork), "void (string)"),
           "store"             => fun_ref(
@@ -437,7 +432,7 @@ module Yast
             method(:ValidateNetwork),
             "boolean (string, map)"
           ),
-          "valid_chars"       => Ops.add(IP.ValidChars4, IP.ValidChars6),
+          "valid_chars"       => IP.ValidChars4 + IP.ValidChars6,
           "no_help"           => true,
           "init"              => fun_ref(method(:InitNetwork), "void (string)"),
           "store"             => fun_ref(
@@ -453,7 +448,7 @@ module Yast
         "broadcast"       => {
           "widget"      => :textentry,
           "label"       => _("Broa&dcast"),
-          "valid_chars" => Ops.add(IP.ValidChars4, IP.ValidChars6),
+          "valid_chars" => IP.ValidChars4 + IP.ValidChars6,
           "no_help"     => true,
           "init"        => fun_ref(method(:InitNetwork), "void (string)"),
           "store"       => fun_ref(method(:StoreNetwork), "void (string, map)"),
@@ -483,7 +478,7 @@ module Yast
           "widget" => :checkbox,
           # checkbox label
           "label"  => _("Add &Bastion Network"),
-          "help"   => Ops.get_string(@HELPS, "bastion", ""),
+          "help"   => @HELPS["bastion"] || "",
           "init"   => fun_ref(method(:InitBastionCheckbox), "void (string)"),
           "handle" => fun_ref(
             method(:HandleBastionCheckbox),
@@ -501,7 +496,7 @@ module Yast
             method(:ValidateNetwork),
             "boolean (string, map)"
           ),
-          "valid_chars"       => Ops.add(IP.ValidChars4, IP.ValidChars6),
+          "valid_chars"       => IP.ValidChars4 + IP.ValidChars6,
           "no_help"           => true,
           "init"              => fun_ref(method(:InitNetwork), "void (string)"),
           "store"             => fun_ref(
@@ -524,8 +519,8 @@ module Yast
     # Read settings dialog
     # @return `abort if aborted and `next otherwise
     def ReadDialog
-      Wizard.RestoreHelp(Ops.get_string(@HELPS, "read", ""))
-      return :abort if !Confirm.MustBeRoot
+      Wizard.RestoreHelp(@HELPS["read"] || "")
+      return :abort unless Confirm.MustBeRoot
       ret = Crowbar.Read
       ret ? :next : :abort
     end
@@ -533,83 +528,56 @@ module Yast
     # Write settings dialog
     # @return `abort if aborted and `next otherwise
     def WriteDialog
-      Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
+      Wizard.RestoreHelp(@HELPS["write"] || "")
       ret = Crowbar.Write
       ret ? :next : :abort
     end
 
     def InitAskOnError(id)
-      UI.ChangeWidget(
-        Id(id),
-        :Value,
-        Ops.get_boolean(
-          @repos,
-          [@current_repo_platform, @current_repo, "ask_on_error"],
-          false
-        ) == true
-      )
-
+      ask = @repos.fetch(@current_repo_platform,{}).fetch(@current_repo,{}).fetch("ask_on_error", false)
+      UI.ChangeWidget(Id(id), :Value, ask)
       nil
     end
 
     def InitRepoURL(id)
-      UI.ChangeWidget(
-        Id(id),
-        :Value,
-        Ops.get_string(
-          @repos,
-          [@current_repo_platform, @current_repo, "url"],
-          ""
-        )
-      )
-
+      url = @repos[@current_repo_platform][@current_repo]["url"] rescue ""
+      UI.ChangeWidget(Id(id), :Value, url)
       nil
     end
 
     def InitTargetPlatform(id)
       UI.ChangeWidget(Id(id), :Value, @current_repo_platform)
-
       nil
     end
 
     # initialize the value of repo table
     def InitReposTable(id)
       repo_items = []
-      Builtins.foreach(@repos) do |prod_name, platform|
-        Builtins.foreach(
-          Convert.convert(platform, :from => "map", :to => "map <string, map>")
-        ) do |name, r|
-          repo_items = Builtins.add(
-            repo_items,
+      @repos.each do |prod_name, platform|
+        platform.each do |name, repo|
+          repo_items <<
             Item(
               Id(name),
               name,
-              Ops.get_string(r, "url", ""),
-              Ops.get_boolean(r, "ask_on_error", false) ?
-                UI.Glyph(:CheckMark) :
-                " ",
+              repo["url"] || "",
+              (repo["ask_on_error"] || false) ?  UI.Glyph(:CheckMark) : " ",
               prod_name
             )
-          )
         end
       end
       UI.ChangeWidget(Id(id), :Items, repo_items)
-      if @current_repo != ""
+      unless @current_repo.empty?
         UI.ChangeWidget(Id(id), :CurrentItem, @current_repo)
       end
-
       nil
     end
 
     # handler for repo selection table
     def HandleReposTable(key, event)
-      event = deep_copy(event)
-      selected = Convert.to_string(UI.QueryWidget(Id(key), :Value))
+      selected = UI.QueryWidget(Id(key), :Value)
       if selected != nil && selected != @current_repo
         @current_repo = selected
-        @current_repo_platform = Convert.to_string(
-          UI.QueryWidget(Id(key), Cell(selected, 3))
-        )
+        @current_repo_platform = UI.QueryWidget(Id(key), Cell(selected, 3))
         InitRepoURL("repo_url")
         InitAskOnError("ask_on_error")
         InitTargetPlatform("target_platform")
@@ -619,9 +587,7 @@ module Yast
 
     # handler for adding new repository button
     def HandleAddRepositoryButton(key, event)
-      event = deep_copy(event)
-      _ID = Ops.get(event, "ID")
-      return nil if _ID != key
+      return nil unless event["ID"] == key
 
       UI.OpenDialog(
         Opt(:decorated),
@@ -648,23 +614,13 @@ module Yast
                   VBox(
                     # radiobutton label
                     Left(
-                      RadioButton(
-                        Id("common"),
-                        Ops.get(@platform2label, "common", ""),
-                        true
-                      )
+                      RadioButton(Id("common"), @platform2label["common"] || "", true)
                     ),
                     Left(
-                      RadioButton(
-                        Id("suse-11.3"),
-                        Ops.get(@platform2label, "suse-11.3", "")
-                      )
+                      RadioButton(Id("suse-11.3"), @platform2label["suse-11.3"] || "")
                     ),
                     Left(
-                      RadioButton(
-                        Id("suse-12.0"),
-                        Ops.get(@platform2label, "suse-12.0", "")
-                      )
+                      RadioButton(Id("suse-12.0"), @platform2label["suse-12.0"] ||  "")
                     )
                   )
                 )
@@ -686,19 +642,18 @@ module Yast
       platform = "common"
 
       while true
-        ret = Convert.to_symbol(UI.UserInput)
+        ret = UI.UserInput
         break if ret == :cancel
         if ret == :ok
-          name = Convert.to_string(UI.QueryWidget(Id(:name), :Value))
-          platform = Convert.to_string(UI.QueryWidget(Id(:platform), :Value))
-
-          if name == ""
+          name = UI.QueryWidget(Id(:name), :Value)
+          platform = UI.QueryWidget(Id(:platform), :Value)
+          if name.empty?
             ret = :cancel
             break
           end
 
-          Builtins.foreach(@repos) do |platform_name, platform_m|
-            if Builtins.haskey(platform_m, name)
+          @repos.each do |platform_name, platform|
+            if platform.key? name
               # error popup
               Popup.Error(
                 Builtins.sformat(
@@ -717,14 +672,10 @@ module Yast
       if ret == :ok
         @current_repo = name
         @current_repo_platform = platform
-        Ops.set(
-          @repos,
-          [@current_repo_platform, @current_repo],
-          {
-            "url"          => UI.QueryWidget(Id(:url), :Value),
-            "ask_on_error" => UI.QueryWidget(Id(:ask_on_error), :Value)
-          }
-        )
+        @repos[@current_repo_platform][@current_repo] = {
+          "url"          => UI.QueryWidget(Id(:url), :Value),
+          "ask_on_error" => UI.QueryWidget(Id(:ask_on_error), :Value)
+        }
       end
       UI.CloseDialog
       if ret == :ok
@@ -736,23 +687,14 @@ module Yast
       nil
     end
 
-
     def StoreRepoURL(key, event)
-      event = deep_copy(event)
-      Ops.set(
-        @repos,
-        [@current_repo_platform, @current_repo, "url"],
-        UI.QueryWidget(Id(key), :Value)
-      )
-
+      @repos[@current_repo_platform][@current_repo]["url"] = UI.QueryWidget(Id(key), :Value)
       nil
     end
 
     def HandleRepoURL(key, event)
-      event = deep_copy(event)
       # store the value on exiting
-      if Ops.get(event, "ID") == :next ||
-          Ops.get_string(event, "EventReason", "") == "ValueChanged"
+      if event["ID"] == :next || event["EventReason"] == "ValueChanged"
         StoreRepoURL(key, event)
         InitReposTable("repos_table")
       end
@@ -760,21 +702,14 @@ module Yast
     end
 
     def StoreAskOnError(key, event)
-      event = deep_copy(event)
-      Ops.set(
-        @repos,
-        [@current_repo_platform, @current_repo, "ask_on_error"],
+      @repos[@current_repo_platform][@current_repo]["ask_on_error"] =
         UI.QueryWidget(Id(key), :Value) == true
-      )
-
       nil
     end
 
     def HandleAskOnError(key, event)
-      event = deep_copy(event)
       # store the value on exiting
-      if Ops.get(event, "ID") == :next ||
-          Ops.get_string(event, "EventReason", "") == "ValueChanged"
+      if event["ID"] == :next || event["EventReason"] == "ValueChanged"
         StoreAskOnError(key, event)
         InitReposTable("repos_table")
       end
@@ -782,29 +717,13 @@ module Yast
     end
 
     def HandleTargetPlatform(key, event)
-      event = deep_copy(event)
-      orig_repo_platform = @current_repo_platform
-      @current_repo_platform = Convert.to_string(
-        UI.QueryWidget(Id(key), :Value)
-      )
+      orig_repo_platform = @current_repo_platform.dup
+      @current_repo_platform = UI.QueryWidget(Id(key), :Value)
       # move the repo to the new submap
       if @current_repo_platform != orig_repo_platform
-        if !Builtins.haskey(@repos, @current_repo_platform)
-          Ops.set(@repos, @current_repo_platform, {})
-        end
-        Ops.set(
-          @repos,
-          [@current_repo_platform, @current_repo],
-          Ops.get_map(@repos, [orig_repo_platform, @current_repo], {})
-        )
-        Ops.set(
-          @repos,
-          orig_repo_platform,
-          Builtins.remove(
-            Ops.get(@repos, orig_repo_platform, {}),
-            @current_repo
-          )
-        )
+        @repos[@current_repo_platform] ||= {}
+        @repos[@current_repo_platform][@current_repo] = @repos[orig_repo_platform].fetch(@current_repo, {})
+        @repos[orig_repo_platform].delete (@current_repo)
       end
       nil
     end
@@ -812,21 +731,16 @@ module Yast
 
     # initialize the value of users table
     def InitUsersTable(id)
-      UI.ChangeWidget(Id(id), :Items, Builtins.maplist(@users) do |name, u|
-        Item(Id(name), name)
-      end)
-      if @current_user != "" && Builtins.haskey(@users, @current_user)
+      UI.ChangeWidget(Id(id), :Items, @users.map { |name, u| Item(Id(name), name) })
+      if @current_user != "" && @users.key?(@current_user)
         UI.ChangeWidget(Id(id), :CurrentItem, @current_user)
       end
-
       nil
     end
 
     # handler for adding user button
     def HandleAddEditUserButton(key, event)
-      event = deep_copy(event)
-      _ID = Ops.get(event, "ID")
-      return nil if _ID != key
+      return nil unless event["ID"] == key
 
       UI.OpenDialog(
         Opt(:decorated),
@@ -854,27 +768,26 @@ module Yast
 
       if key == "edit_user"
         UI.ChangeWidget(Id(:username), :Value, @current_user)
-        UI.ChangeWidget(
-          Id(:pw1),
-          :Value,
-          Ops.get_string(@users, [@current_user, "password"], "")
-        )
-        UI.ChangeWidget(
-          Id(:pw2),
-          :Value,
-          Ops.get_string(@users, [@current_user, "password"], "")
-        )
+        UI.ChangeWidget(Id(:pw1), :Value, @users[@current_user]["password"] || "")
+        UI.ChangeWidget(Id(:pw2), :Value, @users[@current_user]["password"] || "")
       end
 
       ret = :not_next
       name = ""
 
       while true
-        ret = Convert.to_symbol(UI.UserInput)
+        ret = UI.UserInput
         break if ret == :cancel
         if ret == :ok
-          name = Convert.to_string(UI.QueryWidget(Id(:username), :Value))
-          pass = Convert.to_string(UI.QueryWidget(Id(:pw1), :Value))
+          name = UI.QueryWidget(Id(:username), :Value)
+          pass = UI.QueryWidget(Id(:pw1), :Value)
+
+          if name.empty?
+            # error popup
+            Popup.Error(_("User name cannot be empty."))
+            UI.SetFocus(Id(:username))
+            next
+          end
 
           if pass != UI.QueryWidget(Id(:pw2), :Value)
             # error popup
@@ -882,8 +795,7 @@ module Yast
             UI.SetFocus(Id(:pw1))
             next
           end
-          if Builtins.haskey(@users, name) &&
-              (key == "add_user" || name != @current_user)
+          if @users.key?(name) && (key == "add_user" || name != @current_user)
             # error popup
             Popup.Error(
               Builtins.sformat(
@@ -894,8 +806,8 @@ module Yast
             UI.SetFocus(Id(:username))
             next
           end
-          @users = Builtins.remove(@users, @current_user) if key == "edit_user"
-          Ops.set(@users, name, { "password" => pass })
+          @users.delete (@current_user) if key == "edit_user"
+          @users[name] = { "password" => pass }
           break
         end
       end
@@ -904,29 +816,19 @@ module Yast
       if ret == :ok
         @current_user = name
         InitUsersTable("users_table")
-        UI.ChangeWidget(
-          Id("delete_user"),
-          :Enabled,
-          Ops.greater_than(Builtins.size(@users), 0)
-        )
-        UI.ChangeWidget(
-          Id("edit_user"),
-          :Enabled,
-          Ops.greater_than(Builtins.size(@users), 0)
-        )
+        UI.ChangeWidget(Id("delete_user"), :Enabled, @users.size > 0)
+        UI.ChangeWidget(Id("edit_user"), :Enabled, @users.size > 0)
       end
       nil
     end
 
     # handler for user selection table
     def HandleUsersTable(key, event)
-      event = deep_copy(event)
-      selected = Convert.to_string(UI.QueryWidget(Id(key), :Value))
+      selected = UI.QueryWidget(Id(key), :Value)
       if selected != nil && selected != @current_user
-        @current_user = selected == nil ? "" : selected
+        @current_user = (selected == nil ? "" : selected)
       end
-      if key == Ops.get(event, "ID") &&
-          Ops.get_string(event, "EventReason", "") == "Activated"
+      if key == event["ID"] && event["EventReason"] == "Activated"
         HandleAddEditUserButton("edit_user", { "ID" => "edit_user" })
       end
       nil
@@ -935,27 +837,13 @@ module Yast
 
     # handler for user button
     def HandleDeleteUserButton(key, event)
-      event = deep_copy(event)
-      _ID = Ops.get(event, "ID")
-      return nil if _ID != key
-      # yes/no popup question
-      if true # Popup::YesNo (sformat (_("Really delete user '%1'?"), current_user)))
-        @users = Builtins.remove(@users, @current_user)
-        InitUsersTable("users_table")
-        @current_user = Builtins.size(@users) == 0 ?
-          "" :
-          Convert.to_string(UI.QueryWidget(Id("users_table"), :Value))
-        UI.ChangeWidget(
-          Id(key),
-          :Enabled,
-          Ops.greater_than(Builtins.size(@users), 0)
-        )
-        UI.ChangeWidget(
-          Id("edit_user"),
-          :Enabled,
-          Ops.greater_than(Builtins.size(@users), 0)
-        )
-      end
+      return nil unless event["ID"] == key
+
+      @users.delete @current_user
+      InitUsersTable("users_table")
+      @current_user = @users.empty? ? "" : UI.QueryWidget(Id("users_table"), :Value)
+      UI.ChangeWidget(Id(key), :Enabled, @users.size > 0)
+      UI.ChangeWidget(Id("edit_user"), :Enabled, @users.size > 0)
       nil
     end
 
@@ -969,56 +857,38 @@ module Yast
       ]
       UI.ChangeWidget(Id(id), :Items, items)
       UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed)
-
       nil
     end
 
     def StoreMode(key, event)
-      event = deep_copy(event)
-      @mode = Convert.to_string(UI.QueryWidget(Id(key), :Value))
-
+      @mode = UI.QueryWidget(Id(key), :Value)
       nil
     end
 
     def HandleMode(key, event)
-      event = deep_copy(event)
       StoreMode(key, event)
       UI.ChangeWidget(Id("teaming"), :Enabled, @mode == "team")
       nil
     end
 
     def InitConduitList(id)
-      UI.ChangeWidget(
-        Id(id),
-        :Value,
-        Builtins.mergestring(@conduit_if_list, " ")
-      )
-
+      UI.ChangeWidget(Id(id), :Value, @conduit_if_list.join(" "))
       nil
     end
 
     def StoreConduitList(key, event)
-      event = deep_copy(event)
-      @conduit_if_list = Builtins.splitstring(
-        Convert.to_string(UI.QueryWidget(Id(key), :Value)),
-        " "
-      )
-
+      @conduit_if_list = (UI.QueryWidget(Id(key), :Value) || "").split(" ")
       nil
     end
 
     # Validate logical network values for conduit list
     def ValidateConduitList(key, event)
-      event = deep_copy(event)
       # [Quantifier][Speed][Order]
       # Quantifier is optional; for speed there are only 4 options; order starts with 1
       reg = "^[-+?]*(10m|100m|1g|10g)[1-9]+[0-9]*$"
 
       invalid_if = Builtins.find(
-        Builtins.splitstring(
-          Convert.to_string(UI.QueryWidget(Id(key), :Value)),
-          " "
-        )
+        (UI.QueryWidget(Id(key), :Value) || "").split(" ")
       ) do |iface|
         if !Builtins.regexpmatch(iface, reg)
           Builtins.y2warning("iface %1 has incorrect format", iface)
@@ -1043,59 +913,43 @@ module Yast
 
     # functions for handling network teaming widget
     def InitTeaming(id)
-      value = Ops.get(@teaming, "mode", 0)
-      items = []
-      i = 0
-      while Ops.less_than(i, 7)
-        items = Builtins.add(
-          items,
-          Item(Id(i), Builtins.tostring(i), i == value)
-        )
-        i = Ops.add(i, 1)
-      end
+      value = @teaming["mode"] || 0
+      items = (0..6).map {|i| Item(Id(i), i.to_s, i == value) }
       UI.ChangeWidget(Id(id), :Items, items)
       UI.ChangeWidget(Id(id), :Enabled, @mode == "team")
       UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed)
-
       nil
     end
 
     def StoreTeaming(key, event)
-      event = deep_copy(event)
-      Ops.set(
-        @teaming,
-        "mode",
-        Convert.to_integer(UI.QueryWidget(Id(key), :Value))
-      )
-
+      @teaming["mode"] = UI.QueryWidget(Id(key), :Value).to_i
       nil
     end
 
     def HandleTeaming(key, event)
-      event = deep_copy(event)
-      StoreTeaming(key, event) if Ops.get(event, "ID") == :next
+      StoreTeaming(key, event) if event["ID"] == :next
       nil
     end
 
     def GetRouter
-      Convert.to_string(UI.QueryWidget(Id("router"), :Value))
+      UI.QueryWidget(Id("router"), :Value)
     end
 
     # Returns current subnet as filled in dialog
     def GetSubnet
-      Convert.to_string(UI.QueryWidget(Id("subnet"), :Value))
+      UI.QueryWidget(Id("subnet"), :Value)
     end
 
     # Returns current netmask as filled in dialog
     def GetNetmask
-      Convert.to_string(UI.QueryWidget(Id("netmask"), :Value))
+      UI.QueryWidget(Id("netmask"), :Value)
     end
 
     # Returns broadcast address. Based on current netmask and subnet
     def GetBroadcast
       subnet = GetSubnet()
       netmask = GetNetmask()
-      return "" if subnet == "" || netmask == ""
+      return "" if subnet.empty? || netmask.empty?
       IP.ComputeBroadcast(subnet, netmask)
     end
 
@@ -1103,16 +957,10 @@ module Yast
       Item(
         Id(name),
         name,
-        Ops.get_string(@networks, [name, "subnet"], ""),
-        Ops.get_string(@networks, [name, "netmask"], ""),
-        Ops.get_boolean(
-          # table entry (VLAN status)
-          @networks,
-          [name, "use_vlan"],
-          false
-        ) ?
-          Builtins.sformat("%1", Ops.get_integer(@networks, [name, "vlan"], 0)) :
-          _("disabled")
+        @networks[name]["subnet"] || "",
+        @networks[name]["netmask"] || "",
+        (@networks[name]["use_vlan"] || false) ? 
+          Builtins.sformat("%1", @networks[name]["vlan"] || 0) : _("disabled")
       )
     end
 
@@ -1121,7 +969,7 @@ module Yast
       Builtins.foreach(@networks) do |name, n|
         items = Builtins.add(items, CreateItem(name)) if name != "bastion"
       end
-      deep_copy(items)
+      items
     end
     # universal widget: initialize the string value of widget @param
     def InitNetwork(id)
@@ -1131,38 +979,28 @@ module Yast
         return
       end
 
-      UI.ChangeWidget(
-        Id(id),
-        :Value,
-        Ops.get_string(@networks, [@current_network, id], "")
-      )
-
+      UI.ChangeWidget(Id(id), :Value, @networks[@current_network][id] || "")
       nil
     end
 
     # universal widget: initialize the integer value of widget @param
     def InitInteger(id)
-      UI.ChangeWidget(
-        Id(id),
-        :Value,
-        Ops.get_integer(@networks, [@current_network, id], 0)
-      )
+      UI.ChangeWidget(Id(id), :Value, @networks[@current_network][id] || 0)
       if id == "vlan"
         UI.ChangeWidget(
           Id(id),
           :Enabled,
-          Ops.get_boolean(@networks, [@current_network, "use_vlan"], false) == true
+          @networks[@current_network]["use_vlan"] || false
         )
       end
       if id == "router_pref"
         UI.ChangeWidget(
           Id(id),
           :Enabled,
-          Ops.get_string(@networks, [@current_network, "router"], "") != ""
+          ! (@networks[@current_network]["router"] || "").empty?
         )
       end
       UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed)
-
       nil
     end
 
@@ -1170,89 +1008,67 @@ module Yast
     def InitNetworkSelect(id)
       if CWMTab.CurrentTab == "networks"
         @current_network = "admin" if @current_network == "bastion"
-
         UI.ChangeWidget(Id(id), :Items, CreateItemList())
         UI.ChangeWidget(Id(id), :CurrentItem, @current_network)
       end
-
       nil
     end
 
     # store the string value of given widget
     def StoreNetwork(key, event)
-      event = deep_copy(event)
-      if Builtins.size(@networks) == 0 || key == "mode" ||
-          CWMTab.CurrentTab == "network_mode" && !@enable_bastion
-        return
-      end
+      return if @networks.empty? || key == "mode" ||
+        CWMTab.CurrentTab == "network_mode" && !@enable_bastion
+
       if (key == "router" || key == "router_pref") && GetRouter() == ""
-        if Builtins.haskey(Ops.get(@networks, @current_network, {}), key)
+        if @networks[@current_network].key? key
           # do not save empty router values to json
           # do not save router_pref if router is not defined
-          Ops.set(
-            @networks,
-            @current_network,
-            Builtins.remove(Ops.get(@networks, @current_network, {}), key)
-          )
+          @networks[@current_network].delete key
         end
         return
       end
       if key == "subnet"
-        Ops.set(
-          @networks,
-          [@current_network, key],
-          IP.ComputeNetwork(GetSubnet(), GetNetmask())
-        )
+        @networks[@current_network][key] = IP.ComputeNetwork(GetSubnet(), GetNetmask())
         return
       end
-      Ops.set(
-        @networks,
-        [@current_network, key],
-        UI.QueryWidget(Id(key), :Value)
-      )
-
+      @networks[@current_network][key] = UI.QueryWidget(Id(key), :Value)
       nil
     end
 
     # Validate entered network values
     def ValidateNetwork(key, event)
-      event = deep_copy(event)
       ret = true
 
-      if Ops.get(event, "WidgetID") == :back || Builtins.size(@networks) == 0
+      if event["WidgetID"] == :back || @networks.empty?
         return true
       end
       return true if CWMTab.CurrentTab == "network_mode" && !@enable_bastion
 
       subnet = GetSubnet()
       netmask = GetNetmask()
-      router = Convert.to_string(UI.QueryWidget(Id("router"), :Value))
+      router = UI.QueryWidget(Id("router"), :Value)
       ip = ""
       if UI.WidgetExists(Id("ip"))
-        ip = Convert.to_string(UI.QueryWidget(Id("ip"), :Value))
+        ip = UI.QueryWidget(Id("ip"), :Value)
       end
 
       ret = key != "netmask" || Netmask.Check(netmask)
-      if !ret
+      unless ret
         # error popup
         Popup.Error(
           Builtins.sformat(
-            _("The netmask '%1' is invalid.\n%2"),
-            netmask,
-            IP.Valid4
+            _("The netmask '%1' is invalid.\n%2"), netmask, IP.Valid4
           )
         )
         return false
       end
 
       ret = key != "subnet" || IP.Check(subnet)
-      if !ret
+      unless ret
         # error popup
         Popup.Error(
           Builtins.sformat(
-            _("The IP address '%1' is invalid.\n%2"),
-            subnet,
-            IP.Valid4
+            _("The IP address '%1' is invalid.\n%2"), subnet, IP.Valid4
           )
         )
         return false
@@ -1262,15 +1078,12 @@ module Yast
           # error popup
           Popup.Error(
             Builtins.sformat(
-              _("The router address '%1' is invalid.\n%2"),
-              router,
-              IP.Valid4
+              _("The router address '%1' is invalid.\n%2"), router, IP.Valid4
             )
           )
           return false
         end
-        if IP.ComputeNetwork(subnet, netmask) !=
-            IP.ComputeNetwork(router, netmask)
+        if IP.ComputeNetwork(subnet, netmask) != IP.ComputeNetwork(router, netmask)
           # error popup
           Popup.Error(
             Builtins.sformat(
@@ -1283,13 +1096,11 @@ module Yast
         end
       end
       if key == "ip" && ip != ""
-        if !IP.Check(ip)
+        unless IP.Check(ip)
           # error popup
           Popup.Error(
             Builtins.sformat(
-              _("The IP address '%1' is invalid.\n%2"),
-              ip,
-              IP.Valid4
+              _("The IP address '%1' is invalid.\n%2"), ip, IP.Valid4
             )
           )
           return false
@@ -1309,19 +1120,17 @@ module Yast
       # check if ranges are still in network
       if key == "subnet"
         ranges_fine = true
-        Builtins.foreach(
-          Ops.get_map(@networks, [@current_network, "ranges"], {})
-        ) { |name, range| Builtins.foreach(["start", "end"]) do |part|
-          ip2 = Ops.get_string(range, part, "")
-          ranges_fine = false if IP.ComputeNetwork(ip2, netmask) != subnet
-        end }
-        if !ranges_fine
+        (@networks[@current_network]["ranges"] || {}).each { |name, range|
+          ["start", "end"].each do |part|
+            ip2 = range[part] || ""
+            ranges_fine = false if IP.ComputeNetwork(ip2, netmask) != subnet
+          end 
+        }
+        unless ranges_fine
           # popup message
           Popup.Warning(
             Builtins.sformat(
-              _(
-                "Some address ranges are not part of network '%1'.\nAdapt them using 'Edit ranges' button."
-              ),
+              _("Some address ranges are not part of network '%1'.\nAdapt them using 'Edit ranges' button."),
               @current_network
             )
           )
@@ -1333,69 +1142,57 @@ module Yast
 
     # handler for general string-value widgets: store their value on exit/save
     def HandleNetwork(key, event)
-      event = deep_copy(event)
-      if key == "use_vlan" && Ops.get(event, "ID") == "use_vlan"
-        UI.ChangeWidget(
-          Id("vlan"),
-          :Enabled,
-          UI.QueryWidget(Id(key), :Value) == true
-        )
+      if key == "use_vlan" && event["ID"] == "use_vlan"
+        UI.ChangeWidget(Id("vlan"), :Enabled, UI.QueryWidget(Id(key), :Value) == true)
       end
-      if key == "router_pref" && Ops.get(event, "ID") == "router"
+      if key == "router_pref" && event["ID"] == "router"
         UI.ChangeWidget(Id("router_pref"), :Enabled, GetRouter() != "")
       end
       # store the value on exiting
-      if Ops.get_string(event, "EventReason", "") == "ValueChanged"
+      if event["EventReason"] == "ValueChanged"
         if IP.Check(GetSubnet()) && IP.Check(GetNetmask())
           UI.ChangeWidget(Id("broadcast"), :Value, GetBroadcast())
-          StoreNetwork(Ops.get_string(event, "ID", ""), event)
-
+          StoreNetwork(event["ID"], event)
           InitNetworkSelect("network_select")
         end
       end
-      StoreNetwork(key, event) if Ops.get(event, "ID") == :next
+      StoreNetwork(key, event) if event["ID"] == :next
       nil
     end
 
 
     # universal widget: initialize the string value of widget @param
     def InitCheckBox(id)
-      UI.ChangeWidget(
-        Id(id),
-        :Value,
-        Ops.get_boolean(@networks, [@current_network, id], false)
-      )
+      UI.ChangeWidget(Id(id), :Value, @networks[@current_network][id] || false)
       UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed)
-
       nil
     end
 
     # handler network selection table
     def HandleNetworkSelect(key, event)
-      event = deep_copy(event)
-      selected = Convert.to_string(UI.QueryWidget(Id(key), :Value))
+      selected = UI.QueryWidget(Id(key), :Value)
       if selected != @current_network
         validated = true
-        Builtins.foreach(["netmask", "subnet", "router"]) do |key2|
+        ["netmask", "subnet", "router"].each do |key2|
           validated = validated && ValidateNetwork(key2, event)
         end
-        if !validated
+        unless validated
           UI.ChangeWidget(Id(key), :CurrentItem, @current_network)
           return nil
         end
-        Builtins.foreach(
-          [
-            "netmask",
-            "subnet",
-            "add_bridge",
-            "use_vlan",
-            "vlan",
-            "broadcast",
-            "router"
-          ]
-        ) { |key2| StoreNetwork(key2, {}) }
+        [
+          "netmask",
+          "subnet",
+          "add_bridge",
+          "use_vlan",
+          "vlan",
+          "broadcast",
+          "router"
+        ].each do |key2|
+          StoreNetwork(key2, {})
+        end
         @current_network = selected
-        Builtins.foreach(["netmask", "subnet", "broadcast", "router"]) do |key2|
+        ["netmask", "subnet", "broadcast", "router"].each do |key2|
           InitNetwork(key2)
         end
         InitCheckBox("use_vlan")
@@ -1407,36 +1204,34 @@ module Yast
 
     # handler for ranges button
     def HandleRangesButton(key, event)
-      event = deep_copy(event)
-      _ID = Ops.get(event, "ID")
-      return nil if _ID != key
+      return nil unless event["ID"] == key
 
-      subnet = Ops.get_string(@networks, [@current_network, "subnet"], "")
-      netmask = Ops.get_string(@networks, [@current_network, "netmask"], "")
-      ranges = Ops.get_map(@networks, [@current_network, "ranges"], {})
+      subnet = @networks[@current_network]["subnet"] || ""
+      netmask = @networks[@current_network]["netmask"] || ""
+      ranges = deep_copy(@networks[@current_network]["ranges"] || {})
       ranges_term = VBox()
 
-      Builtins.foreach(ranges) do |name, range|
+      ranges.each do |name, range|
         r = Frame(
           name,
           HBox(
             InputField(
-              Id(Ops.add(name, "_start")),
+              Id(name + "_start"),
               Opt(:hstretch),
               # inputfield label
               _("Min IP Address"),
-              Ops.get_string(range, "start", "")
+              range["start"] || ""
             ),
             InputField(
-              Id(Ops.add(name, "_end")),
+              Id(name + "_end"),
               Opt(:hstretch),
               # inputfield label
               _("Max IP Address"),
-              Ops.get_string(range, "end", "")
+              range["end"] || ""
             )
           )
         )
-        ranges_term = Builtins.add(ranges_term, r)
+        ranges_term.params << r
       end
 
       UI.OpenDialog(
@@ -1458,43 +1253,29 @@ module Yast
         )
       )
 
-      Builtins.foreach(ranges) do |name, range|
-        UI.ChangeWidget(
-          Id(Ops.add(name, "_start")),
-          :ValidChars,
-          Ops.add(IP.ValidChars4, IP.ValidChars6)
-        )
-        UI.ChangeWidget(
-          Id(Ops.add(name, "_end")),
-          :ValidChars,
-          Ops.add(IP.ValidChars4, IP.ValidChars6)
-        )
-        UI.ChangeWidget(
-          Id(Ops.add(name, "_start")),
-          :Enabled,
-          !Crowbar.installed
-        )
-        UI.ChangeWidget(Id(Ops.add(name, "_end")), :Enabled, !Crowbar.installed)
+      ranges.each do |name, range|
+        UI.ChangeWidget(Id(name + "_start"), :ValidChars, IP.ValidChars4 + IP.ValidChars6)
+        UI.ChangeWidget(Id(name + "_end"), :ValidChars, IP.ValidChars4 + IP.ValidChars6)
+        UI.ChangeWidget(Id(name + "_start"), :Enabled, !Crowbar.installed)
+        UI.ChangeWidget(Id(name + "_end"), :Enabled, !Crowbar.installed)
       end
 
       UI.ChangeWidget(Id(:ok), :Enabled, !Crowbar.installed)
 
       ret = :not_next
       while true
-        ret = Convert.to_symbol(UI.UserInput)
+        ret = UI.UserInput
         break if ret == :cancel
         if ret == :ok
           widget = ""
           ranges_l = []
-          Builtins.foreach(ranges) do |name, range|
+          ranges.each do |name, range|
             next if widget != ""
-            Builtins.foreach(["start", "end"]) do |part|
-              ip = Convert.to_string(
-                UI.QueryWidget(Id(Ops.add(Ops.add(name, "_"), part)), :Value)
-              )
+            ["start", "end"].each do |part|
+              ip = UI.QueryWidget(Id(name + "_" + part), :Value)
               if !IP.Check(ip)
                 Popup.Error(IP.Valid4)
-                widget = Ops.add(Ops.add(name, "_"), part)
+                widget = name + "_" + part
               elsif IP.ComputeNetwork(ip, netmask) != subnet
                 Popup.Error(
                   Builtins.sformat(
@@ -1503,63 +1284,48 @@ module Yast
                     @current_network
                   )
                 )
-                widget = Ops.add(Ops.add(name, "_"), part)
+                widget = name + "_" + part
               end
-              Ops.set(ranges, [name, part], ip)
+              ranges[name][part] = ip
             end
-            if widget == "" &&
-                Ops.greater_than(
-                  IP.ToInteger(Ops.get_string(ranges, [name, "start"], "")),
-                  IP.ToInteger(Ops.get_string(ranges, [name, "end"], ""))
-                )
+            if widget == "" && 
+              IP.ToInteger(ranges[name]["start"] || "") > IP.ToInteger(ranges[name]["end"] || "")
               # error message
-              Popup.Error(
-                _("The lowest address must be lower than the highest one.")
-              )
-              widget = Ops.add(name, "_end")
+              Popup.Error(_("The lowest address must be lower than the highest one."))
+              widget = name + "_end"
             else
-              ranges_l = Builtins.add(
-                ranges_l,
+              ranges_l <<
                 [
-                  IP.ToInteger(Ops.get_string(ranges, [name, "start"], "")),
-                  IP.ToInteger(Ops.get_string(ranges, [name, "end"], "")),
+                  IP.ToInteger(ranges[name]["start"] || ""),
+                  IP.ToInteger(ranges[name]["end"] || ""),
                   name
                 ]
-              )
             end
           end
           # check if ranges do not overlap
-          if widget == "" && Ops.greater_than(Builtins.size(ranges_l), 1)
+          if widget == "" && ranges_l.size > 1
             ranges_l = Builtins.sort(ranges_l) do |a, b|
-              Ops.less_or_equal(
-                Ops.get_integer(a, 0, 0),
-                Ops.get_integer(b, 0, 0)
-              )
+              a[0] || 0 <= b[0] || 0
             end
             i = 0
-            while Ops.less_than(i, Ops.subtract(Builtins.size(ranges_l), 1))
-              this = Ops.get(ranges_l, i, [])
-              _next = Ops.get(ranges_l, Ops.add(i, 1), [])
-              if Ops.greater_or_equal(
-                  Ops.get_integer(this, 1, 0),
-                  Ops.get_integer(_next, 0, 0)
-                )
+            while i < (ranges_l.size - 1)
+              _this = ranges_l[i] || []
+              _next = ranges_l[i+1] || []
+              if (_this[1] || 0) >= (_next[0] || 0)
                 # error message
                 Popup.Error(
                   Builtins.sformat(
-                    _("Ranges '%1' and '%2' are overlapping."),
-                    Ops.get_string(this, 2, ""),
-                    Ops.get_string(_next, 2, "")
+                    _("Ranges '%1' and '%2' are overlapping."), _this[2] || "", _next[2] || ""
                   )
                 )
-                widget = Ops.add(Ops.get_string(_next, 2, ""), "_start")
+                widget = (_next[2] || "") + "_start"
               end
-              i = Ops.add(i, 1)
+              i += 1
             end
           end
           # finally, save the ranges
           if widget == ""
-            Ops.set(@networks, [@current_network, "ranges"], ranges)
+            @networks[@current_network]["ranges"] = ranges
             break
           else
             ret = :not_next
@@ -1574,30 +1340,25 @@ module Yast
     end
 
     def enable_disable_bastion
-      Builtins.foreach(
-        [
-          "ip",
-          "router",
-          "subnet",
-          "netmask",
-          "broadcast",
-          "use_vlan",
-          "conduit_if_list"
-        ]
-      ) { |w| UI.ChangeWidget(Id(w), :Enabled, @enable_bastion) }
+      [
+        "ip",
+        "router",
+        "subnet",
+        "netmask",
+        "broadcast",
+        "use_vlan",
+        "conduit_if_list"
+      ].each { |w| UI.ChangeWidget(Id(w), :Enabled, @enable_bastion) }
       UI.ChangeWidget(
         Id("vlan"),
         :Enabled,
-        @enable_bastion &&
-          Ops.get_boolean(@networks, [@current_network, "use_vlan"], false) == true
+        @enable_bastion && (@networks[@current_network]["use_vlan"] || false)
       )
       UI.ChangeWidget(
         Id("router_pref"),
         :Enabled,
-        @enable_bastion &&
-          Ops.get_string(@networks, [@current_network, "router"], "") != ""
+        @enable_bastion && @networks[@current_network]["router"] != ""
       )
-
       nil
     end
 
@@ -1608,12 +1369,10 @@ module Yast
       UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed)
       UI.ChangeWidget(Id(id), :Value, @enable_bastion)
       enable_disable_bastion
-
       nil
     end
 
     def HandleBastionCheckbox(key, event)
-      event = deep_copy(event)
       @enable_bastion = UI.QueryWidget(Id(key), :Value) == true
       enable_disable_bastion
       nil
@@ -1780,18 +1539,12 @@ module Yast
       conduit_name = conduit
       name_found = false
 
-      @conduit_map = Builtins.maplist(@conduit_map) do |c_map|
+      @conduit_map.each do |c_map|
         # ignore not matching patterns
-        if Builtins.substring(
-            Ops.get_string(c_map, "pattern", ""),
-            0,
-            Builtins.size(@mode)
-          ) != @mode
-          next deep_copy(c_map)
-        end
-        if !name_found
+        next c_map unless c_map["pattern"] =~ /#{@mode}/
+        unless name_found
           # if non-empty conduit was provided && it exist for the right pattern, use it
-          if Builtins.haskey(Ops.get_map(c_map, "conduit_list", {}), conduit)
+          if c_map["conduit_list"].key? conduit
             name_found = true
           else
             if conduit == ""
@@ -1799,94 +1552,56 @@ module Yast
               conduit_name = "bastion"
             end
             i = 0
-            while Builtins.haskey(
-                Ops.get_map(c_map, "conduit_list", {}),
-                conduit_name
-              )
-              conduit_name = Builtins.sformat("%1%2", conduit, i)
-              i = Ops.add(i, 1)
+            while  c_map["conduit_list"].key? conduit_name
+              conduit_name = "#{conduit}#{i}"
+              i += 1
             end
             name_found = true
           end
         end
-        Ops.set(
-          c_map,
-          ["conduit_list", conduit_name],
-          { "if_list" => @conduit_if_list }
-        )
-        deep_copy(c_map)
+        c_map["conduit_list"][conduit_name] = { "if_list" => @conduit_if_list }
       end
       conduit_name
     end
 
     # Find if_list relevant for given bastion network
     def get_conduit_if_list(bastion)
-      bastion = deep_copy(bastion)
-      conduit_name = Ops.get_string(bastion, "conduit", "")
-      Builtins.foreach(@conduit_map) do |c_map|
-        if Builtins.substring(
-            Ops.get_string(c_map, "pattern", ""),
-            0,
-            Builtins.size(@mode)
-          ) == @mode
-          if Builtins.haskey(
-              Ops.get_map(c_map, "conduit_list", {}),
-              conduit_name
-            )
-            @conduit_if_list = Ops.get_list(
-              c_map,
-              ["conduit_list", conduit_name, "if_list"],
-              []
-            )
-          end
+      conduit_name = bastion["conduit"] || ""
+      if_list   = []
+      @conduit_map.each do |c_map|
+        if (c_map["pattern"] =~ /#{@mode}/) && (c_map["conduit_list"].key? conduit_name)
+          if_list = c_map["conduit_list"][conduit_name]["if_list"] rescue []
         end
       end
-
-      deep_copy(@conduit_if_list)
+      if_list
     end
 
     def OverviewDialog
-      @networks = deep_copy(Crowbar.networks)
-      @mode = Crowbar.mode
-      @teaming = deep_copy(Crowbar.teaming)
-      @users = deep_copy(Crowbar.users)
-      @repos = deep_copy(Crowbar.repos)
-      @conduit_map = deep_copy(Crowbar.conduit_map)
-      @enable_bastion = Builtins.haskey(@networks, "bastion")
-      if !@enable_bastion
-        Ops.set(@networks, "bastion", {})
+      @networks         = Crowbar.networks
+      @mode             = Crowbar.mode
+      @teaming          = Crowbar.teaming
+      @users            = Crowbar.users
+      @repos            = Crowbar.repos
+      @conduit_map      = Crowbar.conduit_map
+      @enable_bastion   = @networks.key? "bastion"
+
+      if @enable_bastion
+        @networks["bastion"]["ip"] = @networks["bastion"]["ranges"]["admin"]["start"] rescue "0"
+        @conduit_if_list = get_conduit_if_list(@networks["bastion"] || {})
       else
-        Ops.set(
-          @networks,
-          ["bastion", "ip"],
-          Ops.get_string(
-            @networks,
-            ["bastion", "ranges", "admin", "start"],
-            "0"
-          )
-        )
-        @conduit_if_list = get_conduit_if_list(
-          Ops.get(@networks, "bastion", {})
-        )
+        @networks["bastion"]    = {}
       end
+
       # find out initial router_pref value for bastion network and set it lower than in admin network
-      @initial_router_pref = Ops.get_integer(
-        @networks,
-        ["admin", "router_pref"],
-        @initial_router_pref
-      )
-      if Ops.greater_than(@initial_router_pref, 0)
-        @initial_router_pref = Ops.subtract(@initial_router_pref, 1)
+      @initial_router_pref = @networks["admin"]["router_pref"] || @initial_router_pref
+      if @initial_router_pref > 0
+        @initial_router_pref -= 1
+      end
+      unless @networks["bastion"].key? "router_pref"
+        @networks["bastion"]["router_pref"] = @initial_router_pref
       end
 
-      if !Builtins.haskey(Ops.get(@networks, "bastion", {}), "router_pref")
-        Ops.set(@networks, ["bastion", "router_pref"], @initial_router_pref)
-      end
-
-      Ops.set(
-        @widget_description,
-        "tab",
-        CWMTab.CreateWidget(
+      @widget_description["tab"] = CWMTab.CreateWidget(
           {
             "tab_order"    => [
               "users",
@@ -1898,7 +1613,6 @@ module Yast
             "widget_descr" => @widget_description,
             "initial_tab"  => "users"
           }
-        )
       )
 
       Wizard.SetContentsButtons(
@@ -1939,41 +1653,33 @@ module Yast
           "back_button"  => Stage.cont ? Label.BackButton : Label.CancelButton
         }
       )
-      if Crowbar.installed
-        # not saving
-        return :back
-      end
+
+      # not saving
+      return :back if Crowbar.installed
+
       if ret == :next
         if @enable_bastion
           # remove internal "ip" key and transform it to ranges (ip-ip)
-          bastion = Ops.get(@networks, "bastion", {})
-          Ops.set(bastion, "ranges", {}) if !Builtins.haskey(bastion, "ranges")
-          Ops.set(
-            bastion,
-            ["ranges", "admin"],
-            {
-              "start" => Ops.get_string(bastion, "ip", "0"),
-              "end"   => Ops.get_string(bastion, "ip", "0")
-            }
-          )
-          bastion = Builtins.remove(bastion, "ip")
+          bastion = @networks["bastion"] || {}
+          bastion["ranges"] ||= {}
+          bastion["ranges"]["admin"] = {
+            "start" => bastion["ip"] || "0",
+            "end"   => bastion["ip"] || "0"
+          }
+          bastion.delete "ip"
           # add conduit to bastion network submap
-          Ops.set(
-            bastion,
-            "conduit",
-            adapt_conduit_map(Ops.get_string(bastion, "conduit", ""))
-          )
-          Ops.set(bastion, "add_bridge", false)
-          Ops.set(@networks, "bastion", bastion)
-        elsif Builtins.haskey(@networks, "bastion")
-          @networks = Builtins.remove(@networks, "bastion")
+          bastion["conduit"] = adapt_conduit_map(bastion["conduit"] || "")
+          bastion["add_bridge"] = false
+          @networks["bastion"] = bastion
+        elsif @networks.key? "bastion"
+          @networks.delete "bastion"
         end
-        Crowbar.networks = deep_copy(@networks)
-        Crowbar.conduit_map = deep_copy(@conduit_map) # was adapted by adapt_conduit_map
-        Crowbar.users = deep_copy(@users)
-        Crowbar.teaming = deep_copy(@teaming)
+        Crowbar.networks = @networks
+        Crowbar.conduit_map = @conduit_map # was adapted by adapt_conduit_map
+        Crowbar.users = @users
+        Crowbar.teaming = @teaming
         Crowbar.mode = @mode
-        Crowbar.repos = deep_copy(@repos)
+        Crowbar.repos = @repos
       end
       ret
     end
