@@ -17,7 +17,7 @@
 
 
 Name:           yast2-crowbar
-Version:        3.1.5
+Version:        3.1.6
 Release:        0
 License:	GPL-2.0
 Group:		System/YaST
