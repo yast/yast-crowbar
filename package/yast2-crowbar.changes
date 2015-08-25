@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Aug 26 13:54:39 UTC 2015 - tserong@suse.com
+
+- Don't explicitly mention SUSE Cloud
+- 3.1.7
+
+-------------------------------------------------------------------
 Thu Jul 23 13:56:45 CEST 2015 - jsuchome@suse.com
 
 - enable entering just SMT/Manager URL and compute the URL
