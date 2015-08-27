@@ -48,7 +48,7 @@ module Yast
           # Ovreview dialog help
           _(
             "<p>\n" +
-              "See the SUSE Cloud deployment guide for details on the network\n" +
+              "See the product deployment guide for details on the network\n" +
               "configuration and on using this YaST module.\n" +
               "</p>"
           )

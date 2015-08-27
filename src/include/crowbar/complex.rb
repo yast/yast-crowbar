@@ -1729,7 +1729,7 @@ module Yast
         Popup.Message(
           Builtins.sformat(
             _(
-              "The SUSE Cloud Admin Server has been deployed. Changing the network is\n" +
+              "The Crowbar Admin Server has been deployed. Changing the network is\n" +
                 "currently not supported.\n" +
                 "\n" +
                 "You can visit the Crowbar web UI on http://%1:3000/"
