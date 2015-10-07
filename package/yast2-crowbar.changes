@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Oct  7 13:52:52 CEST 2015 - jsuchome@suse.com
+
+- Adapt module so it can be called during first stage of installation
+  (which is the only stage in SLES12)
+- 3.1.8 
+
+-------------------------------------------------------------------
 Wed Aug 26 13:54:39 UTC 2015 - tserong@suse.com
 
 - Don't explicitly mention SUSE Cloud
