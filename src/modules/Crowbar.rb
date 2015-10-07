@@ -34,14 +34,15 @@ module Yast
       textdomain "crowbar"
 
       Yast.import "FileUtils"
+      Yast.import "Installation"
+      Yast.import "Message"
       Yast.import "Progress"
       Yast.import "Report"
-      Yast.import "Message"
 
       # Path to the files with JSON data
-      @network_file = "/etc/crowbar/network.json"
-      @crowbar_file = "/etc/crowbar/crowbar.json"
-      @provisioner_file = "/etc/crowbar/provisioner.json"
+      @network_file = Installation.destdir + "/etc/crowbar/network.json"
+      @crowbar_file = Installation.destdir + "/etc/crowbar/crowbar.json"
+      @provisioner_file = Installation.destdir + "/etc/crowbar/provisioner.json"
       @installed_file = "/opt/dell/crowbar_framework/.crowbar-installed-ok"
 
       # The keys are the names of default repositories available for current product
