@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Oct 19 07:27:52 UTC 2015 - vuntz@suse.com
+
+- Update list of repositories for Cloud 6.
+- 3.1.9
+
+-------------------------------------------------------------------
 Wed Oct  7 13:52:52 CEST 2015 - jsuchome@suse.com
 
 - Adapt module so it can be called during first stage of installation

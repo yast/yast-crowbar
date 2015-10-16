@@ -50,21 +50,21 @@ module Yast
       #
       # The values are target node platform for those repositories
       @default_repos = {
-        "Cloud"                                 => "suse-11.3",
-        "SUSE-OpenStack-Cloud-SLE11-6-Pool"     => "suse-11.3",
-        "SUSE-OpenStack-Cloud-SLE11-6-Updates"  => "suse-11.3",
-        "SLES11-SP3-Pool"                       => "suse-11.3",
-        "SLES11-SP3-Updates"                    => "suse-11.3",
-        "SLE11-HAE-SP3-Pool"                    => "suse-11.3",
-        "SLE11-HAE-SP3-Updates"                 => "suse-11.3",
         # sle12 based repos:
         "SLES12-Pool"                           => "suse-12.0",
         "SLES12-Updates"                        => "suse-12.0",
-        "Cloud"                                 => "suse-12.0",
-        "SUSE-OpenStack-Cloud-6-Pool"           => "suse-12.0",
-        "SUSE-OpenStack-Cloud-6-Updates"        => "suse-12.0",
-        "SUSE-Enterprise-Storage-1.0-Pool"      => "suse-12.0",
-        "SUSE-Enterprise-Storage-1.0-Updates"   => "suse-12.0",
+        "SLE12-HA-Pool"                         => "suse-12.0",
+        "SLE12-HA-Updates"                      => "suse-12.0",
+        "SUSE-Enterprise-Storage-2-Pool"        => "suse-12.0",
+        "SUSE-Enterprise-Storage-2-Updates"     => "suse-12.0",
+        # sle12sp1 based repos:
+        "SLES12-SP1-Pool"                       => "suse-12.1",
+        "SLES12-SP1-Updates"                    => "suse-12.1",
+        "SLE12-SP1-HA-Pool"                     => "suse-12.1",
+        "SLE12-SP1-HA-Updates"                  => "suse-12.1",
+        "Cloud"                                 => "suse-12.1",
+        "SUSE-OpenStack-Cloud-6-Pool"           => "suse-12.1",
+        "SUSE-OpenStack-Cloud-6-Updates"        => "suse-12.1",
         # common repos
         "PTF"                                   => "common"
       }
@@ -196,8 +196,8 @@ module Yast
                 "autoyast" => {
                   "repos" => {
                     "common"    => {},
-                    "suse-11.3" => {},
-                    "suse-12.0" => {}
+                    "suse-12.0" => {},
+                    "suse-12.1" => {}
                   }
                 }
               }
@@ -207,15 +207,15 @@ module Yast
       end
       @repos = @provisioner["attributes"]["provisioner"]["suse"]["autoyast"]["repos"] rescue {}
 
-      ["common", "suse-11.3", "suse-12.0"].each do |target_product|
+      ["common", "suse-12.0", "suse-12.1"].each do |target_product|
         @repos[target_product] ||= {}
       end
 
       # fill in all the repo names for the UI
       @default_repos.each do |repo, target_product|
         unless (@repos["common"].key?(repo) ||
-                @repos["suse-11.3"].key?(repo) ||
-                @repos["suse-12.0"].key?(repo))
+                @repos["suse-12.0"].key?(repo) ||
+                @repos["suse-12.1"].key?(repo))
           @repos[target_product][repo]  = { "url" => "" }
         end
       end

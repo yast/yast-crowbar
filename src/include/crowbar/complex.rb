@@ -89,9 +89,9 @@ module Yast
         # radio button item: target repository is common for all available platform
         "common"    => _("Common for All"),
         # target platform name
-        "suse-11.3" => _("SLES 11 SP3"),
+        "suse-12.0" => _("SLES 12"),
         # target platform name
-        "suse-12.0" => _("SLES 12")
+        "suse-12.1" => _("SLES 12 SP1")
       }
 
       @repos_location         = ""
@@ -537,10 +537,10 @@ module Yast
                       RadioButton(Id("common"), @platform2label["common"], true)
                     ),
                     Left(
-                      RadioButton(Id("suse-11.3"), @platform2label["suse-11.3"])
+                      RadioButton(Id("suse-12.0"), @platform2label["suse-12.0"])
                     ),
                     Left(
-                      RadioButton(Id("suse-12.0"), @platform2label["suse-12.0"])
+                      RadioButton(Id("suse-12.1"), @platform2label["suse-12.1"])
                     )
                   )
                 )
@@ -639,7 +639,7 @@ module Yast
       return nil if @remote_server_url.empty? || @repos_location == "custom"
 
       @repos.each do |prod_name, platform|
-        distro = prod_name == "suse-11.3" ? "sles11-sp3-x86_64" : "sles12-x86_64"
+        distro = prod_name == "suse-12.1" ? "sles12-sp1-x86_64" : "sles12-x86_64"
         platform.each do |repo_name, r|
           url = "#{@remote_server_url}/repo/$RCE/#{repo_name}/x86_64/"
           if @repos_location == "sm"
@@ -716,8 +716,8 @@ module Yast
                 HSpacing(),
                 VBox(
                   Left(RadioButton(Id("common"), Opt(:notify), @platform2label["common"])),
-                  Left(RadioButton(Id("suse-11.3"), Opt(:notify), @platform2label["suse-11.3"])),
-                  Left(RadioButton(Id("suse-12.0"), Opt(:notify), @platform2label["suse-12.0"]))
+                  Left(RadioButton(Id("suse-12.0"), Opt(:notify), @platform2label["suse-12.0"])),
+                  Left(RadioButton(Id("suse-12.1"), Opt(:notify), @platform2label["suse-12.1"]))
                 )
               ))
             )),
