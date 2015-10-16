@@ -85,6 +85,9 @@ module Yast
       # platform value for currently selected repository
       @current_repo_platform = "suse-12.0"
 
+      # arch value for currently selected repository
+      @current_arch = "x86_64"
+
       @platform2label = {
         # target platform name
         "suse-12.0" => _("SLES 12"),
@@ -454,13 +457,13 @@ module Yast
     end
 
     def InitAskOnError(id)
-      ask = @repos.fetch(@current_repo_platform,{}).fetch(@current_repo,{}).fetch("ask_on_error", false)
+      ask = @repos.fetch(@current_repo_platform,{}).fetch(@current_arch,{}).fetch(@current_repo,{}).fetch("ask_on_error", false)
       UI.ChangeWidget(Id(id), :Value, ask)
       nil
     end
 
     def InitRepoURL(id)
-      url = @repos[@current_repo_platform][@current_repo]["url"] rescue ""
+      url = @repos[@current_repo_platform][@current_arch][@current_repo]["url"] rescue ""
       url ||= ""
       UI.ChangeWidget(Id(id), :Value, url)
       nil
@@ -469,20 +472,22 @@ module Yast
     # initialize the value of repo table
     def InitReposTable(id)
       repo_items = []
-      @repos.each do |prod_name, platform|
-        platform.each do |repo_id, repo|
-          repo_items <<
-            Item(
-              Id("#{prod_name}|#{repo_id}"),
-              repo["name"] || repo_id,
-              repo["url"] || "",
-              (repo["ask_on_error"] || false) ?  UI.Glyph(:CheckMark) : " ",
-              prod_name
-            )
+      @repos.each do |platform, arches|
+        arches.each do |arch, repos|
+          repos.each do |repo_id, repo|
+            repo_items <<
+              Item(
+                Id("#{platform}|#{arch}|#{repo_id}"),
+                repo["name"] || repo_id,
+                repo["url"] || "",
+                (repo["ask_on_error"] || false) ?  UI.Glyph(:CheckMark) : " ",
+                "#{@platform2label[platform] || platform} (#{arch})"
+              )
+          end
         end
       end
       UI.ChangeWidget(Id(id), :Items, repo_items)
-      UI.ChangeWidget(Id(id), :CurrentItem, "#{@current_repo_platform}|#{@current_repo}") unless @current_repo.empty?
+      UI.ChangeWidget(Id(id), :CurrentItem, "#{@current_repo_platform}|#{@current_arch}|#{@current_repo}") unless @current_repo.empty?
       nil
     end
 
@@ -490,7 +495,7 @@ module Yast
     def HandleReposTable(key, event)
       selected = UI.QueryWidget(Id(key), :Value)
       if !selected.nil? && (selected != @current_repo || event["force"])
-        @current_repo_platform, @current_repo = selected.split("|")
+        @current_repo_platform, @current_arch, @current_repo = selected.split("|")
         InitRepoURL("repo_url")
         InitAskOnError("ask_on_error")
       end
@@ -535,6 +540,21 @@ module Yast
                 )
               )
             ),
+            RadioButtonGroup(
+              Id(:arch),
+              Frame(
+                _("Architecture"),
+                HBox(
+                  HSpacing(),
+                  VBox(
+                    # radiobutton label
+                    Left(
+                      RadioButton(Id("x86_64"), "x86_64")
+                    )
+                  )
+                )
+              )
+            ),
             VSpacing(0.5),
             ButtonBox(
               PushButton(Id(:ok), Label.OKButton),
@@ -549,6 +569,7 @@ module Yast
       ret = :not_next
       name = ""
       platform = "suse-12.1"
+      arch = "x86_64"
 
       while true
         ret = UI.UserInput
@@ -556,23 +577,22 @@ module Yast
         if ret == :ok
           name = UI.QueryWidget(Id(:name), :Value)
           platform = UI.QueryWidget(Id(:platform), :Value)
+          arch = UI.QueryWidget(Id(:arch), :Value)
           if name.empty?
             ret = :cancel
             break
           end
 
-          @repos.each do |platform_name, platform|
-            if platform.key? name
-              # error popup
-              Popup.Error(
-                Builtins.sformat(
-                  _("Repository '%1' already exists.\nChoose a different name."),
-                  name
-                )
+          if @repos[platform][arch].key? name
+            # error popup
+            Popup.Error(
+              Builtins.sformat(
+                _("Repository '%1' already exists.\nChoose a different name."),
+                name
               )
-              UI.SetFocus(Id(:name))
-              ret = :not_next
-            end
+            )
+            UI.SetFocus(Id(:name))
+            ret = :not_next
           end
           break if ret == :ok
         end
@@ -580,8 +600,11 @@ module Yast
 
       if ret == :ok
         @current_repo = name
+        @current_arch = arch
         @current_repo_platform = platform
-        @repos[@current_repo_platform][@current_repo] = {
+        @repos[@current_repo_platform] ||= {}
+        @repos[@current_repo_platform][@current_arch] ||= {}
+        @repos[@current_repo_platform][@current_arch][@current_repo] = {
           "url"          => UI.QueryWidget(Id(:url), :Value),
           "ask_on_error" => UI.QueryWidget(Id(:ask_on_error), :Value)
         }
@@ -596,7 +619,7 @@ module Yast
     end
 
     def StoreRepoURL(key, event)
-      @repos[@current_repo_platform][@current_repo]["url"] = UI.QueryWidget(Id(key), :Value)
+      @repos[@current_repo_platform][@current_arch][@current_repo]["url"] = UI.QueryWidget(Id(key), :Value)
       nil
     end
 
@@ -625,20 +648,22 @@ module Yast
 
       return nil if @remote_server_url.empty? || @repos_location == "custom"
 
-      @repos.each do |prod_name, platform|
-        distro = prod_name == "suse-12.1" ? "sles12-sp1-x86_64" : "sles12-x86_64"
-        platform.each do |repo_name, r|
-          url = "#{@remote_server_url}/repo/$RCE/#{repo_name}/x86_64/"
-          if @repos_location == "sm"
-            if ["SLE-Cloud","SLE-Cloud-PTF"].include? repo_name
-              # some repos cannot be at SM server
-              url = ""
-            else
-              url = "#{@remote_server_url}/ks/dist/child/#{repo_name.downcase}-x86_64/#{distro}"
+      @repos.each do |platform, arches|
+        arches.each do |arch, repos|
+          distro = platform == "suse-12.1" ? "sles12-sp1-#{arch}" : "sles12-#{arch}"
+          repos.each do |repo_name, r|
+            url = "#{@remote_server_url}/repo/$RCE/#{repo_name}/#{arch}/"
+            if @repos_location == "sm"
+              if ["SLE-Cloud","SLE-Cloud-PTF"].include? repo_name
+                # some repos cannot be at SM server
+                url = ""
+              else
+                url = "#{@remote_server_url}/ks/dist/child/#{repo_name.downcase}-#{arch}/#{distro}"
+              end
             end
+            @repos[platform][arch][repo_name] ||= {}
+            @repos[platform][arch][repo_name]["url"] = url
           end
-          @repos[prod_name][repo_name] ||= {}
-          @repos[prod_name][repo_name]["url"] = url
         end
       end
 
@@ -708,17 +733,20 @@ module Yast
       # find the initial location now
       if @repos_location.empty?
         @repos_location = "custom"
-        @repos.each do |prod_name, platform|
-          platform.each do |repo_name, r|
-            url = r["url"] || ""
-            if url.include? "/repo/$RCE/"
-              @repos_location = "smt"
-              @remote_server_url = url.gsub(/(^.*)\/repo\/\$RCE\/.*/,"\\1")
-              break
-            elsif url.include? "ks/dist/child"
-              @repos_location = "sm"
-              @remote_server_url = url.gsub(/(^.*)\/ks\/dist\/child\/.*/,"\\1")
+        @repos.each do |product, arches|
+          arches.each do |arch, repos|
+            repos.each do |repo_name, r|
+              url = r["url"] || ""
+              if url.include? "/repo/$RCE/"
+                @repos_location = "smt"
+                @remote_server_url = url.gsub(/(^.*)\/repo\/\$RCE\/.*/,"\\1")
+              elsif url.include? "ks/dist/child"
+                @repos_location = "sm"
+                @remote_server_url = url.gsub(/(^.*)\/ks\/dist\/child\/.*/,"\\1")
+              end
+              break unless @repos_location == "custom"
             end
+            break unless @repos_location == "custom"
           end
         end
       end
@@ -784,7 +812,7 @@ module Yast
 
 
     def StoreAskOnError(key, event)
-      @repos[@current_repo_platform][@current_repo]["ask_on_error"] =
+      @repos[@current_repo_platform][@current_arch][@current_repo]["ask_on_error"] =
         UI.QueryWidget(Id(key), :Value) == true
       nil
     end

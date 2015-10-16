@@ -203,27 +203,30 @@ module Yast
 
       if FileUtils.Exists(@etc_repos_file)
         etc_repos = yaml2hash(@etc_repos_file)
-        etc_repos.each do |platform, repos|
+
+        etc_repos.each do |platform, arches|
           if @repos.key? platform
-            repos.each do |id, repo|
-              # for repos that exist in our hard-coded file, we only allow
-              # overwriting a subset of attributes
-              if @repos[platform].key? id
-                %w(url ask_on_error).each do |key|
-                  @repos[platform][id][key] = repo[key] if repo.key? key
+            arches.each do |arch, repos|
+              if @repos[platform].key? arch
+                repos.each do |id, repo|
+                  # for repos that exist in our hard-coded file, we only allow
+                  # overwriting a subset of attributes
+                  if @repos[platform][arch].key? id
+                    %w(url ask_on_error).each do |key|
+                      @repos[platform][arch][id][key] = repo[key] if repo.key? key
+                    end
+                  else
+                    @repos[platform][arch][id] = repo
+                  end
                 end
               else
-                @repos[platform][id] = repo
+                @repos[platform][arch] = repos
               end
             end
           else
-            @repos[platform] = repos
+            @repos[platform] = arches
           end
         end
-      end
-
-      ["suse-12.0", "suse-12.1"].each do |target_product|
-        @repos[target_product] ||= {}
       end
 
       Progress.NextStage
@@ -278,20 +281,23 @@ module Yast
         default_repos = {}
       end
 
-      @repos.each do |product_name, product|
-        default_repos_prod = default_repos[product_name] || {}
-        product.each do |repo_name, repo|
-          if default_repos_prod.key? repo_name
-            # remove repos that have no change compared to defaults
-            if same_repos?(default_repos_prod[repo_name], repo)
-              @repos[product_name].delete(repo_name)
-            end
-            repo.each do |key, val|
-              repo.delete(key) unless %w(url ask_on_error).include? key
+      @repos.each do |platform, arches|
+        arches.each do |arch, repos|
+          default_repos_prod = default_repos.fetch(platform, {}).fetch(arch, {})
+          repos.each do |repo_name, repo|
+            if default_repos_prod.key? repo_name
+              # remove repos that have no change compared to defaults
+              if same_repos?(default_repos_prod[repo_name], repo)
+                @repos[platform][arch].delete(repo_name)
+              end
+              repo.each do |key, val|
+                repo.delete(key) unless %w(url ask_on_error).include? key
+              end
             end
           end
+          @repos[platform].delete(arch) if @repos[platform][arch].empty?
         end
-        @repos.delete(product_name) if @repos[product_name].empty?
+        @repos.delete(platform) if @repos[platform].empty?
       end
 
       if @repos.empty?
