@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Oct 26 22:06:38 UTC 2015 - vuntz@suse.com
+
+- Update for new storage of list of repositories, in yaml files.
+- 3.1.10
+
+-------------------------------------------------------------------
 Mon Oct 19 07:27:52 UTC 2015 - vuntz@suse.com
 
 - Update list of repositories for Cloud 6.
