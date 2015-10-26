@@ -83,11 +83,9 @@ module Yast
       @current_repo = ""
 
       # platform value for currently selected repository
-      @current_repo_platform = "common"
+      @current_repo_platform = "suse-12.0"
 
       @platform2label = {
-        # radio button item: target repository is common for all available platform
-        "common"    => _("Common for All"),
         # target platform name
         "suse-12.0" => _("SLES 12"),
         # target platform name
@@ -534,9 +532,6 @@ module Yast
                   VBox(
                     # radiobutton label
                     Left(
-                      RadioButton(Id("common"), @platform2label["common"], true)
-                    ),
-                    Left(
                       RadioButton(Id("suse-12.0"), @platform2label["suse-12.0"])
                     ),
                     Left(
@@ -559,7 +554,7 @@ module Yast
 
       ret = :not_next
       name = ""
-      platform = "common"
+      platform = "suse-12.1"
 
       while true
         ret = UI.UserInput
@@ -715,7 +710,6 @@ module Yast
               Frame(_("Target Platform"), HBox(
                 HSpacing(),
                 VBox(
-                  Left(RadioButton(Id("common"), Opt(:notify), @platform2label["common"])),
                   Left(RadioButton(Id("suse-12.0"), Opt(:notify), @platform2label["suse-12.0"])),
                   Left(RadioButton(Id("suse-12.1"), Opt(:notify), @platform2label["suse-12.1"]))
                 )

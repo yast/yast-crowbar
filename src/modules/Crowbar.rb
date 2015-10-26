@@ -57,6 +57,7 @@ module Yast
         "SLE12-HA-Updates"                      => "suse-12.0",
         "SUSE-Enterprise-Storage-2-Pool"        => "suse-12.0",
         "SUSE-Enterprise-Storage-2-Updates"     => "suse-12.0",
+        "PTF"                                   => "suse-12.0",
         # sle12sp1 based repos:
         "SLES12-SP1-Pool"                       => "suse-12.1",
         "SLES12-SP1-Updates"                    => "suse-12.1",
@@ -65,8 +66,7 @@ module Yast
         "Cloud"                                 => "suse-12.1",
         "SUSE-OpenStack-Cloud-6-Pool"           => "suse-12.1",
         "SUSE-OpenStack-Cloud-6-Updates"        => "suse-12.1",
-        # common repos
-        "PTF"                                   => "common"
+        "PTF"                                   => "suse-12.1"
       }
 
       # map of network template configuration data
@@ -195,7 +195,6 @@ module Yast
               "suse" => {
                 "autoyast" => {
                   "repos" => {
-                    "common"    => {},
                     "suse-12.0" => {},
                     "suse-12.1" => {}
                   }
@@ -207,14 +206,13 @@ module Yast
       end
       @repos = @provisioner["attributes"]["provisioner"]["suse"]["autoyast"]["repos"] rescue {}
 
-      ["common", "suse-12.0", "suse-12.1"].each do |target_product|
+      ["suse-12.0", "suse-12.1"].each do |target_product|
         @repos[target_product] ||= {}
       end
 
       # fill in all the repo names for the UI
       @default_repos.each do |repo, target_product|
-        unless (@repos["common"].key?(repo) ||
-                @repos["suse-12.0"].key?(repo) ||
+        unless (@repos["suse-12.0"].key?(repo) ||
                 @repos["suse-12.1"].key?(repo))
           @repos[target_product][repo]  = { "url" => "" }
         end
