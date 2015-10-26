@@ -465,11 +465,6 @@ module Yast
       nil
     end
 
-    def InitTargetPlatform(id)
-      UI.ChangeWidget(Id(id), :Value, @current_repo_platform)
-      nil
-    end
-
     # initialize the value of repo table
     def InitReposTable(id)
       repo_items = []
@@ -498,7 +493,6 @@ module Yast
         @current_repo_platform = UI.QueryWidget(Id(key), Cell(selected, 3))
         InitRepoURL("repo_url")
         InitAskOnError("ask_on_error")
-        InitTargetPlatform("target_platform")
       end
       nil
     end
@@ -597,7 +591,6 @@ module Yast
         InitReposTable("repos_table")
         InitRepoURL("repo_url")
         InitAskOnError("ask_on_error")
-        InitTargetPlatform("target_platform")
       end
       nil
     end
@@ -703,18 +696,6 @@ module Yast
             ),
             # label (hint for user)
             Left(Label(_("Empty URL means that default value will be used."))),
-            VSpacing(0.4),
-            Left(RadioButtonGroup(
-              Id("target_platform"),
-              # frame label
-              Frame(_("Target Platform"), HBox(
-                HSpacing(),
-                VBox(
-                  Left(RadioButton(Id("suse-12.0"), Opt(:notify), @platform2label["suse-12.0"])),
-                  Left(RadioButton(Id("suse-12.1"), Opt(:notify), @platform2label["suse-12.1"]))
-                )
-              ))
-            )),
             VSpacing(),
             # push button label
             Left(PushButton(Id("add_repository"), _("A&dd Repository")))
@@ -774,10 +755,6 @@ module Yast
       when "add_repository"
         HandleAddRepositoryButton(subkey, event)
       end
-
-      if @platform2label.keys.include? subkey
-        HandleTargetPlatform("target_platform", event)
-      end
       nil
     end
 
@@ -817,19 +794,6 @@ module Yast
       # store the value on exiting
       if event["ID"] == :next || event["EventReason"] == "ValueChanged"
         StoreAskOnError(key, event)
-        InitReposTable("repos_table")
-      end
-      nil
-    end
-
-    def HandleTargetPlatform(key, event)
-      orig_repo_platform = @current_repo_platform.dup
-      @current_repo_platform = UI.QueryWidget(Id(key), :Value)
-      # move the repo to the new submap
-      if @current_repo_platform != orig_repo_platform
-        @repos[@current_repo_platform] ||= {}
-        @repos[@current_repo_platform][@current_repo] = @repos[orig_repo_platform].fetch(@current_repo, {})
-        @repos[orig_repo_platform].delete (@current_repo)
         InitReposTable("repos_table")
       end
       nil
