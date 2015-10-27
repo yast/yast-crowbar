@@ -654,7 +654,7 @@ module Yast
           repos.each do |repo_name, r|
             url = "#{@remote_server_url}/repo/$RCE/#{repo_name}/#{arch}/"
             if @repos_location == "sm"
-              if ["SLE-Cloud","SLE-Cloud-PTF"].include? repo_name
+              if ["Cloud", "PTF"].include? repo_name
                 # some repos cannot be at SM server
                 url = ""
               else
