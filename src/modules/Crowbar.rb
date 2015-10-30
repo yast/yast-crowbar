@@ -27,6 +27,7 @@
 #
 require "yast"
 require 'json'
+require 'yaml'
 
 module Yast
   class CrowbarClass < Module
@@ -42,32 +43,9 @@ module Yast
       # Path to the files with JSON data
       @network_file = Installation.destdir + "/etc/crowbar/network.json"
       @crowbar_file = Installation.destdir + "/etc/crowbar/crowbar.json"
-      @provisioner_file = Installation.destdir + "/etc/crowbar/provisioner.json"
       @installed_file = "/opt/dell/crowbar_framework/.crowbar-installed-ok"
-
-      # The keys are the names of default repositories available for current product
-      # For Cloud5, we support mixed SLE11/SLE12 environments
-      #
-      # The values are target node platform for those repositories
-      @default_repos = {
-        # sle12 based repos:
-        "SLES12-Pool"                           => "suse-12.0",
-        "SLES12-Updates"                        => "suse-12.0",
-        "SLE12-HA-Pool"                         => "suse-12.0",
-        "SLE12-HA-Updates"                      => "suse-12.0",
-        "SUSE-Enterprise-Storage-2-Pool"        => "suse-12.0",
-        "SUSE-Enterprise-Storage-2-Updates"     => "suse-12.0",
-        # sle12sp1 based repos:
-        "SLES12-SP1-Pool"                       => "suse-12.1",
-        "SLES12-SP1-Updates"                    => "suse-12.1",
-        "SLE12-SP1-HA-Pool"                     => "suse-12.1",
-        "SLE12-SP1-HA-Updates"                  => "suse-12.1",
-        "Cloud"                                 => "suse-12.1",
-        "SUSE-OpenStack-Cloud-6-Pool"           => "suse-12.1",
-        "SUSE-OpenStack-Cloud-6-Updates"        => "suse-12.1",
-        # common repos
-        "PTF"                                   => "common"
-      }
+      @repos_file = "/opt/dell/crowbar_framework/config/repos-cloud.yml"
+      @etc_repos_file = Installation.destdir + "/etc/crowbar/repos.yml"
 
       # map of network template configuration data
       @template_network = {}
@@ -75,10 +53,7 @@ module Yast
       # map of crowbar template configuration data
       @template_crowbar = {}
 
-      # map of provisioner configuration data
-      @provisioner = {}
-
-      # repos subset of global provisioner configuration map
+      # repos map
       @repos = {}
 
       # networks subset of global network configuration map
@@ -118,6 +93,13 @@ module Yast
       ret
     end
 
+    # read given yaml file and return the content as a map
+    def yaml2hash(file_name)
+      ret = YAML.load(File.read(file_name))
+      ret = {} unless ret.is_a? Hash
+      ret
+    end
+
     # write whole json map into new file
     def hash2json(data,file_name)
       if data.is_a? Hash
@@ -134,6 +116,33 @@ module Yast
         return false
       end
       return true
+    end
+
+    # write whole yaml map into new file
+    def hash2yaml(data,file_name)
+      if data.is_a? Hash
+        begin
+          File.open(file_name, 'w') do |f|
+            f.puts YAML.dump data
+          end
+        rescue Errno::EACCES => e
+          Builtins.y2error("exception while trying to write to %1: %2", file_name, e)
+          return false
+        end
+      else
+        Builtins.y2error("wrong data format passed as yaml hash!")
+        return false
+      end
+      return true
+    end
+
+    def same_repos?(repo_a, repo_b)
+      url_a = repo_a["url"] || ""
+      url_b = repo_b["url"] || ""
+      ask_on_error_a = repo_a["ask_on_error"] || false
+      ask_on_error_b = repo_b["ask_on_error"] || false
+
+      url_a == url_b && ask_on_error_a == ask_on_error_b
     end
 
     # Read all crowbar settings
@@ -186,38 +195,35 @@ module Yast
       @template_crowbar = json2hash(@crowbar_file)
       @users = @template_crowbar["attributes"]["crowbar"]["users"] rescue {}
 
-      if FileUtils.Exists(@provisioner_file)
-        @provisioner = json2hash(@provisioner_file)
+      if FileUtils.Exists(@repos_file)
+        @repos = yaml2hash(@repos_file)
       else
-        @provisioner = {
-          "attributes" => {
-            "provisioner" => {
-              "suse" => {
-                "autoyast" => {
-                  "repos" => {
-                    "common"    => {},
-                    "suse-12.0" => {},
-                    "suse-12.1" => {}
-                  }
-                }
-              }
-            }
-          }
-        }
-      end
-      @repos = @provisioner["attributes"]["provisioner"]["suse"]["autoyast"]["repos"] rescue {}
-
-      ["common", "suse-12.0", "suse-12.1"].each do |target_product|
-        @repos[target_product] ||= {}
+        @repos = {}
       end
 
-      # fill in all the repo names for the UI
-      @default_repos.each do |repo, target_product|
-        unless (@repos["common"].key?(repo) ||
-                @repos["suse-12.0"].key?(repo) ||
-                @repos["suse-12.1"].key?(repo))
-          @repos[target_product][repo]  = { "url" => "" }
+      if FileUtils.Exists(@etc_repos_file)
+        etc_repos = yaml2hash(@etc_repos_file)
+        etc_repos.each do |platform, repos|
+          if @repos.key? platform
+            repos.each do |id, repo|
+              # for repos that exist in our hard-coded file, we only allow
+              # overwriting a subset of attributes
+              if @repos[platform].key? id
+                %w(url ask_on_error).each do |key|
+                  @repos[platform][id][key] = repo[key] if repo.key? key
+                end
+              else
+                @repos[platform][id] = repo
+              end
+            end
+          else
+            @repos[platform] = repos
+          end
         end
+      end
+
+      ["suse-12.0", "suse-12.1"].each do |target_product|
+        @repos[target_product] ||= {}
       end
 
       Progress.NextStage
@@ -266,22 +272,34 @@ module Yast
         Report.Error(Message.ErrorWritingFile(@crowbar_file))
       end
 
-      @repos.each do |product_name, product|
-        product.each do |repo_name, repo|
-          # remove empty repo definitions
-          if repo["url"].empty? && !(repo["ask_on_error"] || false)
-            @repos[product_name].delete(repo_name)
-          # remove just url if it is empty and non-default ask_on_error stays
-          elsif repo["url"].empty?
-            @repos[product_name][repo_name].delete("url")
-          end
-        end
+      if FileUtils.Exists(@repos_file)
+        default_repos = yaml2hash(@repos_file)
+      else
+        default_repos = {}
       end
 
-      @provisioner["attributes"]["provisioner"]["suse"]["autoyast"]["repos"] = @repos
+      @repos.each do |product_name, product|
+        default_repos_prod = default_repos[product_name] || {}
+        product.each do |repo_name, repo|
+          if default_repos_prod.key? repo_name
+            # remove repos that have no change compared to defaults
+            if same_repos?(default_repos_prod[repo_name], repo)
+              @repos[product_name].delete(repo_name)
+            end
+            repo.each do |key, val|
+              repo.delete(key) unless %w(url ask_on_error).include? key
+            end
+          end
+        end
+        @repos.delete(product_name) if @repos[product_name].empty?
+      end
 
-      unless hash2json(@provisioner, @provisioner_file)
-        Report.Error(Message.ErrorWritingFile(@provisioner_file))
+      if @repos.empty?
+        File.delete(@etc_repos_file) if File.exist?(@etc_repos_file)
+      else
+        unless hash2yaml(@repos, @etc_repos_file)
+          Report.Error(Message.ErrorWritingFile(@etc_repos_file))
+        end
       end
 
       Progress.NextStage

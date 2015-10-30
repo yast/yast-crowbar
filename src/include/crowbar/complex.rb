@@ -83,11 +83,9 @@ module Yast
       @current_repo = ""
 
       # platform value for currently selected repository
-      @current_repo_platform = "common"
+      @current_repo_platform = "suse-12.0"
 
       @platform2label = {
-        # radio button item: target repository is common for all available platform
-        "common"    => _("Common for All"),
         # target platform name
         "suse-12.0" => _("SLES 12"),
         # target platform name
@@ -463,12 +461,8 @@ module Yast
 
     def InitRepoURL(id)
       url = @repos[@current_repo_platform][@current_repo]["url"] rescue ""
+      url ||= ""
       UI.ChangeWidget(Id(id), :Value, url)
-      nil
-    end
-
-    def InitTargetPlatform(id)
-      UI.ChangeWidget(Id(id), :Value, @current_repo_platform)
       nil
     end
 
@@ -476,11 +470,11 @@ module Yast
     def InitReposTable(id)
       repo_items = []
       @repos.each do |prod_name, platform|
-        platform.each do |name, repo|
+        platform.each do |repo_id, repo|
           repo_items <<
             Item(
-              Id(name),
-              name,
+              Id("#{prod_name}|#{repo_id}"),
+              repo["name"] || repo_id,
               repo["url"] || "",
               (repo["ask_on_error"] || false) ?  UI.Glyph(:CheckMark) : " ",
               prod_name
@@ -488,7 +482,7 @@ module Yast
         end
       end
       UI.ChangeWidget(Id(id), :Items, repo_items)
-      UI.ChangeWidget(Id(id), :CurrentItem, @current_repo) unless @current_repo.empty?
+      UI.ChangeWidget(Id(id), :CurrentItem, "#{@current_repo_platform}|#{@current_repo}") unless @current_repo.empty?
       nil
     end
 
@@ -496,11 +490,9 @@ module Yast
     def HandleReposTable(key, event)
       selected = UI.QueryWidget(Id(key), :Value)
       if !selected.nil? && (selected != @current_repo || event["force"])
-        @current_repo = selected
-        @current_repo_platform = UI.QueryWidget(Id(key), Cell(selected, 3))
+        @current_repo_platform, @current_repo = selected.split("|")
         InitRepoURL("repo_url")
         InitAskOnError("ask_on_error")
-        InitTargetPlatform("target_platform")
       end
       nil
     end
@@ -534,9 +526,6 @@ module Yast
                   VBox(
                     # radiobutton label
                     Left(
-                      RadioButton(Id("common"), @platform2label["common"], true)
-                    ),
-                    Left(
                       RadioButton(Id("suse-12.0"), @platform2label["suse-12.0"])
                     ),
                     Left(
@@ -559,7 +548,7 @@ module Yast
 
       ret = :not_next
       name = ""
-      platform = "common"
+      platform = "suse-12.1"
 
       while true
         ret = UI.UserInput
@@ -602,7 +591,6 @@ module Yast
         InitReposTable("repos_table")
         InitRepoURL("repo_url")
         InitAskOnError("ask_on_error")
-        InitTargetPlatform("target_platform")
       end
       nil
     end
@@ -615,7 +603,6 @@ module Yast
     def HandleRepoURL(key, event)
       # store the value on exiting
       if event["ID"] == :next || event["EventReason"] == "ValueChanged"
-        @current_repo = UI.QueryWidget(Id("repos_table"), :Value) || ""
         StoreRepoURL(key, event)
         InitReposTable("repos_table")
       end
@@ -708,19 +695,6 @@ module Yast
             ),
             # label (hint for user)
             Left(Label(_("Empty URL means that default value will be used."))),
-            VSpacing(0.4),
-            Left(RadioButtonGroup(
-              Id("target_platform"),
-              # frame label
-              Frame(_("Target Platform"), HBox(
-                HSpacing(),
-                VBox(
-                  Left(RadioButton(Id("common"), Opt(:notify), @platform2label["common"])),
-                  Left(RadioButton(Id("suse-12.0"), Opt(:notify), @platform2label["suse-12.0"])),
-                  Left(RadioButton(Id("suse-12.1"), Opt(:notify), @platform2label["suse-12.1"]))
-                )
-              ))
-            )),
             VSpacing(),
             # push button label
             Left(PushButton(Id("add_repository"), _("A&dd Repository")))
@@ -780,10 +754,6 @@ module Yast
       when "add_repository"
         HandleAddRepositoryButton(subkey, event)
       end
-
-      if @platform2label.keys.include? subkey
-        HandleTargetPlatform("target_platform", event)
-      end
       nil
     end
 
@@ -823,19 +793,6 @@ module Yast
       # store the value on exiting
       if event["ID"] == :next || event["EventReason"] == "ValueChanged"
         StoreAskOnError(key, event)
-        InitReposTable("repos_table")
-      end
-      nil
-    end
-
-    def HandleTargetPlatform(key, event)
-      orig_repo_platform = @current_repo_platform.dup
-      @current_repo_platform = UI.QueryWidget(Id(key), :Value)
-      # move the repo to the new submap
-      if @current_repo_platform != orig_repo_platform
-        @repos[@current_repo_platform] ||= {}
-        @repos[@current_repo_platform][@current_repo] = @repos[orig_repo_platform].fetch(@current_repo, {})
-        @repos[orig_repo_platform].delete (@current_repo)
         InitReposTable("repos_table")
       end
       nil
