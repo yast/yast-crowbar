@@ -31,6 +31,8 @@ require 'yaml'
 
 module Yast
   class CrowbarClass < Module
+    include Yast::Logger
+
     def main
       textdomain "crowbar"
 
