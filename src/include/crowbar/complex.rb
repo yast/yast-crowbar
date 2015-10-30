@@ -567,17 +567,14 @@ module Yast
       )
 
       ret = :not_next
-      name = ""
-      platform = "suse-12.1"
-      arch = "x86_64"
 
       while true
         ret = UI.UserInput
         break if ret == :cancel
         if ret == :ok
           name = UI.QueryWidget(Id(:name), :Value)
-          platform = UI.QueryWidget(Id(:platform), :Value)
-          arch = UI.QueryWidget(Id(:arch), :Value)
+          platform = UI.QueryWidget(Id(:platform), :Value) || "suse-12.1"
+          arch = UI.QueryWidget(Id(:arch), :Value) || "x86_64"
           if name.empty?
             ret = :cancel
             break
