@@ -291,9 +291,10 @@ module Yast
               # remove repos that have no change compared to defaults
               if same_repos?(default_repos_prod[repo_name], repo)
                 @repos[platform][arch].delete(repo_name)
-              end
-              repo.each do |key, val|
-                repo.delete(key) unless %w(url ask_on_error).include? key
+              else
+                repo.each do |key, val|
+                  repo.delete(key) unless %w(url ask_on_error).include? key
+                end
               end
             end
           end
