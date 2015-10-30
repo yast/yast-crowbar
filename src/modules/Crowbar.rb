@@ -296,6 +296,8 @@ module Yast
                   repo.delete(key) unless %w(url ask_on_error).include? key
                 end
               end
+            else
+              repo["url"] = nil if repo["url"] == ""
             end
           end
           @repos[platform].delete(arch) if @repos[platform][arch].empty?
