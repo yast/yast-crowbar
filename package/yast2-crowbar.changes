@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Nov 10 09:00:40 CET 2015 - jsuchome@suse.com
+
+- updated paths to SMT repositories
+- 3.1.12
+
+-------------------------------------------------------------------
 Tue Oct 27 23:14:03 UTC 2015 - vuntz@suse.com
 
 - Support for repos from multiple architectures.
