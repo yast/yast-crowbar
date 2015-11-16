@@ -116,7 +116,7 @@ module Yast
               "It is also possible to use custom paths. Some examples of how the URL could look like:\n" +
               "</p><p>\n" +
               "<ul>\n" +
-              "<li><i>http://smt.example.com/repo/$RCE/SLES11-SP3-Pool/sle-11-x86_64/</i> for SMT server\n" +
+              "<li><i>http://smt.example.com/repo/SUSE/Products/SLE-HA/12-SP1/x86_64/product</i> for SMT server\n" +
               "<li><i>http://manager.example.com/ks/dist/child/suse-cloud-3.0-pool-x86_64/sles11-sp3-x86_64/</i> for SUSE Manager Server.\n" +
               "</p><p>\n" +
               "For detailed description, check the Deployment Guide.\n" +
@@ -649,12 +649,13 @@ module Yast
         arches.each do |arch, repos|
           distro = platform == "suse-12.1" ? "sles12-sp1-#{arch}" : "sles12-#{arch}"
           repos.each do |repo_name, r|
-            url = "#{@remote_server_url}/repo/$RCE/#{repo_name}/#{arch}/"
-            if @repos_location == "sm"
-              if ["Cloud", "PTF"].include? repo_name
-                # some repos cannot be at SM server
-                url = ""
-              else
+            # some repos are not at SM/SMT server
+            url = ""
+            if @repos_location == "smt"
+              smt_path = @repos[platform][arch][repo_name]["smt_path"] || ""
+              url = "#{@remote_server_url}/repo/#{smt_path}" unless smt_path.empty?
+            elsif @repos_location == "sm"
+              unless ["Cloud", "PTF"].include? repo_name
                 url = "#{@remote_server_url}/ks/dist/child/#{repo_name.downcase}-#{arch}/#{distro}"
               end
             end
@@ -734,9 +735,9 @@ module Yast
           arches.each do |arch, repos|
             repos.each do |repo_name, r|
               url = r["url"] || ""
-              if url.include? "/repo/$RCE/"
+              if url.include? "/repo/SUSE/"
                 @repos_location = "smt"
-                @remote_server_url = url.gsub(/(^.*)\/repo\/\$RCE\/.*/,"\\1")
+                @remote_server_url = url.gsub(/(^.*)\/repo\/SUSE\/.*/,"\\1")
               elsif url.include? "ks/dist/child"
                 @repos_location = "sm"
                 @remote_server_url = url.gsub(/(^.*)\/ks\/dist\/child\/.*/,"\\1")
