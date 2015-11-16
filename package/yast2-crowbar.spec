@@ -19,21 +19,18 @@
 Name:           yast2-crowbar
 Version:        3.1.12
 Release:        0
-License:	GPL-2.0
-Group:		System/YaST
-
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+Summary:        Configuration of crowbar
+License:        GPL-2.0
+Group:          System/YaST
 Source0:        %{name}-%{version}.tar.bz2
-
-Requires:	yast2
-BuildRequires:	update-desktop-files yast2 yast2-testsuite
+BuildRequires:  update-desktop-files
+BuildRequires:  yast2
 BuildRequires:  yast2-devtools >= 3.1.10
-
-BuildArchitectures:	noarch
-
+BuildRequires:  yast2-testsuite
+Requires:       yast2
 Requires:       yast2-ruby-bindings >= 1.0.0
-
-Summary:	Configuration of crowbar
+BuildArch:      noarch
+BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %description
 -
@@ -57,3 +54,5 @@ Summary:	Configuration of crowbar
 %{yast_moduledir}/Crowbar.rb
 %{yast_desktopdir}/crowbar.desktop
 %doc %{yast_docdir}
+
+%changelog
