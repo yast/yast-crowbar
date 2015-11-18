@@ -5,6 +5,7 @@ module_DATA = \
 
 client_DATA = \
   clients/inst_crowbar.rb \
+  clients/inst_crowbar_patterns.rb \
   clients/crowbar.rb
 
 yncludedir = @yncludedir@/crowbar

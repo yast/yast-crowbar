@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov 18 12:08:00 CET 2015 - jsuchome@suse.com
+
+- Added another installation client for preselecting cloud admin
+  pattern for installation
+- 3.1.13
+
+-------------------------------------------------------------------
 Tue Nov 10 09:00:40 CET 2015 - jsuchome@suse.com
 
 - updated paths to SMT repositories
