@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Nov 18 11:34:27 CET 2015 - jsuchome@suse.com
+
+- Skip the installation client if crowbar packages are not installed
+- 3.1.13
+
+-------------------------------------------------------------------
 Tue Nov 10 09:00:40 CET 2015 - jsuchome@suse.com
 
 - updated paths to SMT repositories

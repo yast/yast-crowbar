@@ -33,6 +33,7 @@ module Yast
       textdomain "crowbar"
 
       Yast.import "Mode"
+      Yast.import "Package"
       Yast.import "Progress"
       Yast.import "Stage"
       Yast.import "Wizard"
@@ -47,15 +48,20 @@ module Yast
 
       @dialog_ret = :auto
 
-      Wizard.CreateDialog if Mode.normal
+      if Package.Installed("crowbar-core")
 
-      Progress.off
-      @dialog_ret = CrowbarSequence()
-      Progress.on
+        Wizard.CreateDialog if Mode.normal
 
-      Wizard.CloseDialog if Mode.normal
+        Progress.off
+        @dialog_ret = CrowbarSequence()
+        Progress.on
 
-      deep_copy(@dialog_ret)
+        Wizard.CloseDialog if Mode.normal
+      else
+        Builtins.y2milestone("Necessary packages not installed, skipping Crowbar configuration...")
+      end
+
+      @dialog_ret
     end
   end
 end
