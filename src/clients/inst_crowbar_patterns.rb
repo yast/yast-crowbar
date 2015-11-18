@@ -20,44 +20,27 @@
 # ------------------------------------------------------------------------------
 
 # Package:     Crowbar configuration
-# Summary:     Client for running configuration during installation
+# Summary:     Client for selecting Cloud pattern(s) for the installation 
 # Authors:     Jiri Suchomel <jsuchome@suse.cz>
-#              Michal Filka <mfilka@suse.cz>
 #
-#
-# This client should be called during 2nd stage of installation
 module Yast
-  class InstCrowbarClient < Client
+  class InstCrowbarPatternsClient < Client
     def main
-      Yast.import "UI"
-      textdomain "crowbar"
 
-      Yast.import "Mode"
-      Yast.import "Progress"
-      Yast.import "Stage"
-      Yast.import "Wizard"
+      Yast.import "GetInstArgs"
+      Yast.import "PackagesProposal"
 
-      Yast.include self, "crowbar/wizards.rb"
+      dialog_ret = :auto
+      patterns = [ "cloud_admin" ]
 
-      Builtins.y2milestone(
-        "Crowbar configuration client (%1, %2)",
-        Mode.mode,
-        Stage.stage
-      )
+      unless GetInstArgs.going_back
+        Builtins.y2milestone("Selecting Cloud Admin pattern for installation...")
+        PackagesProposal.SetResolvables("crowbar_patterns", :pattern, patterns)
+      end
 
-      @dialog_ret = :auto
-
-      Wizard.CreateDialog if Mode.normal
-
-      Progress.off
-      @dialog_ret = CrowbarSequence()
-      Progress.on
-
-      Wizard.CloseDialog if Mode.normal
-
-      @dialog_ret
+      dialog_ret
     end
   end
 end
 
-Yast::InstCrowbarClient.new.main
+Yast::InstCrowbarPatternsClient.new.main

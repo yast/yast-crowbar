@@ -17,7 +17,7 @@
 
 
 Name:           yast2-crowbar
-Version:        3.1.12
+Version:        3.1.13
 Release:        0
 Summary:        Configuration of crowbar
 License:        GPL-2.0
@@ -51,6 +51,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 %{yast_yncludedir}/crowbar/*
 %{yast_clientdir}/crowbar.rb
 %{yast_clientdir}/inst_crowbar.rb
+%{yast_clientdir}/inst_crowbar_patterns.rb
 %{yast_moduledir}/Crowbar.rb
 %{yast_desktopdir}/crowbar.desktop
 %doc %{yast_docdir}
