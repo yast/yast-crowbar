@@ -25,6 +25,7 @@
 #
 module Yast
   class InstCrowbarPatternsClient < Client
+    include Yast::Logger
     def main
 
       Yast.import "GetInstArgs"
@@ -51,25 +52,23 @@ module Yast
         end
 
         ret = PackagesUI.RunPatternSelector
-        Builtins.y2milestone("RunPatternSelector returned %1", ret)
+        log.info "RunPatternSelector returned #{ret}"
 
-        dialog_ret = :next
-        dialog_ret = :abort if ret == :cancel
+        dialog_ret = (ret == :cancel) ? :abort : :next
 
         if ret == :accept || ret == :ok
           # Add-on requires packages to be installed right now
-          Builtins.y2milestone("Selected resolvables will be installed now")
+          log.info "Selected resolvables will be installed now"
 
           if WFM.CallFunction("inst_rpmcopy", [GetInstArgs.Buttons(false, false)]) == :abort
             dialog_ret = :abort
           else
             Kernel.InformAboutKernelChange
-            Builtins.y2milestone("Done")
           end
         end
       else
         # During installation workflow, just preselect extra pattern
-        Builtins.y2milestone("Selecting Cloud Admin pattern for installation...")
+        log.info "Selecting Cloud Admin pattern for installation..."
         PackagesProposal.SetResolvables("crowbar_patterns", :pattern, patterns)
       end
 
