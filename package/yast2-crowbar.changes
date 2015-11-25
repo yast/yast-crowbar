@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov 25 12:13:50 CET 2015 - jsuchome@suse.com
+
+- adapt the client for preselecting pattern to work also in normal
+  stage
+- 3.1.14
+
+-------------------------------------------------------------------
 Wed Nov 18 12:08:00 CET 2015 - jsuchome@suse.com
 
 - Added another installation client for preselecting cloud admin

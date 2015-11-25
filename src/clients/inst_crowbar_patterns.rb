@@ -28,12 +28,47 @@ module Yast
     def main
 
       Yast.import "GetInstArgs"
+      Yast.import "Installation"
+      Yast.import "Kernel"
       Yast.import "PackagesProposal"
+      Yast.import "PackagesUI"
+      Yast.import "Pkg"
+      Yast.import "Stage"
 
       dialog_ret = :auto
       patterns = [ "cloud_admin" ]
 
-      unless GetInstArgs.going_back
+      return dialog_ret if GetInstArgs.going_back
+
+      if Stage.normal
+        # In normal stage, we need to use the functionality from
+        # inst_add-on_software to setup source and target
+
+        Pkg.TargetInit(Installation.destdir, false)
+        Pkg.SourceStartManager(true)
+        patterns.each do |pattern|
+          Pkg.ResolvableInstall(pattern, :pattern)
+        end
+
+        ret = PackagesUI.RunPatternSelector
+        Builtins.y2milestone("RunPatternSelector returned %1", ret)
+
+        dialog_ret = :next
+        dialog_ret = :abort if ret == :cancel
+
+        if ret == :accept || ret == :ok
+          # Add-on requires packages to be installed right now
+          Builtins.y2milestone("Selected resolvables will be installed now")
+
+          if WFM.CallFunction("inst_rpmcopy", [GetInstArgs.Buttons(false, false)]) == :abort
+            dialog_ret = :abort
+          else
+            Kernel.InformAboutKernelChange
+            Builtins.y2milestone("Done")
+          end
+        end
+      else
+        # During installation workflow, just preselect extra pattern
         Builtins.y2milestone("Selecting Cloud Admin pattern for installation...")
         PackagesProposal.SetResolvables("crowbar_patterns", :pattern, patterns)
       end
