@@ -630,7 +630,7 @@ module Yast
     end
 
     def InitLocationURL(id)
-      UI.ChangeWidget(Id(id), :Value, @remote_server_url)
+      UI.ChangeWidget(Id(id), :Value, @remote_server_url) unless @repos_location == "local"
       nil
     end
 
@@ -730,7 +730,7 @@ module Yast
     def InitRPRepos(id)
       # find the initial location now
       if @repos_location.empty?
-        @repos_location = "custom"
+        @repos_location = "local"
         @repos.each do |product, arches|
           arches.each do |arch, repos|
             repos.each do |repo_name, r|
@@ -741,18 +741,22 @@ module Yast
               elsif url.include? "ks/dist/child"
                 @repos_location = "sm"
                 @remote_server_url = url.gsub(/(^.*)\/ks\/dist\/child\/.*/,"\\1")
+              elsif !url.empty?
+                @repos_location = "custom"
               end
-              break unless @repos_location == "custom"
+              break unless @repos_location == "local"
             end
-            break unless @repos_location == "custom"
+            break unless @repos_location == "local"
           end
         end
       end
 
-      if @repos_location != "custom"
-        show_remote_server_widget
-      else
+      if @repos_location == "custom"
         show_custom_repos_widget
+      elsif @repos_location == "local"
+        UI.ReplaceWidget(Id("repos_rp"), VBox(VStretch()))
+      else
+        show_remote_server_widget
       end
 
       # initialization of ReplacePoint content
@@ -785,6 +789,8 @@ module Yast
 
     def InitReposCombo(id)
       items = [
+        # combobox item
+        Item(Id("local"), _("Local SMT Server"), "local" == @repos_location),
         # combobox item
         Item(Id("smt"), _("Remote SMT Server"), "smt" == @repos_location),
         # combobox item

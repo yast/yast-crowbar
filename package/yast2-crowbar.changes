@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Dec  3 16:37:52 CET 2015 - jsuchome@suse.com
+
+- added Local SMT Server as possible repos location
+- 3.1.15
+
+-------------------------------------------------------------------
 Wed Nov 25 12:13:50 CET 2015 - jsuchome@suse.com
 
 - adapt the client for preselecting pattern to work also in normal
