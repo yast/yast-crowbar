@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Feb 12 12:50:51 UTC 2016 - vuntz@suse.com
+
+- Remove any mention of SLE12
+- 3.1.16
+
+-------------------------------------------------------------------
 Thu Dec  3 16:37:52 CET 2015 - jsuchome@suse.com
 
 - added Local SMT Server as possible repos location
