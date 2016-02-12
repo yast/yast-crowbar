@@ -83,14 +83,12 @@ module Yast
       @current_repo = ""
 
       # platform value for currently selected repository
-      @current_repo_platform = "suse-12.0"
+      @current_repo_platform = "suse-12.1"
 
       # arch value for currently selected repository
       @current_arch = "x86_64"
 
       @platform2label = {
-        # target platform name
-        "suse-12.0" => _("SLES 12"),
         # target platform name
         "suse-12.1" => _("SLES 12 SP1")
       }
@@ -531,9 +529,6 @@ module Yast
                   VBox(
                     # radiobutton label
                     Left(
-                      RadioButton(Id("suse-12.0"), @platform2label["suse-12.0"])
-                    ),
-                    Left(
                       RadioButton(Id("suse-12.1"), @platform2label["suse-12.1"])
                     )
                   )
@@ -647,7 +642,10 @@ module Yast
 
       @repos.each do |platform, arches|
         arches.each do |arch, repos|
-          distro = platform == "suse-12.1" ? "sles12-sp1-#{arch}" : "sles12-#{arch}"
+          distro = case platform
+          when "suse-12.1"
+            "sles12-sp1-#{arch}"
+          end
           repos.each do |repo_name, r|
             # some repos are not at SM/SMT server
             url = ""
