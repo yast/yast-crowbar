@@ -108,7 +108,7 @@ module Yast
           "help"   => _(
             "<p>Here you can edit the location of your <b>Update Repositories</b>.</p>\n" +
               "<p>\n" +
-              "If repositories are stored at SMT server or SUSE Manager server, it's enought to enter server's URL and the paths
+              "If repositories are stored at SMT server or SUSE Manager server, it's enough to enter server's URL and the paths
               to repositories will be filled automatically." +
               "</p>" +
               "It is also possible to use custom paths. Some examples of how the URL could look like:\n" +
