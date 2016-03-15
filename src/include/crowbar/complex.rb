@@ -47,6 +47,7 @@ module Yast
 
       Yast.include include_target, "crowbar/helps.rb"
 
+      @small_screen = UI.GetDisplayInfo["Height"].to_i < 23
 
       # local copy of network settings
       @networks = {}
@@ -1265,6 +1266,9 @@ module Yast
     def InitCheckBox(id)
       UI.ChangeWidget(Id(id), :Value, @networks[@current_network][id] || false)
       UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed)
+      if id == "use_vlan"
+        UI.ChangeWidget(Id("vlan"), :Enabled, UI.QueryWidget(Id(id), :Value) == true)
+      end
       nil
     end
 
@@ -1567,14 +1571,14 @@ module Yast
             HSpacing(2),
             VBox(
               "network_help",
-              VSpacing(),
+              @small_screen ? Empty() : VSpacing(),
               "network_select",
               Left("add_bridge"),
               VSpacing(0.4),
               HBox(
                 VBox("use_vlan", Label("")),
-                HWeight(1, "vlan"),
-                HWeight(8, Empty())
+                HSpacing(2),
+                "vlan"
               ),
               "router",
               HBox("subnet", "netmask", "broadcast"),
