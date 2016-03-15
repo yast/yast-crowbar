@@ -17,7 +17,7 @@
 
 
 Name:           yast2-crowbar
-Version:        3.1.16
+Version:        3.1.17
 Release:        0
 Summary:        Configuration of crowbar
 License:        GPL-2.0
