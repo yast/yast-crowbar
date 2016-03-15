@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Mar 15 11:42:32 CET 2016 - jsuchome@suse.com
+
+- Fix network tab UI for smaller screens (bsc#968694)
+  Correctly set initial state of VLAN ID field
+- 3.1.18
+
+-------------------------------------------------------------------
 Mon Mar 14 20:07:56 CET 2016 - jsuchome@suse.com
 
 - Fixed typo in help text (bsc#970810)
