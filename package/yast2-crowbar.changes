@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Nov 21 10:11:58 UTC 2016 - rarcea@suse.com
+
+- Update SLE versions to SP2 for Cloud 7
+- 3.2.0
+
+-------------------------------------------------------------------
 Tue Jun  7 10:18:22 UTC 2016 - igonzalezsosa@suse.com
 
 - Stop generating autodocs (fate#320356)
@@ -72,7 +78,7 @@ Wed Oct  7 13:52:52 CEST 2015 - jsuchome@suse.com
 
 - Adapt module so it can be called during first stage of installation
   (which is the only stage in SLES12)
-- 3.1.8 
+- 3.1.8
 
 -------------------------------------------------------------------
 Wed Aug 26 13:54:39 UTC 2015 - tserong@suse.com
@@ -151,7 +157,7 @@ Wed Jul 31 08:28:02 UTC 2013 - yast-devel@opensuse.org
 Wed Jul 17 11:48:46 CEST 2013 - jsuchome@suse.cz
 
 - Use /etc/crowbar/network.json as path for network configuration
-- 2.27.30 
+- 2.27.30
 
 -------------------------------------------------------------------
 Fri Jun 21 15:31:53 CEST 2013 - jsuchome@suse.cz
@@ -164,7 +170,7 @@ Fri Jun 21 15:31:53 CEST 2013 - jsuchome@suse.cz
 Wed Nov 14 10:21:30 CET 2012 - jsuchome@suse.cz
 
 - fixed a typo in popup text (bnc#788945)
-- 2.17.28 
+- 2.17.28
 
 -------------------------------------------------------------------
 Tue Nov  6 11:08:55 CET 2012 - jsuchome@suse.cz
@@ -172,13 +178,13 @@ Tue Nov  6 11:08:55 CET 2012 - jsuchome@suse.cz
 - enable viewing table items even when changes are not allowd
   (bnc#787533)
 - check for broken JSON file
-- 2.17.27 
+- 2.17.27
 
 -------------------------------------------------------------------
 Mon Sep 17 14:47:56 CEST 2012 - jsuchome@suse.cz
 
 - added 0 as available Bonding Policy (bnc#780412)
-- 2.17.26 
+- 2.17.26
 
 -------------------------------------------------------------------
 Wed Aug 22 14:05:16 CEST 2012 - jsuchome@suse.cz
@@ -191,13 +197,13 @@ Wed Aug 22 14:05:16 CEST 2012 - jsuchome@suse.cz
 Wed Aug 22 10:57:08 CEST 2012 - jsuchome@suse.cz
 
 - do not allow any changes when crowbar is installed (bnc#776837)
-- 2.17.24 
+- 2.17.24
 
 -------------------------------------------------------------------
 Tue Aug 21 10:42:16 CEST 2012 - jsuchome@suse.cz
 
 - added options to edit network mode (bnc#776693)
-- 2.17.23 
+- 2.17.23
 
 -------------------------------------------------------------------
 Tue Aug 21 09:16:50 CEST 2012 - jsuchome@suse.cz
@@ -210,38 +216,38 @@ Tue Aug 21 09:16:50 CEST 2012 - jsuchome@suse.cz
 Thu Aug 16 14:46:47 CEST 2012 - jsuchome@suse.cz
 
 - added basic help text (bnc#773051)
-- 2.17.21 
+- 2.17.21
 
 -------------------------------------------------------------------
 Mon Aug 13 14:22:34 CEST 2012 - jsuchome@suse.cz
 
 - check the ranges also from main table menu (bnc#767916)
-- 2.17.20 
+- 2.17.20
 
 -------------------------------------------------------------------
 Mon Aug  6 07:55:17 CEST 2012 - jsuchome@suse.cz
 
 - fixed subnet computing - bnc#773419
-- 2.17.19 
+- 2.17.19
 
 -------------------------------------------------------------------
 Wed Aug  1 09:19:57 UTC 2012 - mfilka@suse.com
 
 - fixed subnet computing - bnc#773419
 - use better function for netmask validation
-- 2.17.18 
+- 2.17.18
 
 -------------------------------------------------------------------
 Wed Aug  1 09:56:56 CEST 2012 - jsuchome@suse.cz
 
 - enable removing of router value
-- 2.17.17 
+- 2.17.17
 
 -------------------------------------------------------------------
 Mon Jul 30 14:15:44 CEST 2012 - jsuchome@suse.cz
 
 - update VLAN id in the table (bnc#772402)
-- 2.17.16 
+- 2.17.16
 
 -------------------------------------------------------------------
 Fri Jul 20 15:42:39 CEST 2012 - jsuchome@suse.cz
@@ -254,7 +260,7 @@ Fri Jul 20 15:42:39 CEST 2012 - jsuchome@suse.cz
 Fri Jul 20 09:53:22 CEST 2012 - jsuchome@suse.cz
 
 - validate router only when table selection changes (bnc#767916)
-- 2.17.14 
+- 2.17.14
 
 -------------------------------------------------------------------
 Thu Jul 19 14:52:01 CEST 2012 - jsuchome@suse.cz
@@ -266,32 +272,32 @@ Thu Jul 19 14:52:01 CEST 2012 - jsuchome@suse.cz
 -------------------------------------------------------------------
 Thu Jul 12 16:36:09 CEST 2012 - jsuchome@suse.cz
 
-- display the VLAN ID instead of check mark 
+- display the VLAN ID instead of check mark
 - 2.17.12
 
 -------------------------------------------------------------------
 Thu Jul 12 16:02:05 CEST 2012 - jsuchome@suse.cz
 
 - indicate VLAN usage in the table (bnc#767902)
-- 2.17.11 
+- 2.17.11
 
 -------------------------------------------------------------------
 Thu Jul 12 15:02:06 CEST 2012 - jsuchome@suse.cz
 
 - added checkbox for VLAN usage (bnc#767902)
-- 2.17.10 
+- 2.17.10
 
 -------------------------------------------------------------------
 Mon Jul  9 14:32:20 CEST 2012 - jsuchome@suse.cz
 
-- do not save empty router values to json 
+- do not save empty router values to json
 - 2.17.9
 
 -------------------------------------------------------------------
 Fri Jun 29 14:19:01 CEST 2012 - jsuchome@suse.cz
 
 - added support for IP ranges (bnc#767916)
-- 2.17.8 
+- 2.17.8
 
 -------------------------------------------------------------------
 Wed Jun 27 10:46:20 CEST 2012 - jsuchome@suse.cz
@@ -299,19 +305,19 @@ Wed Jun 27 10:46:20 CEST 2012 - jsuchome@suse.cz
 - save broadcast values
 - initialize table with current item
 - added option to edit VLAN ID's (bnc#767902)
-- 2.17.7 
+- 2.17.7
 
 -------------------------------------------------------------------
 Wed Jun 13 17:31:05 CEST 2012 - jsuchome@suse.cz
 
 - changed locations of JSON files
-- 2.17.6 
+- 2.17.6
 
 -------------------------------------------------------------------
 Wed Jun 13 17:10:18 CEST 2012 - jsuchome@suse.cz
 
 - adapted to work on SP2
-- 2.17.5 
+- 2.17.5
 
 -------------------------------------------------------------------
 Wed Jun 13 16:55:53 CEST 2012 - mfilka@suse.cz
@@ -324,7 +330,7 @@ Wed Jun 13 13:10:53 CEST 2012 - jsuchome@suse.cz
 
 - save password settings
 - check for write errors
-- 2.17.3 
+- 2.17.3
 
 -------------------------------------------------------------------
 Wed Jun 13 11:57:58 CEST 2012 - mfilka@suse.cz
@@ -342,7 +348,7 @@ Wed Jun 13 11:30:58 CEST 2012 - mfilka@suse.cz
 Tue Jun 12 19:20:58 CEST 2012 - jsuchome@suse.cz
 
 - changed UI to use tabs
-- write basic network settings 
+- write basic network settings
 - 2.17.1
 
 -------------------------------------------------------------------
