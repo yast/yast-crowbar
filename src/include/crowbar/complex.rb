@@ -84,14 +84,14 @@ module Yast
       @current_repo = ""
 
       # platform value for currently selected repository
-      @current_repo_platform = "suse-12.1"
+      @current_repo_platform = "suse-12.2"
 
       # arch value for currently selected repository
       @current_arch = "x86_64"
 
       @platform2label = {
         # target platform name
-        "suse-12.1" => _("SLES 12 SP1")
+        "suse-12.2" => _("SLES 12 SP2")
       }
 
       @repos_location         = ""
@@ -115,8 +115,8 @@ module Yast
               "It is also possible to use custom paths. Some examples of how the URL could look like:\n" +
               "</p><p>\n" +
               "<ul>\n" +
-              "<li><i>http://smt.example.com/repo/SUSE/Products/SLE-HA/12-SP1/x86_64/product</i> for SMT server\n" +
-              "<li><i>http://manager.example.com/ks/dist/child/suse-cloud-3.0-pool-x86_64/sles11-sp3-x86_64/</i> for SUSE Manager Server.\n" +
+              "<li><i>http://smt.example.com/repo/SUSE/Products/SLE-HA/12-SP2/x86_64/product</i> for SMT server\n" +
+              "<li><i>http://manager.example.com/ks/dist/child/suse-openstack-cloud-7-pool-x86_64/sles12-sp2-pool-x86_64/</i> for SUSE Manager Server.\n" +
               "</p><p>\n" +
               "For detailed description, check the Deployment Guide.\n" +
               "</p>"
@@ -530,7 +530,7 @@ module Yast
                   VBox(
                     # radiobutton label
                     Left(
-                      RadioButton(Id("suse-12.1"), @platform2label["suse-12.1"])
+                      RadioButton(Id("suse-12.2"), @platform2label["suse-12.2"])
                     )
                   )
                 )
@@ -569,7 +569,7 @@ module Yast
         break if ret == :cancel
         if ret == :ok
           name = UI.QueryWidget(Id(:name), :Value)
-          platform = UI.QueryWidget(Id(:platform), :Value) || "suse-12.1"
+          platform = UI.QueryWidget(Id(:platform), :Value) || "suse-12.2"
           arch = UI.QueryWidget(Id(:arch), :Value) || "x86_64"
           if name.empty?
             ret = :cancel
@@ -644,8 +644,8 @@ module Yast
       @repos.each do |platform, arches|
         arches.each do |arch, repos|
           distro = case platform
-          when "suse-12.1"
-            "sles12-sp1-#{arch}"
+          when "suse-12.2"
+            "sles12-sp2-#{arch}"
           end
           repos.each do |repo_name, r|
             # some repos are not at SM/SMT server
@@ -664,7 +664,7 @@ module Yast
         end
       end
 
-      # for SUSE Manager, 
+      # for SUSE Manager,
       # see http://docserv.nue.suse.com/documents/Cloud5/suse-openstack-cloud-deployment/single-html/#sec.depl.adm_conf.repos.scc.remote_susemgr
       # not ready for cloud6?
       # http://manager.example.com/ks/dist/child/sle-12-cloud-compute5-pool-x86_64/sles12-x86_64/
@@ -764,7 +764,7 @@ module Yast
         HandleReposTable("repos_table", { "force" => true })
       elsif @repos_location != ""
         InitLocationURL("repos_location_url")
-      end 
+      end
       nil
     end
 
@@ -1060,7 +1060,7 @@ module Yast
         name,
         @networks[name]["subnet"] || "",
         @networks[name]["netmask"] || "",
-        (@networks[name]["use_vlan"] || false) ? 
+        (@networks[name]["use_vlan"] || false) ?
           Builtins.sformat("%1", @networks[name]["vlan"] || 0) : _("disabled")
       )
     end
@@ -1225,7 +1225,7 @@ module Yast
           ["start", "end"].each do |part|
             ip2 = range[part] || ""
             ranges_fine = false if IP.ComputeNetwork(ip2, netmask) != subnet
-          end 
+          end
         }
         unless ranges_fine
           # popup message
@@ -1392,7 +1392,7 @@ module Yast
               end
               ranges[name][part] = ip
             end
-            if widget == "" && 
+            if widget == "" &&
               IP.ToInteger(ranges[name]["start"] || "") > IP.ToInteger(ranges[name]["end"] || "")
               # error message
               Popup.Error(_("The lowest address must be lower than the highest one."))
