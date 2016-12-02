@@ -11,6 +11,11 @@ Tue Jun  7 10:18:22 UTC 2016 - igonzalezsosa@suse.com
 - 3.1.19
 
 -------------------------------------------------------------------
+Tue Apr 12 15:44:52 UTC 2016 - dmueller@suse.com
+
+- add license
+
+-------------------------------------------------------------------
 Tue Mar 15 11:42:32 CET 2016 - jsuchome@suse.com
 
 - Fix network tab UI for smaller screens (bsc#968694)
