@@ -31,6 +31,6 @@ tmp.*
 *.sw?
 *.bkp
 yast2-crowbar-*/
-doc/
+doc/autodocs
 *.pot
 /.yardoc
