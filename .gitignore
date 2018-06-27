@@ -33,3 +33,4 @@ tmp.*
 yast2-crowbar-*/
 doc/
 .yardoc/
+crowbar.pot
