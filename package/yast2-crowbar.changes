@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Fri Aug 17 15:42:41 CEST 2018 - schubi@suse.de
+
+- Changed licence to GPL-2.0-only.
+
+-------------------------------------------------------------------
 Tue Jun 26 16:43:08 CEST 2018 - schubi@suse.de
 
 - Added additional searchkeys to desktop file (fate#321043).
