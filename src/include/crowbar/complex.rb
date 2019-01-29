@@ -84,14 +84,14 @@ module Yast
       @current_repo = ""
 
       # platform value for currently selected repository
-      @current_repo_platform = "suse-12.2"
+      @current_repo_platform = "suse-12.4"
 
       # arch value for currently selected repository
       @current_arch = "x86_64"
 
       @platform2label = {
         # target platform name
-        "suse-12.2" => _("SLES 12 SP2")
+        "suse-12.4" => _("SLES 12 SP4")
       }
 
       @repos_location         = ""
@@ -115,8 +115,8 @@ module Yast
               "It is also possible to use custom paths. Some examples of how the URL could look like:\n" +
               "</p><p>\n" +
               "<ul>\n" +
-              "<li><i>http://smt.example.com/repo/SUSE/Products/SLE-HA/12-SP2/x86_64/product</i> for SMT server\n" +
-              "<li><i>http://manager.example.com/ks/dist/child/suse-openstack-cloud-7-pool-x86_64/sles12-sp2-pool-x86_64/</i> for SUSE Manager Server.\n" +
+              "<li><i>http://smt.example.com/repo/SUSE/Products/SLE-HA/12-SP4/x86_64/product</i> for SMT server\n" +
+              "<li><i>http://manager.example.com/ks/dist/child/suse-openstack-cloud-9-pool-x86_64/sles12-sp4-pool-x86_64/</i> for SUSE Manager Server.\n" +
               "</p><p>\n" +
               "For detailed description, check the Deployment Guide.\n" +
               "</p>"
@@ -530,7 +530,7 @@ module Yast
                   VBox(
                     # radiobutton label
                     Left(
-                      RadioButton(Id("suse-12.2"), @platform2label["suse-12.2"])
+                      RadioButton(Id("suse-12.4"), @platform2label["suse-12.4"])
                     )
                   )
                 )
@@ -569,7 +569,7 @@ module Yast
         break if ret == :cancel
         if ret == :ok
           name = UI.QueryWidget(Id(:name), :Value)
-          platform = UI.QueryWidget(Id(:platform), :Value) || "suse-12.2"
+          platform = UI.QueryWidget(Id(:platform), :Value) || "suse-12.4"
           arch = UI.QueryWidget(Id(:arch), :Value) || "x86_64"
           if name.empty?
             ret = :cancel
@@ -644,8 +644,8 @@ module Yast
       @repos.each do |platform, arches|
         arches.each do |arch, repos|
           distro = case platform
-          when "suse-12.2"
-            "sles12-sp2-#{arch}"
+          when "suse-12.4"
+            "sles12-sp4-#{arch}"
           end
           repos.each do |repo_name, r|
             # some repos are not at SM/SMT server
