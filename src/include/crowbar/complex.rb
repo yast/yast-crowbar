@@ -899,8 +899,7 @@ module Yast
       value = @teaming["mode"] || 0
       items = (0..6).map {|i| Item(Id(i), i.to_s, i == value) }
       UI.ChangeWidget(Id(id), :Items, items)
-      UI.ChangeWidget(Id(id), :Enabled, @mode == "team")
-      UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed)
+      UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed && @mode == "team")
       nil
     end
 
@@ -973,17 +972,16 @@ module Yast
         UI.ChangeWidget(
           Id(id),
           :Enabled,
-          @networks[@current_network]["use_vlan"] || false
+          !Crowbar.installed && (@networks[@current_network]["use_vlan"] || false)
         )
       end
       if id == "router_pref"
         UI.ChangeWidget(
           Id(id),
           :Enabled,
-          ! (@networks[@current_network]["router"] || "").empty?
+          !Crowbar.installed && !(@networks[@current_network]["router"] || "").empty?
         )
       end
-      UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed)
       nil
     end
 
@@ -1149,7 +1147,7 @@ module Yast
       UI.ChangeWidget(Id(id), :Value, @networks[@current_network][id] || false)
       UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed)
       if id == "use_vlan"
-        UI.ChangeWidget(Id("vlan"), :Enabled, UI.QueryWidget(Id(id), :Value) == true)
+        UI.ChangeWidget(Id("vlan"), :Enabled, !Crowbar.installed && UI.QueryWidget(Id(id), :Value) == true)
       end
       nil
     end
@@ -1334,16 +1332,16 @@ module Yast
         "broadcast",
         "use_vlan",
         "conduit_if_list"
-      ].each { |w| UI.ChangeWidget(Id(w), :Enabled, @enable_bastion) }
+      ].each { |w| UI.ChangeWidget(Id(w), :Enabled, !Crowbar.installed && @enable_bastion) }
       UI.ChangeWidget(
         Id("vlan"),
         :Enabled,
-        @enable_bastion && (@networks[@current_network]["use_vlan"] || false)
+        !Crowbar.installed && @enable_bastion && (@networks[@current_network]["use_vlan"] || false)
       )
       UI.ChangeWidget(
         Id("router_pref"),
         :Enabled,
-        @enable_bastion && @networks[@current_network]["router"] != ""
+        !Crowbar.installed && @enable_bastion && @networks[@current_network]["router"] != ""
       )
       nil
     end
