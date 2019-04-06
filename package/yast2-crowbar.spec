@@ -17,7 +17,7 @@
 
 
 Name:           yast2-crowbar
-Version:        3.4.0
+Version:        3.4.1
 Release:        0
 Summary:        Configuration of crowbar
 License:        GPL-2.0
@@ -27,6 +27,7 @@ BuildRequires:  update-desktop-files
 BuildRequires:  yast2
 BuildRequires:  yast2-devtools >= 3.1.10
 BuildRequires:  yast2-testsuite
+Requires:       rubygem(inifile) >= 3.0.0
 Requires:       yast2
 Requires:       yast2-ruby-bindings >= 1.0.0
 BuildArch:      noarch

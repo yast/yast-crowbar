@@ -26,6 +26,7 @@
 #              Michal Filka <mfilka@suse.cz>
 #
 require "yast"
+require 'inifile'
 require 'json'
 require 'yaml'
 
@@ -45,6 +46,7 @@ module Yast
       # Path to the files with JSON data
       @network_file = Installation.destdir + "/etc/crowbar/network.json"
       @crowbar_file = Installation.destdir + "/etc/crowbar/crowbar.json"
+      @crowbarrc_file = Installation.destdir + "/etc/crowbarrc"
       @installed_file = "/opt/dell/crowbar_framework/.crowbar-installed-ok"
       @repos_file = "/opt/dell/crowbar_framework/config/repos-cloud.yml"
       @etc_repos_file = Installation.destdir + "/etc/crowbar/repos.yml"
@@ -71,8 +73,9 @@ module Yast
       # network mode; valid values are: single | dual | team
       @mode = "single"
 
-      # users subset of global crowbar configuration map
-      @users = {}
+      # admin credentials from crowbarrc
+      @admin_user = ""
+      @admin_password = ""
 
       # If crowbar was installed
       @installed = false
@@ -185,6 +188,10 @@ module Yast
         return false
       end
 
+      unless FileUtils.Exists(@crowbarrc_file)
+        Report.Error(Message.CannotOpenFile(@crowbarrc_file))
+        return false
+      end
 
       @template_network = json2hash(@network_file)
 
@@ -195,7 +202,16 @@ module Yast
       @conduit_map = network["conduit_map"] || []
 
       @template_crowbar = json2hash(@crowbar_file)
-      @users = @template_crowbar["attributes"]["crowbar"]["users"] rescue {}
+
+      begin
+        crowbarrc = IniFile.load(@crowbarrc_file)
+        @admin_user = crowbarrc["default"]["username"]
+        @admin_password = crowbarrc["default"]["password"]
+      rescue IniFile::Error => e
+        Yast.y2error "Failed to open file #{@crowbarrc_file} with: #{e.message}"
+        Report.Error(Message.CannotOpenFile(@crowbarrc_file))
+        return false
+      end
 
       if FileUtils.Exists(@repos_file)
         @repos = yaml2hash(@repos_file)
@@ -272,9 +288,21 @@ module Yast
         Report.Error(Message.ErrorWritingFile(@network_file))
       end
 
-      @template_crowbar["attributes"]["crowbar"]["users"]       = @users
       unless hash2json(@template_crowbar, @crowbar_file)
         Report.Error(Message.ErrorWritingFile(@crowbar_file))
+      end
+
+      begin
+        crowbarrc = IniFile.load(@crowbarrc_file)
+        if crowbarrc["default"]["username"] != @admin_user ||
+            crowbarrc["default"]["password"] != @admin_password
+          crowbarrc["default"]["username"] = @admin_user
+          crowbarrc["default"]["password"] = @admin_password
+          crowbarrc.save
+        end
+      rescue IniFile::Error => e
+        Yast.y2error "Failed to open and save file #{@crowbarrc_file} with: #{e.message}"
+        Report.Error(Message.ErrorWritingFile(@crowbarrc_file))
       end
 
       if FileUtils.Exists(@repos_file)
@@ -324,7 +352,8 @@ module Yast
     publish :variable => :conduit_map, :type => "list <map>"
     publish :variable => :teaming, :type => "map <string, integer>"
     publish :variable => :mode, :type => "string"
-    publish :variable => :users, :type => "map <string, map>"
+    publish :variable => :admin_user, :type => "string"
+    publish :variable => :admin_password, :type => "string"
     publish :variable => :installed, :type => "boolean"
     publish :function => :Modified, :type => "boolean ()"
     publish :function => :Read, :type => "boolean ()"
