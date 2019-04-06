@@ -47,7 +47,7 @@ module Yast
       @network_file = Installation.destdir + "/etc/crowbar/network.json"
       @crowbar_file = Installation.destdir + "/etc/crowbar/crowbar.json"
       @crowbarrc_file = Installation.destdir + "/etc/crowbarrc"
-      @installed_file = "/opt/dell/crowbar_framework/.crowbar-installed-ok"
+      @installed_file = "/var/lib/crowbar/install/crowbar-installed-ok"
       @repos_file = "/opt/dell/crowbar_framework/config/repos-cloud.yml"
       @etc_repos_file = Installation.destdir + "/etc/crowbar/repos.yml"
 
