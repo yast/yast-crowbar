@@ -4,6 +4,7 @@ Sat Apr  6 20:57:02 UTC 2019 - vuntz@suse.com
 - Update for changes to admin credentials in crowbar
 - Fix network widgets being enabled due to wrong conditions
 - Fix check for completed installation
+- Minor code cleanup
 - 3.4.1
 
 -------------------------------------------------------------------
