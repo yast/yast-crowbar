@@ -6,6 +6,7 @@ Sat Apr  6 20:57:02 UTC 2019 - vuntz@suse.com
 - Fix check for completed installation
 - Minor code cleanup
 - Allow editing credentials & repos after install
+- Reword message when crowbar is installed
 - 3.4.1
 
 -------------------------------------------------------------------

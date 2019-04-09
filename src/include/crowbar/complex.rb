@@ -1594,10 +1594,10 @@ module Yast
         Popup.Message(
           Builtins.sformat(
             _(
-              "The Crowbar Admin Server has been deployed. Changing the network is\n" +
-                "currently not supported.\n" +
+              "The Crowbar Admin Server has been deployed. Changing the network configuration\n" +
+                "is currently not supported.\n" +
                 "\n" +
-                "You can visit the Crowbar web UI on http://%1:3000/"
+                "You can visit the Crowbar web UI on http://%1/"
             ),
             Hostname.CurrentFQ
           )
