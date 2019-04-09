@@ -1620,33 +1620,34 @@ module Yast
         }
       )
 
-      # not saving
-      return :back if Crowbar.installed
-
       if ret == :next
-        if @enable_bastion
-          # remove internal "ip" key and transform it to ranges (ip-ip)
-          bastion = @networks["bastion"] || {}
-          bastion["ranges"] ||= {}
-          bastion["ranges"]["admin"] = {
-            "start" => bastion["ip"] || "0",
-            "end"   => bastion["ip"] || "0"
-          }
-          bastion.delete "ip"
-          # add conduit to bastion network submap
-          bastion["conduit"] = adapt_conduit_map(bastion["conduit"] || "")
-          bastion["add_bridge"] = false
-          @networks["bastion"] = bastion
-        elsif @networks.key? "bastion"
-          @networks.delete "bastion"
-        end
-        Crowbar.networks = @networks
-        Crowbar.conduit_map = @conduit_map # was adapted by adapt_conduit_map
         Crowbar.admin_user = @admin_user
         Crowbar.admin_password = @admin_password
-        Crowbar.teaming = @teaming
-        Crowbar.mode = @mode
         Crowbar.repos = @repos
+
+        # we don't allow changing the network config after initial install
+        unless Crowbar.installed
+          if @enable_bastion
+            # remove internal "ip" key and transform it to ranges (ip-ip)
+            bastion = @networks["bastion"] || {}
+            bastion["ranges"] ||= {}
+            bastion["ranges"]["admin"] = {
+              "start" => bastion["ip"] || "0",
+              "end"   => bastion["ip"] || "0"
+            }
+            bastion.delete "ip"
+            # add conduit to bastion network submap
+            bastion["conduit"] = adapt_conduit_map(bastion["conduit"] || "")
+            bastion["add_bridge"] = false
+            @networks["bastion"] = bastion
+          elsif @networks.key? "bastion"
+            @networks.delete "bastion"
+          end
+          Crowbar.networks = @networks
+          Crowbar.conduit_map = @conduit_map # was adapted by adapt_conduit_map
+          Crowbar.teaming = @teaming
+          Crowbar.mode = @mode
+        end
       end
       ret
     end
