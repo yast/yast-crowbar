@@ -52,8 +52,9 @@ module Yast
       # local copy of network settings
       @networks = {}
 
-      # local copy of user settings
-      @users = {}
+      # local copy of admin credentials
+      @admin_user = ""
+      @admin_password = ""
 
       # local copy of teaming options
       @teaming = {}
@@ -136,55 +137,32 @@ module Yast
           )
         },
         # ---------------- widgets for Users tab
-        "users_table"     => {
-          "widget"        => :custom,
-          "custom_widget" => VBox(
-            VWeight(
-              2,
-              Table(
-                Id("users_table"),
-                Opt(:notify, :immediate, :hstretch),
-                # table header
-                Header(_("Administrator Name"))
-              )
-            )
-          ),
-          "init"          => fun_ref(method(:InitUsersTable), "void (string)"),
-          "handle"        => fun_ref(
-            method(:HandleUsersTable),
-            "symbol (string, map)"
-          ),
-          # help text
-          "help"          => _(
-            "<p>Manage user names and passwords for Crowbar administrators.</p>"
-          )
+        "users_help"    => {
+          "widget" => :empty,
+          # generic help for Network tab
+          "help"   => @HELPS["overview"] || ""
         },
-        "add_user"        => {
-          "widget"  => :push_button,
-          "label"   => Label.AddButton,
-          "no_help" => true,
-          "handle"  => fun_ref(
-            method(:HandleAddEditUserButton),
-            "symbol (string, map)"
-          )
+        "admin_user" => {
+          "widget"             => :textentry,
+          "label"              => _("&Administrator User Name"),
+          "opt"                => [:hstretch],
+          "no_help"            => true,
+          "init"               => fun_ref(method(:InitAdminUser), "void (string)"),
+          "store"              => fun_ref(method(:StoreAdminUser), "void (string, map)"),
+          "validate_type"      => :function_no_popup,
+          "validate_function"  => fun_ref(method(:ValidateAdminUser), "boolean (string, map)"),
+          "validate_help"      => _("User name cannot be empty.")
         },
-        "edit_user"       => {
-          "widget"  => :push_button,
-          "label"   => Label.EditButton,
-          "no_help" => true,
-          "handle"  => fun_ref(
-            method(:HandleAddEditUserButton),
-            "symbol (string, map)"
-          )
-        },
-        "delete_user"     => {
-          "widget"  => :push_button,
-          "label"   => Label.DeleteButton,
-          "no_help" => true,
-          "handle"  => fun_ref(
-            method(:HandleDeleteUserButton),
-            "symbol (string, map)"
-          )
+        "admin_password" => {
+          "widget"             => :password,
+          "label"              => _("Pass&word"),
+          "opt"                => [:hstretch],
+          "no_help"            => true,
+          "init"               => fun_ref(method(:InitAdminPassword), "void (string)"),
+          "store"              => fun_ref(method(:StoreAdminPassword), "void (string, map)"),
+          "validate_type"      => :function_no_popup,
+          "validate_function"  => fun_ref(method(:ValidateAdminUser), "boolean (string, map)"),
+          "validate_help"      => _("Password cannot be empty.")
         },
         # ---------------- widgets for Network Mode tab
         "mode"            => {
@@ -829,125 +807,29 @@ module Yast
       nil
     end
 
-
-    # initialize the value of users table
-    def InitUsersTable(id)
-      UI.ChangeWidget(Id(id), :Items, @users.map { |name, u| Item(Id(name), name) })
-      if @current_user != "" && @users.key?(@current_user)
-        UI.ChangeWidget(Id(id), :CurrentItem, @current_user)
-      end
+    def InitAdminUser(id)
+      UI.ChangeWidget(Id(id), :Value, @admin_user)
       nil
     end
 
-    # handler for adding user button
-    def HandleAddEditUserButton(key, event)
-      return nil unless event["ID"] == key
-
-      UI.OpenDialog(
-        Opt(:decorated),
-        HBox(
-          HSpacing(1),
-          VBox(
-            VSpacing(0.5),
-            HSpacing(65),
-            # text entry label
-            InputField(Id(:username), Opt(:hstretch), _("User Name")),
-            # text entry label
-            Password(Id(:pw1), Opt(:hstretch), _("Password")),
-            # text entry label
-            Password(Id(:pw2), Opt(:hstretch), _("Repeat the Password")),
-            VSpacing(0.5),
-            ButtonBox(
-              PushButton(Id(:ok), Label.OKButton),
-              PushButton(Id(:cancel), Label.CancelButton)
-            ),
-            VSpacing(0.5)
-          ),
-          HSpacing(1)
-        )
-      )
-
-      if key == "edit_user"
-        UI.ChangeWidget(Id(:username), :Value, @current_user)
-        UI.ChangeWidget(Id(:pw1), :Value, @users[@current_user]["password"] || "")
-        UI.ChangeWidget(Id(:pw2), :Value, @users[@current_user]["password"] || "")
-      end
-
-      ret = :not_next
-      name = ""
-
-      while true
-        ret = UI.UserInput
-        break if ret == :cancel
-        if ret == :ok
-          name = UI.QueryWidget(Id(:username), :Value)
-          pass = UI.QueryWidget(Id(:pw1), :Value)
-
-          if name.empty?
-            # error popup
-            Popup.Error(_("User name cannot be empty."))
-            UI.SetFocus(Id(:username))
-            next
-          end
-
-          if pass != UI.QueryWidget(Id(:pw2), :Value)
-            # error popup
-            Popup.Error(_("The passwords do not match.\nTry again."))
-            UI.SetFocus(Id(:pw1))
-            next
-          end
-          if @users.key?(name) && (key == "add_user" || name != @current_user)
-            # error popup
-            Popup.Error(
-              Builtins.sformat(
-                _("User '%1' already exists.\nChoose a different name."),
-                name
-              )
-            )
-            UI.SetFocus(Id(:username))
-            next
-          end
-          @users.delete (@current_user) if key == "edit_user"
-          @users[name] = { "password" => pass }
-          break
-        end
-      end
-      UI.CloseDialog
-
-      if ret == :ok
-        @current_user = name
-        InitUsersTable("users_table")
-        UI.ChangeWidget(Id("delete_user"), :Enabled, @users.size > 0)
-        UI.ChangeWidget(Id("edit_user"), :Enabled, @users.size > 0)
-      end
+    def StoreAdminUser(key, event)
+      @admin_user = UI.QueryWidget(Id(key), :Value)
       nil
     end
 
-    # handler for user selection table
-    def HandleUsersTable(key, event)
-      selected = UI.QueryWidget(Id(key), :Value)
-      if selected != nil && selected != @current_user
-        @current_user = (selected == nil ? "" : selected)
-      end
-      if key == event["ID"] && event["EventReason"] == "Activated"
-        HandleAddEditUserButton("edit_user", { "ID" => "edit_user" })
-      end
+    def InitAdminPassword(id)
+      UI.ChangeWidget(Id(id), :Value, @admin_password)
       nil
     end
 
-
-    # handler for user button
-    def HandleDeleteUserButton(key, event)
-      return nil unless event["ID"] == key
-
-      @users.delete @current_user
-      InitUsersTable("users_table")
-      @current_user = @users.empty? ? "" : UI.QueryWidget(Id("users_table"), :Value)
-      UI.ChangeWidget(Id(key), :Enabled, @users.size > 0)
-      UI.ChangeWidget(Id("edit_user"), :Enabled, @users.size > 0)
-      nil
+    def ValidateAdminUser(key, event)
+      UI.QueryWidget(Id(key), :Value) != ""
     end
 
+    def StoreAdminPassword(key, event)
+      @admin_password = UI.QueryWidget(Id(key), :Value)
+      nil
+    end
 
     # functions for handling network mode widget
     def InitMode(id)
@@ -1017,8 +899,7 @@ module Yast
       value = @teaming["mode"] || 0
       items = (0..6).map {|i| Item(Id(i), i.to_s, i == value) }
       UI.ChangeWidget(Id(id), :Items, items)
-      UI.ChangeWidget(Id(id), :Enabled, @mode == "team")
-      UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed)
+      UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed && @mode == "team")
       nil
     end
 
@@ -1091,17 +972,16 @@ module Yast
         UI.ChangeWidget(
           Id(id),
           :Enabled,
-          @networks[@current_network]["use_vlan"] || false
+          !Crowbar.installed && (@networks[@current_network]["use_vlan"] || false)
         )
       end
       if id == "router_pref"
         UI.ChangeWidget(
           Id(id),
           :Enabled,
-          ! (@networks[@current_network]["router"] || "").empty?
+          !Crowbar.installed && !(@networks[@current_network]["router"] || "").empty?
         )
       end
-      UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed)
       nil
     end
 
@@ -1267,7 +1147,7 @@ module Yast
       UI.ChangeWidget(Id(id), :Value, @networks[@current_network][id] || false)
       UI.ChangeWidget(Id(id), :Enabled, !Crowbar.installed)
       if id == "use_vlan"
-        UI.ChangeWidget(Id("vlan"), :Enabled, UI.QueryWidget(Id(id), :Value) == true)
+        UI.ChangeWidget(Id("vlan"), :Enabled, !Crowbar.installed && UI.QueryWidget(Id(id), :Value) == true)
       end
       nil
     end
@@ -1452,16 +1332,16 @@ module Yast
         "broadcast",
         "use_vlan",
         "conduit_if_list"
-      ].each { |w| UI.ChangeWidget(Id(w), :Enabled, @enable_bastion) }
+      ].each { |w| UI.ChangeWidget(Id(w), :Enabled, !Crowbar.installed && @enable_bastion) }
       UI.ChangeWidget(
         Id("vlan"),
         :Enabled,
-        @enable_bastion && (@networks[@current_network]["use_vlan"] || false)
+        !Crowbar.installed && @enable_bastion && (@networks[@current_network]["use_vlan"] || false)
       )
       UI.ChangeWidget(
         Id("router_pref"),
         :Enabled,
-        @enable_bastion && @networks[@current_network]["router"] != ""
+        !Crowbar.installed && @enable_bastion && @networks[@current_network]["router"] != ""
       )
       nil
     end
@@ -1491,26 +1371,19 @@ module Yast
           "contents"     => HBox(
             HSpacing(2),
             VBox(
+              "users_help",
               VSpacing(),
-              "users_table",
-              VSpacing(0.4),
-              HBox("add_user", "edit_user", "delete_user", HStretch()),
-              VSpacing(2),
-              Left(
-                Label(
-                  # label (hint for user)
-                  _("If no user is present, user 'crowbar' with default password will be used.")
-                )
-              ),
+              "admin_user",
+              VSpacing(),
+              "admin_password",
               VStretch()
             ),
             HSpacing(2)
           ),
           "widget_names" => [
-            "add_user",
-            "delete_user",
-            "edit_user",
-            "users_table"
+            "users_help",
+            "admin_user",
+            "admin_password"
           ]
         },
         "network_mode" => {
@@ -1672,7 +1545,8 @@ module Yast
       @networks         = Crowbar.networks
       @mode             = Crowbar.mode
       @teaming          = Crowbar.teaming
-      @users            = Crowbar.users
+      @admin_user       = Crowbar.admin_user
+      @admin_password   = Crowbar.admin_password
       @repos            = Crowbar.repos
       @conduit_map      = Crowbar.conduit_map
       @enable_bastion   = @networks.key? "bastion"
@@ -1720,10 +1594,10 @@ module Yast
         Popup.Message(
           Builtins.sformat(
             _(
-              "The Crowbar Admin Server has been deployed. Changing the network is\n" +
-                "currently not supported.\n" +
+              "The Crowbar Admin Server has been deployed. Changing the network configuration\n" +
+                "is currently not supported.\n" +
                 "\n" +
-                "You can visit the Crowbar web UI on http://%1:3000/"
+                "You can visit the Crowbar web UI on http://%1/"
             ),
             Hostname.CurrentFQ
           )
@@ -1746,32 +1620,34 @@ module Yast
         }
       )
 
-      # not saving
-      return :back if Crowbar.installed
-
       if ret == :next
-        if @enable_bastion
-          # remove internal "ip" key and transform it to ranges (ip-ip)
-          bastion = @networks["bastion"] || {}
-          bastion["ranges"] ||= {}
-          bastion["ranges"]["admin"] = {
-            "start" => bastion["ip"] || "0",
-            "end"   => bastion["ip"] || "0"
-          }
-          bastion.delete "ip"
-          # add conduit to bastion network submap
-          bastion["conduit"] = adapt_conduit_map(bastion["conduit"] || "")
-          bastion["add_bridge"] = false
-          @networks["bastion"] = bastion
-        elsif @networks.key? "bastion"
-          @networks.delete "bastion"
-        end
-        Crowbar.networks = @networks
-        Crowbar.conduit_map = @conduit_map # was adapted by adapt_conduit_map
-        Crowbar.users = @users
-        Crowbar.teaming = @teaming
-        Crowbar.mode = @mode
+        Crowbar.admin_user = @admin_user
+        Crowbar.admin_password = @admin_password
         Crowbar.repos = @repos
+
+        # we don't allow changing the network config after initial install
+        unless Crowbar.installed
+          if @enable_bastion
+            # remove internal "ip" key and transform it to ranges (ip-ip)
+            bastion = @networks["bastion"] || {}
+            bastion["ranges"] ||= {}
+            bastion["ranges"]["admin"] = {
+              "start" => bastion["ip"] || "0",
+              "end"   => bastion["ip"] || "0"
+            }
+            bastion.delete "ip"
+            # add conduit to bastion network submap
+            bastion["conduit"] = adapt_conduit_map(bastion["conduit"] || "")
+            bastion["add_bridge"] = false
+            @networks["bastion"] = bastion
+          elsif @networks.key? "bastion"
+            @networks.delete "bastion"
+          end
+          Crowbar.networks = @networks
+          Crowbar.conduit_map = @conduit_map # was adapted by adapt_conduit_map
+          Crowbar.teaming = @teaming
+          Crowbar.mode = @mode
+        end
       end
       ret
     end
