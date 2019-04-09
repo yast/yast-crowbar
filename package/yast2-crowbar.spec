@@ -45,10 +45,9 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 %install
 %yast_install
 
-
 %files
 %defattr(-,root,root)
-%doc COPYING
+%license COPYING
 %dir %{yast_yncludedir}/crowbar
 %{yast_yncludedir}/crowbar/*
 %{yast_clientdir}/crowbar.rb
