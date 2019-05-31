@@ -15,7 +15,7 @@ ynclude_DATA = \
   include/crowbar/helps.rb
 
 desktop_DATA = \
-  desktop/crowbar.desktop
+  desktop/org.openSUSE.YaST.Crowbar.desktop
 
 EXTRA_DIST = $(module_DATA) $(client_DATA) $(ynclude_DATA) $(desktop_DATA)
 
