@@ -18,6 +18,7 @@ X-SuSE-YaST-Keywords=cloud,openstack,deployment,provisioning
 Icon=yast-crowbar
 Exec=/usr/bin/xdg-su -c '/sbin/yast2 crowbar'
 
-Name=Crowbar
-GenericName=crowbar
+Name=YaST Crowbar
+GenericName=Crowbar
+Comment=Configure Crowbar Framework
 StartupNotify=true
