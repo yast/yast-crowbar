@@ -12,7 +12,7 @@
 # license that conforms to the Open Source Definition (Version 1.9)
 # published by the Open Source Initiative.
 
-# Please submit bugfixes or comments via http://bugs.opensuse.org/
+# Please submit bugfixes or comments via https://bugs.opensuse.org/
 #
 
 
@@ -22,39 +22,40 @@ Release:        0
 Summary:        Configuration of crowbar
 License:        GPL-2.0-only
 Group:          System/YaST
+Url:            https://github.com/yast/yast-crowbar
+
 Source0:        %{name}-%{version}.tar.bz2
+
 BuildRequires:  update-desktop-files
 BuildRequires:  yast2
 BuildRequires:  yast2-devtools >= 3.1.10
 BuildRequires:  yast2-testsuite
+
 Requires:       yast2
 Requires:       yast2-ruby-bindings >= 1.0.0
+
 BuildArch:      noarch
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %description
 -
 
 %prep
-%setup -n %{name}-%{version}
+%setup -q
 
 %build
 %yast_build
 
 %install
 %yast_install
-
+%yast_metainfo
 
 %files
-%defattr(-,root,root)
 %license COPYING
-%dir %{yast_yncludedir}/crowbar
-%{yast_yncludedir}/crowbar/*
-%{yast_clientdir}/crowbar.rb
-%{yast_clientdir}/inst_crowbar.rb
-%{yast_clientdir}/inst_crowbar_patterns.rb
-%{yast_moduledir}/Crowbar.rb
-%{yast_desktopdir}/crowbar.desktop
+%{yast_yncludedir}
+%{yast_clientdir}
+%{yast_moduledir}
+%{yast_desktopdir}
+%{yast_metainfodir}
 %doc %{yast_docdir}
 
 %changelog
