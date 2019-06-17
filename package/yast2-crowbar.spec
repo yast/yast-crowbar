@@ -43,7 +43,6 @@ BuildArch:      noarch
 %setup -q
 
 %build
-%yast_build
 
 %install
 %yast_install
