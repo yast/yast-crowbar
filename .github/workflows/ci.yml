@@ -1,12 +1,11 @@
-
 # See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
 
 name: CI
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
-# FIXME: no unit tests
+  # FIXME: no unit tests
   # Tests:
   #   runs-on: ubuntu-latest
   #   container: registry.opensuse.org/yast/head/containers/yast-ruby:latest
@@ -32,7 +31,7 @@ jobs:
   #     with:
   #       github-token: ${{ secrets.GITHUB_TOKEN }}
 
-# FIXME: Rubocop not used
+  # FIXME: Rubocop not used
   # Rubocop:
   #   runs-on: ubuntu-latest
   #   container: registry.opensuse.org/yast/head/containers/yast-ruby:latest
@@ -51,18 +50,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        distro:  [ "tumbleweed", "leap_latest" ]
+        distro: [ "tumbleweed" ]
 
     container:
       image: registry.opensuse.org/yast/head/containers_${{matrix.distro}}/yast-ruby
 
     steps:
+      - name: Git Checkout
+        uses: actions/checkout@v2
 
-    - name: Git Checkout
-      uses: actions/checkout@v2
-
-    - name: Package Build
-      run: yast-ci-ruby -o package
+      - name: Package Build
+        run: yast-ci-ruby -o package
 
   Yardoc:
     runs-on: ubuntu-latest
@@ -70,18 +68,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        distro: [ "leap_latest" ]
+        distro: [ "tumbleweed" ]
 
     container:
       image: registry.opensuse.org/yast/head/containers_${{matrix.distro}}/yast-ruby
 
     steps:
+      - name: Git Checkout
+        uses: actions/checkout@v2
 
-    - name: Git Checkout
-      uses: actions/checkout@v2
-
-    - name: Yardoc
-      run: rake check:doc
+      - name: Yardoc
+        run: rake check:doc
 
   # downloading the Docker image takes some time so bundling several fast
   # checks into one job avoids that overhead
@@ -91,15 +88,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        distro: [ "leap_latest" ]
+        distro: [ "tumbleweed" ]
 
     container:
       image: registry.opensuse.org/yast/head/containers_${{matrix.distro}}/yast-ruby
 
     steps:
+      - name: Git Checkout
+        uses: actions/checkout@v2
 
-    - name: Git Checkout
-      uses: actions/checkout@v2
-
-    - name: POT Check
-      run: rake check:pot
+      - name: POT Check
+        run: rake check:pot
