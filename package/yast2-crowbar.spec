@@ -17,7 +17,7 @@
 
 
 Name:           yast2-crowbar
-Version:        4.2.1
+Version:        4.2.2
 Release:        0
 Summary:        Configuration of crowbar
 License:        GPL-2.0-only
@@ -26,7 +26,6 @@ Url:            https://github.com/yast/yast-crowbar
 
 Source0:        %{name}-%{version}.tar.bz2
 
-BuildRequires:  update-desktop-files
 BuildRequires:  yast2
 BuildRequires:  yast2-devtools >= 4.2.2
 BuildRequires:  rubygem(%rb_default_ruby_abi:yast-rake)
